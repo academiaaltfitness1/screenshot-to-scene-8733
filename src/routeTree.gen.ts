@@ -10,33 +10,252 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as AuthenticatedAlunosRouteImport } from './routes/_authenticated/alunos'
+import { Route as AuthenticatedAvaliacaoRouteImport } from './routes/_authenticated/avaliacao'
+import { Route as AuthenticatedBackupRouteImport } from './routes/_authenticated/backup'
+import { Route as AuthenticatedCaixaRouteImport } from './routes/_authenticated/caixa'
+import { Route as AuthenticatedFrequenciaRouteImport } from './routes/_authenticated/frequencia'
+import { Route as AuthenticatedFuncionariosRouteImport } from './routes/_authenticated/funcionarios'
+import { Route as AuthenticatedMatriculasRouteImport } from './routes/_authenticated/matriculas'
+import { Route as AuthenticatedPagarRouteImport } from './routes/_authenticated/pagar'
+import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
+import { Route as AuthenticatedProdutosRouteImport } from './routes/_authenticated/produtos'
+import { Route as AuthenticatedReceberRouteImport } from './routes/_authenticated/receber'
+import { Route as AuthenticatedSistemaRouteImport } from './routes/_authenticated/sistema'
+import { Route as AuthenticatedTreinosRouteImport } from './routes/_authenticated/treinos'
+import { Route as AuthenticatedTurmasRouteImport } from './routes/_authenticated/turmas'
+import { Route as AuthenticatedVendaRouteImport } from './routes/_authenticated/venda'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAlunosRoute = AuthenticatedAlunosRouteImport.update({
+  id: '/alunos',
+  path: '/alunos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAvaliacaoRoute = AuthenticatedAvaliacaoRouteImport.update({
+  id: '/avaliacao',
+  path: '/avaliacao',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedBackupRoute = AuthenticatedBackupRouteImport.update({
+  id: '/backup',
+  path: '/backup',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCaixaRoute = AuthenticatedCaixaRouteImport.update({
+  id: '/caixa',
+  path: '/caixa',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFrequenciaRoute = AuthenticatedFrequenciaRouteImport.update({
+  id: '/frequencia',
+  path: '/frequencia',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFuncionariosRoute =
+  AuthenticatedFuncionariosRouteImport.update({
+    id: '/funcionarios',
+    path: '/funcionarios',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedMatriculasRoute = AuthenticatedMatriculasRouteImport.update({
+  id: '/matriculas',
+  path: '/matriculas',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPagarRoute = AuthenticatedPagarRouteImport.update({
+  id: '/pagar',
+  path: '/pagar',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
+  id: '/painel',
+  path: '/painel',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedProdutosRoute = AuthenticatedProdutosRouteImport.update({
+  id: '/produtos',
+  path: '/produtos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedReceberRoute = AuthenticatedReceberRouteImport.update({
+  id: '/receber',
+  path: '/receber',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSistemaRoute = AuthenticatedSistemaRouteImport.update({
+  id: '/sistema',
+  path: '/sistema',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTreinosRoute = AuthenticatedTreinosRouteImport.update({
+  id: '/treinos',
+  path: '/treinos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTurmasRoute = AuthenticatedTurmasRouteImport.update({
+  id: '/turmas',
+  path: '/turmas',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedVendaRoute = AuthenticatedVendaRouteImport.update({
+  id: '/venda',
+  path: '/venda',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/alunos': typeof AuthenticatedAlunosRoute
+  '/avaliacao': typeof AuthenticatedAvaliacaoRoute
+  '/backup': typeof AuthenticatedBackupRoute
+  '/caixa': typeof AuthenticatedCaixaRoute
+  '/frequencia': typeof AuthenticatedFrequenciaRoute
+  '/funcionarios': typeof AuthenticatedFuncionariosRoute
+  '/matriculas': typeof AuthenticatedMatriculasRoute
+  '/pagar': typeof AuthenticatedPagarRoute
+  '/painel': typeof AuthenticatedPainelRoute
+  '/produtos': typeof AuthenticatedProdutosRoute
+  '/receber': typeof AuthenticatedReceberRoute
+  '/sistema': typeof AuthenticatedSistemaRoute
+  '/treinos': typeof AuthenticatedTreinosRoute
+  '/turmas': typeof AuthenticatedTurmasRoute
+  '/venda': typeof AuthenticatedVendaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/alunos': typeof AuthenticatedAlunosRoute
+  '/avaliacao': typeof AuthenticatedAvaliacaoRoute
+  '/backup': typeof AuthenticatedBackupRoute
+  '/caixa': typeof AuthenticatedCaixaRoute
+  '/frequencia': typeof AuthenticatedFrequenciaRoute
+  '/funcionarios': typeof AuthenticatedFuncionariosRoute
+  '/matriculas': typeof AuthenticatedMatriculasRoute
+  '/pagar': typeof AuthenticatedPagarRoute
+  '/painel': typeof AuthenticatedPainelRoute
+  '/produtos': typeof AuthenticatedProdutosRoute
+  '/receber': typeof AuthenticatedReceberRoute
+  '/sistema': typeof AuthenticatedSistemaRoute
+  '/treinos': typeof AuthenticatedTreinosRoute
+  '/turmas': typeof AuthenticatedTurmasRoute
+  '/venda': typeof AuthenticatedVendaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/_authenticated/alunos': typeof AuthenticatedAlunosRoute
+  '/_authenticated/avaliacao': typeof AuthenticatedAvaliacaoRoute
+  '/_authenticated/backup': typeof AuthenticatedBackupRoute
+  '/_authenticated/caixa': typeof AuthenticatedCaixaRoute
+  '/_authenticated/frequencia': typeof AuthenticatedFrequenciaRoute
+  '/_authenticated/funcionarios': typeof AuthenticatedFuncionariosRoute
+  '/_authenticated/matriculas': typeof AuthenticatedMatriculasRoute
+  '/_authenticated/pagar': typeof AuthenticatedPagarRoute
+  '/_authenticated/painel': typeof AuthenticatedPainelRoute
+  '/_authenticated/produtos': typeof AuthenticatedProdutosRoute
+  '/_authenticated/receber': typeof AuthenticatedReceberRoute
+  '/_authenticated/sistema': typeof AuthenticatedSistemaRoute
+  '/_authenticated/treinos': typeof AuthenticatedTreinosRoute
+  '/_authenticated/turmas': typeof AuthenticatedTurmasRoute
+  '/_authenticated/venda': typeof AuthenticatedVendaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/reset-password'
+    | '/alunos'
+    | '/avaliacao'
+    | '/backup'
+    | '/caixa'
+    | '/frequencia'
+    | '/funcionarios'
+    | '/matriculas'
+    | '/pagar'
+    | '/painel'
+    | '/produtos'
+    | '/receber'
+    | '/sistema'
+    | '/treinos'
+    | '/turmas'
+    | '/venda'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/reset-password'
+    | '/alunos'
+    | '/avaliacao'
+    | '/backup'
+    | '/caixa'
+    | '/frequencia'
+    | '/funcionarios'
+    | '/matriculas'
+    | '/pagar'
+    | '/painel'
+    | '/produtos'
+    | '/receber'
+    | '/sistema'
+    | '/treinos'
+    | '/turmas'
+    | '/venda'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/reset-password'
+    | '/_authenticated/alunos'
+    | '/_authenticated/avaliacao'
+    | '/_authenticated/backup'
+    | '/_authenticated/caixa'
+    | '/_authenticated/frequencia'
+    | '/_authenticated/funcionarios'
+    | '/_authenticated/matriculas'
+    | '/_authenticated/pagar'
+    | '/_authenticated/painel'
+    | '/_authenticated/produtos'
+    | '/_authenticated/receber'
+    | '/_authenticated/sistema'
+    | '/_authenticated/treinos'
+    | '/_authenticated/turmas'
+    | '/_authenticated/venda'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +267,179 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/alunos': {
+      id: '/_authenticated/alunos'
+      path: '/alunos'
+      fullPath: '/alunos'
+      preLoaderRoute: typeof AuthenticatedAlunosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/avaliacao': {
+      id: '/_authenticated/avaliacao'
+      path: '/avaliacao'
+      fullPath: '/avaliacao'
+      preLoaderRoute: typeof AuthenticatedAvaliacaoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/backup': {
+      id: '/_authenticated/backup'
+      path: '/backup'
+      fullPath: '/backup'
+      preLoaderRoute: typeof AuthenticatedBackupRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/caixa': {
+      id: '/_authenticated/caixa'
+      path: '/caixa'
+      fullPath: '/caixa'
+      preLoaderRoute: typeof AuthenticatedCaixaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/frequencia': {
+      id: '/_authenticated/frequencia'
+      path: '/frequencia'
+      fullPath: '/frequencia'
+      preLoaderRoute: typeof AuthenticatedFrequenciaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/funcionarios': {
+      id: '/_authenticated/funcionarios'
+      path: '/funcionarios'
+      fullPath: '/funcionarios'
+      preLoaderRoute: typeof AuthenticatedFuncionariosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/matriculas': {
+      id: '/_authenticated/matriculas'
+      path: '/matriculas'
+      fullPath: '/matriculas'
+      preLoaderRoute: typeof AuthenticatedMatriculasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pagar': {
+      id: '/_authenticated/pagar'
+      path: '/pagar'
+      fullPath: '/pagar'
+      preLoaderRoute: typeof AuthenticatedPagarRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/painel': {
+      id: '/_authenticated/painel'
+      path: '/painel'
+      fullPath: '/painel'
+      preLoaderRoute: typeof AuthenticatedPainelRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/produtos': {
+      id: '/_authenticated/produtos'
+      path: '/produtos'
+      fullPath: '/produtos'
+      preLoaderRoute: typeof AuthenticatedProdutosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/receber': {
+      id: '/_authenticated/receber'
+      path: '/receber'
+      fullPath: '/receber'
+      preLoaderRoute: typeof AuthenticatedReceberRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/sistema': {
+      id: '/_authenticated/sistema'
+      path: '/sistema'
+      fullPath: '/sistema'
+      preLoaderRoute: typeof AuthenticatedSistemaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/treinos': {
+      id: '/_authenticated/treinos'
+      path: '/treinos'
+      fullPath: '/treinos'
+      preLoaderRoute: typeof AuthenticatedTreinosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/turmas': {
+      id: '/_authenticated/turmas'
+      path: '/turmas'
+      fullPath: '/turmas'
+      preLoaderRoute: typeof AuthenticatedTurmasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/venda': {
+      id: '/_authenticated/venda'
+      path: '/venda'
+      fullPath: '/venda'
+      preLoaderRoute: typeof AuthenticatedVendaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAlunosRoute: typeof AuthenticatedAlunosRoute
+  AuthenticatedAvaliacaoRoute: typeof AuthenticatedAvaliacaoRoute
+  AuthenticatedBackupRoute: typeof AuthenticatedBackupRoute
+  AuthenticatedCaixaRoute: typeof AuthenticatedCaixaRoute
+  AuthenticatedFrequenciaRoute: typeof AuthenticatedFrequenciaRoute
+  AuthenticatedFuncionariosRoute: typeof AuthenticatedFuncionariosRoute
+  AuthenticatedMatriculasRoute: typeof AuthenticatedMatriculasRoute
+  AuthenticatedPagarRoute: typeof AuthenticatedPagarRoute
+  AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
+  AuthenticatedProdutosRoute: typeof AuthenticatedProdutosRoute
+  AuthenticatedReceberRoute: typeof AuthenticatedReceberRoute
+  AuthenticatedSistemaRoute: typeof AuthenticatedSistemaRoute
+  AuthenticatedTreinosRoute: typeof AuthenticatedTreinosRoute
+  AuthenticatedTurmasRoute: typeof AuthenticatedTurmasRoute
+  AuthenticatedVendaRoute: typeof AuthenticatedVendaRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAlunosRoute: AuthenticatedAlunosRoute,
+  AuthenticatedAvaliacaoRoute: AuthenticatedAvaliacaoRoute,
+  AuthenticatedBackupRoute: AuthenticatedBackupRoute,
+  AuthenticatedCaixaRoute: AuthenticatedCaixaRoute,
+  AuthenticatedFrequenciaRoute: AuthenticatedFrequenciaRoute,
+  AuthenticatedFuncionariosRoute: AuthenticatedFuncionariosRoute,
+  AuthenticatedMatriculasRoute: AuthenticatedMatriculasRoute,
+  AuthenticatedPagarRoute: AuthenticatedPagarRoute,
+  AuthenticatedPainelRoute: AuthenticatedPainelRoute,
+  AuthenticatedProdutosRoute: AuthenticatedProdutosRoute,
+  AuthenticatedReceberRoute: AuthenticatedReceberRoute,
+  AuthenticatedSistemaRoute: AuthenticatedSistemaRoute,
+  AuthenticatedTreinosRoute: AuthenticatedTreinosRoute,
+  AuthenticatedTurmasRoute: AuthenticatedTurmasRoute,
+  AuthenticatedVendaRoute: AuthenticatedVendaRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
