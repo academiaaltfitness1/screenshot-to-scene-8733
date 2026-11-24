@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Plus, Trash2, Upload, Printer } from "lucide-react";
+import { Plus, Trash2, Upload, Printer, MessageCircle, Mail } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
@@ -320,6 +320,25 @@ function StudentDialog({ student, onClose, onEnroll }: { student: Partial<Studen
               onClick={() => confirm("Excluir este aluno e todo o histórico?") && remove.mutate()}
             >
               <Trash2 /> Excluir
+            </Button>
+          )}
+          {!isNew && f.whatsapp && (
+            <Button variant="outline" onClick={() => {
+              const digits = f.whatsapp!.replace(/\D/g, "");
+              const phone = digits.length <= 11 ? `55${digits}` : digits;
+              const message = `Olá ${(f.name ?? "").split(" ")[0]}! Seja bem-vindo(a) à Academia ALT FITNESS! Estamos felizes em ter você conosco. Qualquer dúvida, conte com nossa equipe!`;
+              window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
+            }}>
+              <MessageCircle /> Boas-vindas
+            </Button>
+          )}
+          {!isNew && f.email && (
+            <Button variant="outline" onClick={() => {
+              const subject = "Boas-vindas à Academia ALT FITNESS";
+              const body = `Olá ${(f.name ?? "").split(" ")[0]}!\n\nSeja bem-vindo(a) à Academia ALT FITNESS! Estamos felizes em ter você conosco.\n\nConte com nossa equipe!`;
+              window.location.href = `mailto:${encodeURIComponent(f.email!)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            }}>
+              <Mail /> E-mail
             </Button>
           )}
           <Button variant="outline" onClick={onClose}>
