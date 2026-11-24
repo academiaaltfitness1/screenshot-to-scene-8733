@@ -134,12 +134,12 @@ function AlunosPage() {
           ))}
         </tbody>
       </table>
-      {editing && <StudentDialog student={editing} onClose={() => setEditing(null)} />}
+      {editing && <StudentDialog student={editing} onClose={() => setEditing(null)} onEnroll={(id) => navigate({ to: "/matriculas", search: { studentId: id } })} />}
     </ModuleWindow>
   );
 }
 
-function StudentDialog({ student, onClose }: { student: Partial<Student> | Overview; onClose: () => void }) {
+function StudentDialog({ student, onClose, onEnroll }: { student: Partial<Student> | Overview; onClose: () => void; onEnroll: (id: string) => void }) {
   const qc = useQueryClient();
   const { staff } = useStaff();
   const [f, setF] = useState<Partial<Student>>(student as Partial<Student>);
@@ -179,6 +179,7 @@ function StudentDialog({ student, onClose }: { student: Partial<Student> | Overv
       qc.invalidateQueries({ queryKey: ["students-mini"] });
       setF(d);
       if (!isNew) onClose();
+      else if (confirm("Cadastro confirmado! Deseja fazer a matrícula agora?")) onEnroll(d.id);
     },
     onError: (e) => {
       const m = errMsg(e);
