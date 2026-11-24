@@ -210,7 +210,7 @@ function TreinosPage() {
     >
       <ModuleBar>
         <div className="w-80">
-          <StudentPicker value={student} onChange={(id) => { setStudent(id); setCopySource(null); }} />
+          <StudentPicker value={student} onChange={(id) => { setStudent(id); setCopySource(null); setPlan([]); }} />
         </div>
         {student && (
           <>
@@ -226,7 +226,7 @@ function TreinosPage() {
               <Button size="sm" variant="outline" onClick={applyTemplate} disabled={!templateKey}><ClipboardList /> Aplicar</Button>
             </div>
             <div className="flex min-w-64 items-center gap-2">
-              <div className="w-44"><StudentPicker value={copySource} onChange={setCopySource} /></div>
+              <div className="w-44"><StudentPicker value={copySource} onChange={setCopySource} placeholder="Copiar de outro aluno…" /></div>
               <Button size="sm" variant="outline" onClick={copyFromStudent} disabled={!copySource || loadingCopy}><Copy /> Copiar ficha</Button>
             </div>
             <Button size="sm" variant="outline" onClick={addWorkout}>
