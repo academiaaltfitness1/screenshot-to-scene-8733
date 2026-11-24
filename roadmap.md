@@ -9,3 +9,4 @@
 - [x] Admin entra direto, sem confirmar e-mail
 - [x] Logotipo original aplicado (cabeçalho, login, ícones, favicon)
 - [x] Tela de entrada: lista da equipe (escolher nome + senha), e-mail opcional para funcionários
+- [ ] Central de Mensagens WhatsApp: fila em 5 categorias (2 dias atraso → depois de amanhã), seleção, avanço só manual, status por mensagem, modelos editáveis, salva no banco, sem envio automático

@@ -167,6 +167,7 @@ export interface FileRoutesByTo {
   '/painel': typeof AuthenticatedPainelRoute
   '/produtos': typeof AuthenticatedProdutosRoute
   '/receber': typeof AuthenticatedReceberRoute
+  '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/sistema': typeof AuthenticatedSistemaRoute
   '/treinos': typeof AuthenticatedTreinosRoute
   '/turmas': typeof AuthenticatedTurmasRoute
