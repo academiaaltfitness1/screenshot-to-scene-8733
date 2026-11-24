@@ -2,13 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Plus, Save, Trash2, X, Printer } from "lucide-react";
+import { Plus, Save, Trash2, X, Printer, Copy, ClipboardList } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ModuleWindow } from "@/components/shell/ModuleWindow";
 import { ModuleBar } from "@/components/app/common";
 import { StudentPicker } from "@/components/app/StudentPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { errMsg } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/treinos")({
@@ -46,11 +47,48 @@ const SUGGESTIONS = [
 
 const newEx = (): Ex => ({ exercise: "", sets: "3", reps: "12", load: "", rest: "60s" });
 
+const WORKOUT_TEMPLATES: Record<string, Workout[]> = {
+  adaptacao: [{ letter: "A", name: "Adaptação — Corpo todo", notes: "Priorizar técnica, amplitude confortável e cargas leves.", exercises: [
+    { exercise: "Leg press 45°", sets: "2", reps: "15", load: "Leve", rest: "60s" },
+    { exercise: "Supino máquina", sets: "2", reps: "15", load: "Leve", rest: "60s" },
+    { exercise: "Puxada frontal", sets: "2", reps: "15", load: "Leve", rest: "60s" },
+    { exercise: "Cadeira extensora", sets: "2", reps: "15", load: "Leve", rest: "60s" },
+    { exercise: "Abdominal supra", sets: "2", reps: "15", load: "Peso corporal", rest: "45s" },
+  ] }],
+  hipertrofia_a_b: [
+    { letter: "A", name: "Hipertrofia — A (Peito, ombro e tríceps)", notes: "Ajustar cargas e volume à avaliação individual.", exercises: [
+      { exercise: "Supino reto", sets: "3", reps: "8–12", load: "", rest: "90s" },
+      { exercise: "Supino inclinado", sets: "3", reps: "8–12", load: "", rest: "90s" },
+      { exercise: "Crucifixo", sets: "3", reps: "10–12", load: "", rest: "60s" },
+      { exercise: "Elevação lateral", sets: "3", reps: "12", load: "", rest: "60s" },
+      { exercise: "Tríceps pulley", sets: "3", reps: "10–12", load: "", rest: "60s" },
+    ] },
+    { letter: "B", name: "Hipertrofia — B (Costas e bíceps)", notes: "Ajustar cargas e volume à avaliação individual.", exercises: [
+      { exercise: "Puxada frontal", sets: "3", reps: "8–12", load: "", rest: "90s" },
+      { exercise: "Remada baixa", sets: "3", reps: "8–12", load: "", rest: "90s" },
+      { exercise: "Remada curvada", sets: "3", reps: "10", load: "", rest: "90s" },
+      { exercise: "Rosca direta", sets: "3", reps: "10–12", load: "", rest: "60s" },
+      { exercise: "Rosca alternada", sets: "2", reps: "12", load: "", rest: "60s" },
+    ] },
+  ],
+  emagrecimento: [{ letter: "A", name: "Emagrecimento — Resistência geral", notes: "Combinar com atividade aeróbica conforme condição e avaliação do aluno.", exercises: [
+    { exercise: "Leg press 45°", sets: "3", reps: "12–15", load: "", rest: "45s" },
+    { exercise: "Puxada frontal", sets: "3", reps: "12–15", load: "", rest: "45s" },
+    { exercise: "Supino máquina", sets: "3", reps: "12–15", load: "", rest: "45s" },
+    { exercise: "Cadeira extensora", sets: "3", reps: "12–15", load: "", rest: "45s" },
+    { exercise: "Remada baixa", sets: "3", reps: "12–15", load: "", rest: "45s" },
+    { exercise: "Prancha", sets: "3", reps: "20–30s", load: "Peso corporal", rest: "45s" },
+  ] }],
+};
+
 function TreinosPage() {
   const qc = useQueryClient();
   const [student, setStudent] = useState<string | null>(null);
   const [plan, setPlan] = useState<Workout[]>([]);
   const [saving, setSaving] = useState(false);
+  const [templateKey, setTemplateKey] = useState("");
+  const [copySource, setCopySource] = useState<string | null>(null);
+  const [loadingCopy, setLoadingCopy] = useState(false);
 
   const { data } = useQuery({
     queryKey: ["workouts", student],
@@ -85,6 +123,35 @@ function TreinosPage() {
     setPlan([...plan, { letter, name: `Treino ${letter}`, notes: "", exercises: [newEx()] }]);
   };
   const upd = (i: number, w: Partial<Workout>) => setPlan(plan.map((x, j) => (j === i ? { ...x, ...w } : x)));
+
+  function applyTemplate() {
+    const template = WORKOUT_TEMPLATES[templateKey];
+    if (!template) return;
+    if (plan.length && !confirm("Aplicar este modelo substituirá a ficha que está sendo editada. Continuar?")) return;
+    setPlan(template.map((w) => ({ ...w, exercises: w.exercises.map((e) => ({ ...e })) })));
+    toast.success("Modelo aplicado. Revise e personalize antes de salvar.");
+  }
+
+  async function copyFromStudent() {
+    if (!student || !copySource) return;
+    if (student === copySource) { toast.error("Selecione outro aluno para copiar."); return; }
+    if (plan.length && !confirm("Copiar a ficha substituirá a ficha que está sendo editada. Continuar?")) return;
+    setLoadingCopy(true);
+    try {
+      const { data: source, error } = await supabase.from("workouts").select("*, workout_exercises(*)")
+        .eq("student_id", copySource).eq("active", true).order("letter");
+      if (error) throw error;
+      if (!source?.length) { toast.error("Este aluno não possui ficha ativa para copiar."); return; }
+      setPlan(source.map((w) => ({
+        letter: w.letter, name: w.name, notes: w.notes ?? "",
+        exercises: [...w.workout_exercises].sort((a, b) => a.sort_order - b.sort_order).map((e) => ({
+          exercise: e.exercise, sets: e.sets, reps: e.reps, load: e.load, rest: e.rest,
+        })),
+      })));
+      toast.success("Ficha copiada para edição. O aluno de origem não será alterado.");
+    } catch (e) { toast.error(errMsg(e)); }
+    finally { setLoadingCopy(false); }
+  }
   const updEx = (i: number, k: number, e: Partial<Ex>) => upd(i, { exercises: plan[i]!.exercises.map((x, j) => (j === k ? { ...x, ...e } : x)) });
 
   async function save() {
@@ -143,12 +210,29 @@ function TreinosPage() {
     >
       <ModuleBar>
         <div className="w-80">
-          <StudentPicker value={student} onChange={setStudent} />
+          <StudentPicker value={student} onChange={(id) => { setStudent(id); setCopySource(null); }} />
         </div>
         {student && (
-          <Button size="sm" variant="outline" onClick={addWorkout}>
-            <Plus /> Adicionar treino {String.fromCharCode(65 + plan.length)}
-          </Button>
+          <>
+            <div className="flex min-w-52 items-center gap-2">
+              <Select value={templateKey} onValueChange={setTemplateKey}>
+                <SelectTrigger className="h-9"><SelectValue placeholder="Modelos de treino" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="adaptacao">Adaptação</SelectItem>
+                  <SelectItem value="hipertrofia_a_b">Hipertrofia iniciante A/B</SelectItem>
+                  <SelectItem value="emagrecimento">Emagrecimento</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button size="sm" variant="outline" onClick={applyTemplate} disabled={!templateKey}><ClipboardList /> Aplicar</Button>
+            </div>
+            <div className="flex min-w-64 items-center gap-2">
+              <div className="w-44"><StudentPicker value={copySource} onChange={setCopySource} /></div>
+              <Button size="sm" variant="outline" onClick={copyFromStudent} disabled={!copySource || loadingCopy}><Copy /> Copiar ficha</Button>
+            </div>
+            <Button size="sm" variant="outline" onClick={addWorkout}>
+              <Plus /> Adicionar treino {String.fromCharCode(65 + plan.length)}
+            </Button>
+          </>
         )}
       </ModuleBar>
       <datalist id="ex-suggest">
