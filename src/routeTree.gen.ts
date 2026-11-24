@@ -24,6 +24,7 @@ import { Route as AuthenticatedPagarRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as AuthenticatedProdutosRouteImport } from './routes/_authenticated/produtos'
 import { Route as AuthenticatedReceberRouteImport } from './routes/_authenticated/receber'
+import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
 import { Route as AuthenticatedSistemaRouteImport } from './routes/_authenticated/sistema'
 import { Route as AuthenticatedTreinosRouteImport } from './routes/_authenticated/treinos'
 import { Route as AuthenticatedTurmasRouteImport } from './routes/_authenticated/turmas'
@@ -104,6 +105,11 @@ const AuthenticatedReceberRoute = AuthenticatedReceberRouteImport.update({
   path: '/receber',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedRelatoriosRoute = AuthenticatedRelatoriosRouteImport.update({
+  id: '/relatorios',
+  path: '/relatorios',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSistemaRoute = AuthenticatedSistemaRouteImport.update({
   id: '/sistema',
   path: '/sistema',
@@ -140,6 +146,7 @@ export interface FileRoutesByFullPath {
   '/painel': typeof AuthenticatedPainelRoute
   '/produtos': typeof AuthenticatedProdutosRoute
   '/receber': typeof AuthenticatedReceberRoute
+  '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/sistema': typeof AuthenticatedSistemaRoute
   '/treinos': typeof AuthenticatedTreinosRoute
   '/turmas': typeof AuthenticatedTurmasRoute
@@ -182,6 +189,7 @@ export interface FileRoutesById {
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/_authenticated/produtos': typeof AuthenticatedProdutosRoute
   '/_authenticated/receber': typeof AuthenticatedReceberRoute
+  '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/sistema': typeof AuthenticatedSistemaRoute
   '/_authenticated/treinos': typeof AuthenticatedTreinosRoute
   '/_authenticated/turmas': typeof AuthenticatedTurmasRoute
@@ -204,6 +212,7 @@ export interface FileRouteTypes {
     | '/painel'
     | '/produtos'
     | '/receber'
+    | '/relatorios'
     | '/sistema'
     | '/treinos'
     | '/turmas'
@@ -224,6 +233,7 @@ export interface FileRouteTypes {
     | '/painel'
     | '/produtos'
     | '/receber'
+    | '/relatorios'
     | '/sistema'
     | '/treinos'
     | '/turmas'
@@ -245,6 +255,7 @@ export interface FileRouteTypes {
     | '/_authenticated/painel'
     | '/_authenticated/produtos'
     | '/_authenticated/receber'
+    | '/_authenticated/relatorios'
     | '/_authenticated/sistema'
     | '/_authenticated/treinos'
     | '/_authenticated/turmas'
@@ -365,6 +376,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReceberRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/relatorios': {
+      id: '/_authenticated/relatorios'
+      path: '/relatorios'
+      fullPath: '/relatorios'
+      preLoaderRoute: typeof AuthenticatedRelatoriosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/sistema': {
       id: '/_authenticated/sistema'
       path: '/sistema'
@@ -408,6 +426,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
   AuthenticatedProdutosRoute: typeof AuthenticatedProdutosRoute
   AuthenticatedReceberRoute: typeof AuthenticatedReceberRoute
+  AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
   AuthenticatedSistemaRoute: typeof AuthenticatedSistemaRoute
   AuthenticatedTreinosRoute: typeof AuthenticatedTreinosRoute
   AuthenticatedTurmasRoute: typeof AuthenticatedTurmasRoute
@@ -426,6 +445,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
   AuthenticatedProdutosRoute: AuthenticatedProdutosRoute,
   AuthenticatedReceberRoute: AuthenticatedReceberRoute,
+  AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
   AuthenticatedSistemaRoute: AuthenticatedSistemaRoute,
   AuthenticatedTreinosRoute: AuthenticatedTreinosRoute,
   AuthenticatedTurmasRoute: AuthenticatedTurmasRoute,
