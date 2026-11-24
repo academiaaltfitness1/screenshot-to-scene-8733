@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_authenticated/relatorios")({
   component: VencimentosReport,
 });
 
-type StatusFilter = "todos" | "recebidos" | "pendentes" | "vencidos";
+type StatusFilter = "todos" | "recebidos" | "pendentes" | "vencidos" | "a_vencer";
 
 function VencimentosReport() {
   const today = todayISO();
@@ -47,6 +47,7 @@ function VencimentosReport() {
     if (status === "recebidos" && !row.paid_at) return false;
     if (status === "pendentes" && row.paid_at) return false;
     if (status === "vencidos" && (row.paid_at || row.due_date >= today)) return false;
+    if (status === "a_vencer" && (row.paid_at || row.due_date <= today)) return false;
     return true;
   }), [rows, startDate, endDate, status, today]);
 
@@ -77,6 +78,7 @@ function VencimentosReport() {
                 <SelectItem value="recebidos">Recebidos</SelectItem>
                 <SelectItem value="pendentes">Pendentes</SelectItem>
                 <SelectItem value="vencidos">Vencidos</SelectItem>
+                <SelectItem value="a_vencer">A vencer</SelectItem>
               </SelectContent>
             </Select>
           </Field>
