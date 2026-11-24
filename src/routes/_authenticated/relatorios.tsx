@@ -71,7 +71,7 @@ function VencimentosReport() {
             <Input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} />
           </Field>
           <Field label="Situação">
-            <Select value={status} onValueChange={(value) => setStatus(value as StatusFilter)}>
+            <Select value={status} onValueChange={(value) => { setStatus(value as StatusFilter); if (value === "a_vencer" && endDate === today) setEndDate(""); }}>
               <SelectTrigger className="w-40 bg-card"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos</SelectItem>
