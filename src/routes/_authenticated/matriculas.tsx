@@ -17,7 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { brl, fmtDate, addMonthsISO, addDaysISO, errMsg } from "@/lib/format";
+import { brl, fmtDate, addMonthsSameDayISO, addDaysISO, errMsg } from "@/lib/format";
 import { todayISO } from "@/lib/access";
 
 export const Route = createFileRoute("/_authenticated/matriculas")({
@@ -214,7 +214,7 @@ function MatriculasPage() {
 function EnrollDialog({ draft, setDraft, plans }: { draft: Draft; setDraft: (d: Draft | null) => void; plans: Plan[] }) {
   const qc = useQueryClient();
   const plan = plans.find((p) => p.id === draft.plan_id);
-  const end = plan ? addMonthsISO(draft.start_date, plan.months) : "";
+  const end = plan ? addMonthsSameDayISO(draft.start_date, plan.months) : "";
   const upd = (p: Partial<Draft>) => setDraft({ ...draft, ...p });
 
   const save = useMutation({
