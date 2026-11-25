@@ -677,6 +677,7 @@ export type Database = {
           allow_matricula: boolean
           allow_password: boolean
           allow_qrcode: boolean
+          allow_sko12: boolean
           bill_alert_days: number
           block_inactive: boolean
           fingerprint_rule: string
@@ -703,6 +704,7 @@ export type Database = {
           allow_matricula?: boolean
           allow_password?: boolean
           allow_qrcode?: boolean
+          allow_sko12?: boolean
           bill_alert_days?: number
           block_inactive?: boolean
           fingerprint_rule?: string
@@ -729,6 +731,7 @@ export type Database = {
           allow_matricula?: boolean
           allow_password?: boolean
           allow_qrcode?: boolean
+          allow_sko12?: boolean
           bill_alert_days?: number
           block_inactive?: boolean
           fingerprint_rule?: string
