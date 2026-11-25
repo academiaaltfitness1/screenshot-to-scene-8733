@@ -1,0 +1,192 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Download, Save, Unlock, Wifi, WifiOff, ShieldCheck } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
+import { ModuleWindow } from "@/components/shell/ModuleWindow";
+import { Field } from "@/components/app/common";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { settingsQuery, useStaff } from "@/hooks/use-staff";
+import { buildAgentZip } from "@/lib/agent-package";
+import { fmtDateTime, errMsg } from "@/lib/format";
+
+export const Route = createFileRoute("/_authenticated/catraca")({
+  head: () => ({
+    meta: [
+      { title: "Catraca Henry — ALT FITNESS" },
+      { name: "description", content: "Integração local com a catraca Henry Primme Acesso SF." },
+    ],
+  }),
+  component: CatracaPage,
+});
+
+type Settings = Tables<"settings">;
+
+function CatracaPage() {
+  const qc = useQueryClient();
+  const { staff } = useStaff();
+  const { data, isLoading } = useQuery({ ...settingsQuery, refetchInterval: 10_000 });
+  const [f, setF] = useState<Partial<Settings>>({});
+
+  useEffect(() => {
+    if (data) setF(data);
+  }, [data]);
+
+  const online = !!data?.agent_last_seen &&
+    Date.now() - new Date(data.agent_last_seen).getTime() < 3 * 60_000;
+
+  const save = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("settings").update({
+        turnstile_ip: String(f.turnstile_ip || "192.168.0.229").trim(),
+        turnstile_port: Number(f.turnstile_port || 3000),
+        release_seconds: Number(f.release_seconds || 5),
+        block_inactive: f.block_inactive !== false,
+        allow_qrcode: f.allow_qrcode !== false,
+        allow_password: f.allow_password !== false,
+        allow_matricula: f.allow_matricula !== false,
+        allow_card: f.allow_card !== false,
+        fingerprint_rule: String(f.fingerprint_rule || "CONSULTAR NÚMERO DE MATRÍCULA"),
+        keypad_rule: String(f.keypad_rule || "CONSULTAR NÚMERO DE MATRÍCULA"),
+        welcome_message: String(f.welcome_message || "Bem-vindo"),
+        updated_at: new Date().toISOString(),
+      }).eq("id", 1);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Configurações da catraca salvas");
+      qc.invalidateQueries({ queryKey: ["settings"] });
+    },
+    onError: (e) => toast.error(errMsg(e)),
+  });
+
+  const release = useMutation({
+    mutationFn: async () => {
+      if (!online) throw new Error("O Agente Local está sem sinal. Não foi enviado comando à catraca.");
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) throw new Error("Sessão expirada. Entre novamente.");
+      const { error } = await supabase.from("turnstile_commands").insert({
+        command: "liberar",
+        direction: "entrada",
+        requested_by: auth.user.id,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Comando enviado ao Agente Local. Aguarde a confirmação da catraca.");
+      qc.invalidateQueries({ queryKey: ["settings"] });
+    },
+    onError: (e) => toast.error(errMsg(e)),
+  });
+
+  async function downloadAgent() {
+    try {
+      if (!staff?.isAdmin) throw new Error("Somente o administrador pode gerar o pacote seguro do Agente Local.");
+      const { data: credential, error } = await supabase.from("agent_credentials")
+        .select("token").eq("id", 1).single();
+      if (error || !credential?.token) throw new Error("Não foi possível obter o código do Agente. Verifique sua permissão de administrador.");
+      const blob = await buildAgentZip({
+        system_url: window.location.origin,
+        token: credential.token,
+        porta_local: 3001,
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "agente-henry-altfitness.zip";
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast.success("Pacote do Agente Local gerado.");
+    } catch (e) {
+      toast.error(errMsg(e));
+    }
+  }
+
+  const set = (key: keyof Settings, value: unknown) =>
+    setF((old) => ({ ...old, [key]: value }));
+
+  return (
+    <ModuleWindow
+      module="catraca"
+      actions={
+        <Button size="sm" variant="hero" onClick={downloadAgent} disabled={!staff?.isAdmin}>
+          <Download /> Baixar Agente Local
+        </Button>
+      }
+    >
+      <div className="mx-auto grid max-w-4xl gap-5 p-5">
+        <section className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-4">
+          <div>
+            <h3 className="flex items-center gap-2 text-lg font-bold">
+              <ShieldCheck className="h-5 w-5 text-primary" /> Henry Primme Acesso SF
+            </h3>
+            <p className="text-sm text-muted-foreground">Firmware 2.0.26 · Comunicação TCP/IP · Agente Local no computador da recepção</p>
+            <p className="mt-1 text-xs text-muted-foreground">Último sinal: {fmtDateTime(data?.agent_last_seen)}</p>
+          </div>
+          {online ? (
+            <Badge variant="success"><Wifi className="mr-1 h-3.5 w-3.5" /> Agente conectado</Badge>
+          ) : (
+            <Badge variant="destructive"><WifiOff className="mr-1 h-3.5 w-3.5" /> Sem sinal do agente</Badge>
+          )}
+        </section>
+
+        <section className="grid gap-3 rounded-lg border border-border bg-card p-4 sm:grid-cols-3">
+          <h3 className="text-base font-bold sm:col-span-3">Comunicação com a catraca</h3>
+          <Field label="Endereço IP">
+            <Input value={String(f.turnstile_ip ?? "192.168.0.229")} onChange={(e) => set("turnstile_ip", e.target.value)} />
+          </Field>
+          <Field label="Porta TCP">
+            <Input type="number" min="1" max="65535" value={String(f.turnstile_port ?? 3000)} onChange={(e) => set("turnstile_port", Number(e.target.value))} />
+          </Field>
+          <Field label="Tempo de liberação (segundos)">
+            <Input type="number" min="1" max="30" value={String(f.release_seconds ?? 5)} onChange={(e) => set("release_seconds", Number(e.target.value))} />
+          </Field>
+          <Field label="Mensagem no visor" >
+            <Input value={String(f.welcome_message ?? "Bem-vindo")} onChange={(e) => set("welcome_message", e.target.value)} />
+          </Field>
+          <Field label="Regra da biometria">
+            <Input value={String(f.fingerprint_rule ?? "CONSULTAR NÚMERO DE MATRÍCULA")} onChange={(e) => set("fingerprint_rule", e.target.value)} />
+          </Field>
+          <Field label="Regra do teclado">
+            <Input value={String(f.keypad_rule ?? "CONSULTAR NÚMERO DE MATRÍCULA")} onChange={(e) => set("keypad_rule", e.target.value)} />
+          </Field>
+        </section>
+
+        <section className="grid gap-3 rounded-lg border border-border bg-card p-4 sm:grid-cols-2">
+          <h3 className="text-base font-bold sm:col-span-2">Formas de identificação permitidas</h3>
+          <label className="flex items-center gap-2 text-sm"><Checkbox checked={f.allow_matricula !== false} onCheckedChange={(v) => set("allow_matricula", v === true)} /> Matrícula / digital vinculada à matrícula</label>
+          <label className="flex items-center gap-2 text-sm"><Checkbox checked={f.allow_password !== false} onCheckedChange={(v) => set("allow_password", v === true)} /> Senha no teclado</label>
+          <label className="flex items-center gap-2 text-sm"><Checkbox checked={f.allow_card !== false} onCheckedChange={(v) => set("allow_card", v === true)} /> Cartão / proximidade</label>
+          <label className="flex items-center gap-2 text-sm"><Checkbox checked={f.allow_qrcode !== false} onCheckedChange={(v) => set("allow_qrcode", v === true)} /> QR Code</label>
+          <label className="flex items-center gap-2 text-sm sm:col-span-2"><Checkbox checked={f.block_inactive !== false} onCheckedChange={(v) => set("block_inactive", v === true)} /> Bloquear alunos inativos</label>
+        </section>
+
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => save.mutate()} disabled={save.isPending || isLoading}>
+            <Save /> Salvar configurações
+          </Button>
+          <Button variant="outline" onClick={() => release.mutate()} disabled={!online || release.isPending}>
+            <Unlock /> Liberar catraca remotamente
+          </Button>
+        </div>
+
+        <section className="rounded-lg border border-border bg-muted/30 p-4 text-sm">
+          <h3 className="mb-2 font-bold">Instalação no computador da recepção</h3>
+          <ol className="list-decimal space-y-1 pl-5 text-muted-foreground">
+            <li>Salve as configurações da catraca.</li>
+            <li>Baixe o Agente Local e extraia o ZIP no computador conectado à mesma rede da Henry.</li>
+            <li>Instale o Node.js LTS, se ainda não estiver instalado.</li>
+            <li>Execute <strong>instalar-inicio-automatico.bat</strong> dentro da pasta extraída.</li>
+            <li>Volte a esta tela. O indicador deve mudar para “Agente conectado”.</li>
+          </ol>
+          <p className="mt-3 text-xs text-muted-foreground">O agente mantém cópia local dos alunos e fila de frequência para continuar validando acessos quando a internet cair.</p>
+        </section>
+      </div>
+    </ModuleWindow>
+  );
+}
