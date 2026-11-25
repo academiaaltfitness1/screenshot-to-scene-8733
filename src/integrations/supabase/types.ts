@@ -680,6 +680,7 @@ export type Database = {
           allow_qrcode: boolean
           allow_sko12: boolean
           bill_alert_days: number
+          dashboard_mascot_url: string | null
           block_inactive: boolean
           fingerprint_rule: string
           gym_name: string
@@ -708,6 +709,8 @@ export type Database = {
           allow_qrcode?: boolean
           allow_sko12?: boolean
           bill_alert_days?: number
+          dashboard_mascot_url?: string | null
+          dashboard_mascot_url?: string | null
           block_inactive?: boolean
           fingerprint_rule?: string
           gym_name?: string
