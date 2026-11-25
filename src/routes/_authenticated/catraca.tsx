@@ -33,6 +33,7 @@ function CatracaPage() {
   const { data, isLoading } = useQuery({ ...settingsQuery, refetchInterval: 10_000 });
   const [f, setF] = useState<Partial<Settings>>({});
   const [cameraActive, setCameraActive] = useState(false);
+  const [keyboardCode, setKeyboardCode] = useState("");
   const videoRef = useRef<HTMLVideoElement>(null);
   const keyboardBuffer = useRef("");
   const lastKeyAt = useRef(0);
@@ -235,6 +236,24 @@ function CatracaPage() {
           <div className="flex flex-wrap gap-2">
             <Badge variant="success">SKO 12 — teclado principal</Badge>
             <Badge variant="secondary">Webcam USB — QR Code</Badge>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              autoFocus
+              value={keyboardCode}
+              onChange={(event) => setKeyboardCode(event.target.value.replace(/[^0-9]/g, "").slice(0, 30))}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && keyboardCode.trim()) {
+                  event.preventDefault();
+                  void identifyAtComputer(keyboardCode, "teclado");
+                  setKeyboardCode("");
+                }
+              }}
+              placeholder="Clique aqui e digite a matrícula no SKO 12; confirme no Enter"
+              inputMode="numeric"
+              aria-label="Entrada pelo teclado SKO 12"
+            />
+            <Button onClick={() => { if (keyboardCode.trim()) { void identifyAtComputer(keyboardCode, "teclado"); setKeyboardCode(""); } }}>Confirmar</Button>
           </div>
           <Button variant="outline" onClick={() => setCameraActive((v) => !v)}>
             {cameraActive ? "Parar leitura da webcam" : "Abrir câmera para ler QR Code"}
