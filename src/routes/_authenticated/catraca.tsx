@@ -108,7 +108,7 @@ function CatracaPage() {
   }
 
   const set = (key: keyof Settings, value: unknown) =>
-    setF((old) => ({ ...old, [key]: value }));
+    setF((old) => ({ ...old, [key]: value } as Partial<Settings>));
 
   return (
     <ModuleWindow
