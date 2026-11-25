@@ -10,9 +10,6 @@ export const Route = createFileRoute("/api/public/agent/sync")({
         const onlyCommands = new URL(request.url).searchParams.get("only") === "commands";
 
         const { data: cmds } = await db.from("turnstile_commands").select("id").is("executed_at", null).gte("created_at", new Date(Date.now() - 60_000).toISOString());
-        if (cmds?.length) {
-          await db.from("turnstile_commands").update({ executed_at: new Date().toISOString() }).in("id", cmds.map((c) => c.id));
-        }
         await db.from("settings").update({ agent_last_seen: new Date().toISOString() }).eq("id", 1);
         if (onlyCommands) return Response.json({ commands: cmds ?? [] });
 
