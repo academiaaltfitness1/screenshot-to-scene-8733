@@ -58,7 +58,7 @@ function Painel() {
       <img src={gymBg} alt="" className="absolute inset-0 h-full w-full object-cover opacity-45" />
       <div className="absolute inset-0 bg-gradient-to-br from-background/70 via-background/40 to-primary/20" />
       <img
-        src={shark}
+        src={settings?.dashboard_mascot_url || shark}
         alt=""
         className="pointer-events-none absolute -bottom-6 right-4 hidden h-[78%] max-h-[520px] object-contain opacity-90 drop-shadow-2xl lg:block"
       />
