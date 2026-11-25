@@ -24,7 +24,7 @@ export async function buildAgentZip(c: AgentConfig): Promise<Blob> {
         turnstile_ip: "",
         turnstile_port: "",
         // Codigos do protocolo Henry (ajuste somente se o suporte tecnico orientar):
-        codigo_liberar: "1",
+        codigo_liberar: "6",
         codigo_bloquear: "30",
         segundos_aviso: 3,
       },
