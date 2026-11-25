@@ -189,7 +189,7 @@ export function FacialAccess({ enabled, onIdentify }: { enabled: boolean; onIden
         updated_at: new Date().toISOString(),
       }, { onConflict: "student_id" });
       if (error) throw error;
-      setStatus("Cadastro facial autorizado salvo para " + student.name + ". Nenhuma fotografia é armazenada por este módulo; somente o modelo matemático protegido.");
+      setStatus("Cadastro facial registrado para " + student.name + ". A imagem é processada temporariamente no navegador; somente o vetor biométrico é gravado no banco com acesso restrito pela permissão de catraca.");
       setConsent(false);
       setCameraActive(false);
     } catch (error) {
@@ -241,12 +241,12 @@ export function FacialAccess({ enabled, onIdentify }: { enabled: boolean; onIden
             <Checkbox checked={consent} onCheckedChange={(value) => setConsent(value === true)} />
             <span>Confirmo que o aluno foi informado sobre a finalidade de controle de acesso, que o cadastro é opcional, que existem outras formas de entrada e que ele autorizou expressamente o uso do dado biométrico facial. A autorização pode ser retirada e o cadastro excluído.</span>
           </label>
-          <p className="text-xs text-muted-foreground">Texto sugerido para apresentar ao aluno: “Autorizo a Academia ALT FITNESS a utilizar meu dado biométrico facial exclusivamente para identificação e controle de acesso. Sei que o cadastro é opcional, posso utilizar matrícula ou QR Code e posso solicitar a exclusão do cadastro.”</p>
+          <p className="text-xs text-muted-foreground">Texto sugerido para apresentar ao aluno (a confirmação abaixo registra o atendente que recebeu a autorização, não substitui o registro/termo de autorização do aluno): “Autorizo a Academia ALT FITNESS a utilizar meu dado biométrico facial exclusivamente para identificação e controle de acesso. Sei que o cadastro é opcional, posso utilizar matrícula ou QR Code e posso solicitar a exclusão do cadastro.”</p>
           <Button disabled={!consent || working} onClick={registerFace}>Capturar rosto e registrar autorização</Button>
         </div>
       )}
       <p className="text-sm text-muted-foreground" role="status">{status}</p>
-      <p className="text-xs text-muted-foreground">Privacidade e segurança: este módulo grava um vetor biométrico, não a foto. O acesso aos vetores deve ficar restrito à equipe autorizada. A piscada é uma verificação básica de presença, não uma certificação anti-fraude; não use o reconhecimento facial como único fator até validar o desempenho e os riscos no local.</p>
+      <p className="text-xs text-muted-foreground">Privacidade e segurança: a câmera é processada no próprio navegador; a biblioteca e os modelos são baixados do CDN jsDelivr, mas o vídeo não é enviado ao CDN. O módulo grava um vetor biométrico, não a fotografia, e o banco limita o acesso à permissão de catraca. A confirmação registra o atendente que declarou ter recebido a autorização. A piscada é uma verificação básica de presença, não uma certificação anti-fraude; mantenha matrícula/QR como alternativas e valide o desempenho antes de depender só da face.</p>
     </section>
   );
 }
