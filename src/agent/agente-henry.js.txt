@@ -75,10 +75,10 @@ function findStudent(credential) {
   var list = cache.students || [];
   for (var i = 0; i < list.length; i++) {
     var s = list[i];
-    if (String(s.matricula) === c) return { s: s, source: "teclado" };
-    if (s.access_password && (s.access_password === c || s.access_password === raw)) return { s: s, source: "teclado" };
-    if (s.qr_code && (s.qr_code === raw || s.qr_code.replace(/^0+/, "") === c)) return { s: s, source: "qrcode" };
-    if (s.card_number && (s.card_number === raw || s.card_number.replace(/^0+/, "") === c)) return { s: s, source: "cartao" };
+    if (cfg("allow_matricula", true) !== false && String(s.matricula) === c) return { s: s, source: "digital" };
+    if (cfg("allow_password", true) !== false && s.access_password && (s.access_password === c || s.access_password === raw)) return { s: s, source: "teclado" };
+    if (cfg("allow_qrcode", true) !== false && s.qr_code && (s.qr_code === raw || s.qr_code.replace(/^0+/, "") === c)) return { s: s, source: "qrcode" };
+    if (cfg("allow_card", true) !== false && s.card_number && (s.card_number === raw || s.card_number.replace(/^0+/, "") === c)) return { s: s, source: "cartao" };
   }
   return null;
 }
@@ -156,10 +156,10 @@ function clean(msg) {
 }
 function release(message, index) {
   var secs = Number(cfg("release_seconds", 5));
-  return send((index || "01") + "+REON+00+" + CONFIG.codigo_liberar + "]" + secs + "]" + clean(message) + "]");
+  return send((index || "01") + "+REON+00+" + CONFIG.codigo_liberar + "]" + secs + "]" + clean(message) + "]2");
 }
 function deny(message, index) {
-  return send((index || "01") + "+REON+00+" + CONFIG.codigo_bloquear + "]" + CONFIG.segundos_aviso + "]" + clean(message) + "]");
+  return send((index || "01") + "+REON+00+" + CONFIG.codigo_bloquear + "]" + CONFIG.segundos_aviso + "]" + clean(message) + "]1");
 }
 function handleMessage(text) {
   log("<< catraca:", text);
@@ -176,7 +176,11 @@ function handleMessage(text) {
     result = { allowed: false, message: "Procure a Recepcao" };
     ev = { student_id: null, credential: credential, source: "catraca" };
   } else {
-    result = cfg("block_inactive", true) === false ? { allowed: true, message: String(cfg("welcome_message", "Bem-vindo")) } : checkAccess(found.s);
+    var accessStudent = found.s;
+    if (accessStudent.status === "inativo" && cfg("block_inactive", true) === false) {
+      accessStudent = Object.assign({}, accessStudent, { status: "ativo" });
+    }
+    result = checkAccess(accessStudent);
     ev = { student_id: found.s.id, credential: credential, source: found.source };
   }
   if (result.allowed) release(result.message + " " + (found ? found.s.name.split(" ")[0] : ""), index);
