@@ -86,10 +86,15 @@ export class FrameReader {
   }
 }
 
+function displayText(value) {
+  return String(value).normalize("NFD").replace(/[\\u0300-\\u036f]/g, "")
+    .replace(/[^\\x20-\\x7E]/g, " ").slice(0, 48);
+}
+
 export function allowCommand(seconds, message = "ACESSO LIBERADO") {
-  return `REON+00+6]${seconds}]${message}]2`;
+  return `REON+00+6]${seconds}]${displayText(message)}]2`;
 }
 
 export function denyCommand(seconds, message = "ACESSO NEGADO") {
-  return `REON+00+30]${seconds}]${message}]1`;
+  return `REON+00+30]${seconds}]${displayText(message)}]1`;
 }
