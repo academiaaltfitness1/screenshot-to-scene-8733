@@ -8,7 +8,7 @@ const schema = z.object({
       z.object({
         student_id: z.string().uuid().nullable(),
         credential: z.string().max(60).nullable(),
-        source: z.enum(["catraca", "teclado", "qrcode", "cartao", "digital", "remoto"]),
+        source: z.enum(["catraca", "teclado", "qrcode", "cartao", "digital", "facial", "remoto"]),
         allowed: z.boolean(),
         reason: z.string().max(80).nullable(),
         direction: z.enum(["entrada", "saida"]),
