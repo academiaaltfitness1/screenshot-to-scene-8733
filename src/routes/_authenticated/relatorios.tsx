@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_authenticated/relatorios")({
   component: VencimentosReport,
 });
 
-type StatusFilter = "todos" | "recebidos" | "pendentes" | "vencidos" | "a_vencer";
+type StatusFilter = "todos" | "recebidos" | "pendentes" | "a_vencer";
 
 function VencimentosReport() {
   const today = todayISO();
@@ -46,7 +46,6 @@ function VencimentosReport() {
     if (endDate && row.due_date > endDate) return false;
     if (status === "recebidos" && !row.paid_at) return false;
     if (status === "pendentes" && row.paid_at) return false;
-    if (status === "vencidos" && (row.paid_at || row.due_date >= today)) return false;
     if (status === "a_vencer" && (row.paid_at || row.due_date <= today)) return false;
     return true;
   }), [rows, startDate, endDate, status, today]);
@@ -77,7 +76,6 @@ function VencimentosReport() {
                 <SelectItem value="todos">Todos</SelectItem>
                 <SelectItem value="recebidos">Recebidos</SelectItem>
                 <SelectItem value="pendentes">Pendentes</SelectItem>
-                <SelectItem value="vencidos">Vencidos</SelectItem>
                 <SelectItem value="a_vencer">A vencer</SelectItem>
               </SelectContent>
             </Select>
@@ -121,7 +119,6 @@ function VencimentosReport() {
                   <td className={grid.td}>{brl(row.amount)}</td>
                   <td className={grid.td}>
                     {row.paid_at ? <Badge variant="success">Recebido · {fmtDate(row.paid_at)}</Badge>
-                      : row.due_date < today ? <Badge variant="destructive">Vencido / pendente</Badge>
                       : <Badge variant="warning">Pendente</Badge>}
                   </td>
                 </tr>
