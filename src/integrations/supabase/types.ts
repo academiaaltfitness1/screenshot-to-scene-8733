@@ -674,6 +674,7 @@ export type Database = {
           address: string
           agent_last_seen: string | null
           allow_card: boolean
+          allow_face: boolean
           allow_matricula: boolean
           allow_password: boolean
           allow_qrcode: boolean
@@ -701,6 +702,7 @@ export type Database = {
           address?: string
           agent_last_seen?: string | null
           allow_card?: boolean
+          allow_face?: boolean
           allow_matricula?: boolean
           allow_password?: boolean
           allow_qrcode?: boolean
@@ -728,6 +730,7 @@ export type Database = {
           address?: string
           agent_last_seen?: string | null
           allow_card?: boolean
+          allow_face?: boolean
           allow_matricula?: boolean
           allow_password?: boolean
           allow_qrcode?: boolean
@@ -812,6 +815,44 @@ export type Database = {
           whatsapp?: string | null
         }
         Relationships: []
+      }
+      student_face_templates: {
+        Row: {
+          consent_at: string
+          consent_text_version: string
+          consent_user_id: string | null
+          created_at: string
+          descriptor: Json
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          consent_at: string
+          consent_text_version: string
+          consent_user_id?: string | null
+          created_at?: string
+          descriptor: Json
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          consent_at?: string
+          consent_text_version?: string
+          consent_user_id?: string | null
+          created_at?: string
+          descriptor?: Json
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_face_templates_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: true
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       turnstile_commands: {
         Row: {
