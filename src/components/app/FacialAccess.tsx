@@ -223,7 +223,7 @@ export function FacialAccess({ enabled, onIdentify }: { enabled: boolean; onIden
           <h3 className="font-bold">Reconhecimento facial</h3>
           <p className="text-xs text-muted-foreground">Cadastro individual autorizado e identificação pela webcam da recepção.</p>
         </div>
-        <Badge variant={enabled ? "success" : "secondary"}>{enabled ? "Identificação ativa" : "Identificação desativada"}</Badge>
+        <Badge variant={enabled ? "success" : "secondary"}>{enabled ? "Experimental ativa" : "Desativada"}</Badge>
       </div>
       <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
         <Input value={matricula} onChange={(event) => setMatricula(event.target.value.replace(/\D/g, "").slice(0, 12))} placeholder="Matrícula do aluno para cadastrar/remover o rosto" inputMode="numeric" />
