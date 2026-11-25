@@ -81,7 +81,7 @@ export function FacialAccess({ enabled, onIdentify }: { enabled: boolean; onIden
     let interval = 0;
     async function openCamera() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
         if (cancelled) { stream.getTracks().forEach((track) => track.stop()); return; }
         streamRef.current = stream;
         if (!videoRef.current) return;
