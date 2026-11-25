@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS public.student_face_templates (
   descriptor jsonb NOT NULL CHECK (jsonb_typeof(descriptor) = 'array'),
   consent_at timestamptz NOT NULL,
   consent_text_version text NOT NULL,
-  consent_user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  recorded_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
