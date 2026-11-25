@@ -256,7 +256,7 @@ http.createServer(function (req, res) {
       try {
         var payload = JSON.parse(body || "{}");
         var credential = String(payload.credential || "").trim();
-        var source = payload.source === "qrcode" ? "qrcode" : "teclado";
+        var source = payload.source === "qrcode" ? "qrcode" : payload.source === "facial" ? "facial" : "teclado";
         if (source === "teclado" && cfg("allow_sko12", true) === false) {
           res.writeHead(403);
           return res.end(JSON.stringify({ ok: false, error: "teclado_desativado", message: "O teclado SKO 12 está desativado nas configurações." }));
@@ -265,13 +265,22 @@ http.createServer(function (req, res) {
           res.writeHead(403);
           return res.end(JSON.stringify({ ok: false, error: "qrcode_desativado", message: "A leitura de QR Code está desativada nas configurações." }));
         }
+        if (source === "facial" && cfg("allow_face", false) !== true) {
+          res.writeHead(403);
+          return res.end(JSON.stringify({ ok: false, error: "facial_desativado", message: "O reconhecimento facial está desativado nas configurações." }));
+        }
         if (!credential || credential.length > 80) { res.writeHead(400); return res.end(JSON.stringify({ ok: false, error: "codigo_invalido" })); }
-        var found = findStudent(credential);
+        var found = source === "facial"
+          ? (cache.students || []).filter(function (s) { return String(s.matricula) === credential; }).map(function (s) { return { s: s, source: "facial" }; })[0] || null
+          : findStudent(credential);
         if (!found) {
           res.writeHead(404);
           return res.end(JSON.stringify({ ok: false, error: "aluno_nao_encontrado" }));
         }
         var student = found.s;
+        if (student.status === "inativo" && cfg("block_inactive", true) === false) {
+          student = Object.assign({}, student, { status: "ativo" });
+        }
         var result = checkAccess(student);
         var sent = result.allowed
           ? release(result.message + " " + String(student.name || "").split(" ")[0])
