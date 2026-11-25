@@ -96,7 +96,9 @@ async function processEvent(socket, event) {
   const credential = parts[1] ?? parts[0] ?? "";
   if (!credential) {
     log("Evento sem matrícula/credencial reconhecível:", event.data);
-    socket.write(buildFrame(event.index, denyCommand(settings.release_seconds, "IDENTIFICACAO INVALIDA")));
+    let seconds = 5;
+    try { seconds = (await getCurrentSettings()).release_seconds ?? 5; } catch {}
+    socket.write(buildFrame(event.index, denyCommand(seconds, "IDENTIFICACAO INVALIDA")));
     return;
   }
 
@@ -111,7 +113,7 @@ async function processEvent(socket, event) {
     await recordAttempt(student, credential, result);
   } catch (error) {
     log("Falha ao consultar aluno/registrar frequência; acesso negado:", error.message);
-    socket.write(buildFrame(event.index, denyCommand(settings.release_seconds, "FALHA DE VALIDACAO")));
+    socket.write(buildFrame(event.index, denyCommand(settings?.release_seconds ?? 5, "FALHA DE VALIDACAO")));
     return;
   }
 
