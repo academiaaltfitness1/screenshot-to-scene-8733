@@ -66,6 +66,7 @@ function CatracaPage() {
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       const target = event.target as HTMLElement | null;
+      if (f.allow_sko12 === false) return;
       if (target && ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) return;
       if (event.key === "Enter") {
         const value = keyboardBuffer.current;
@@ -83,7 +84,7 @@ function CatracaPage() {
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
+  }, [f.allow_sko12]);
 
   useEffect(() => {
     if (!cameraActive) return;
@@ -143,6 +144,7 @@ function CatracaPage() {
         release_seconds: Number(f.release_seconds || 5),
         block_inactive: f.block_inactive !== false,
         allow_qrcode: f.allow_qrcode !== false,
+        allow_sko12: f.allow_sko12 !== false,
         allow_password: f.allow_password !== false,
         allow_matricula: f.allow_matricula !== false,
         allow_card: f.allow_card !== false,
@@ -287,9 +289,12 @@ function CatracaPage() {
         <section className="grid gap-3 rounded-lg border border-border bg-card p-4 sm:grid-cols-2">
           <h3 className="text-base font-bold sm:col-span-2">Formas de identificação permitidas</h3>
           <label className="flex items-center gap-2 text-sm"><Checkbox checked={f.allow_matricula !== false} onCheckedChange={(v) => set("allow_matricula", v === true)} /> Matrícula / digital vinculada à matrícula</label>
+          <label className="flex items-center gap-2 text-sm"><Checkbox checked={f.allow_sko12 !== false} onCheckedChange={(v) => set("allow_sko12", v === true)} /> Teclado USB SKO 12 (conectado à CPU)</label>
           <label className="flex items-center gap-2 text-sm"><Checkbox checked={f.allow_password !== false} onCheckedChange={(v) => set("allow_password", v === true)} /> Senha no teclado</label>
           <label className="flex items-center gap-2 text-sm"><Checkbox checked={f.allow_card !== false} onCheckedChange={(v) => set("allow_card", v === true)} /> Cartão / proximidade</label>
           <label className="flex items-center gap-2 text-sm"><Checkbox checked={f.allow_qrcode !== false} onCheckedChange={(v) => set("allow_qrcode", v === true)} /> QR Code</label>
+          <label className="flex items-center gap-2 text-sm opacity-70 sm:col-span-2"><Checkbox checked={false} disabled /> Reconhecimento facial — módulo biométrico em desenvolvimento</label>
+          <p className="text-xs text-muted-foreground sm:col-span-2">O reconhecimento facial ainda não está disponível. A opção só será liberada após cadastro com autorização, proteção dos dados biométricos e testes de validação. Enquanto isso, use matrícula, SKO 12 ou QR Code.</p>
           <label className="flex items-center gap-2 text-sm sm:col-span-2"><Checkbox checked={f.block_inactive !== false} onCheckedChange={(v) => set("block_inactive", v === true)} /> Bloquear alunos inativos</label>
         </section>
 
