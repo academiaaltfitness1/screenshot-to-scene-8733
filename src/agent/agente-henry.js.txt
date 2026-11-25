@@ -228,18 +228,28 @@ function connect() {
 }
 
 /* ---------------- Servidor local (botao Liberar catraca) ---------------- */
+var allowedOrigin = "";
+try { allowedOrigin = new URL(CONFIG.system_url).origin; } catch (e) {}
 http.createServer(function (req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "content-type");
-  res.setHeader("Access-Control-Allow-Private-Network", "true");
+  var origin = req.headers.origin || "";
+  if (origin && origin === allowedOrigin) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Vary", "Origin");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "content-type");
+    res.setHeader("Access-Control-Allow-Private-Network", "true");
+  }
   res.setHeader("content-type", "application/json");
-  if (req.method === "OPTIONS") { res.writeHead(204); return res.end(); }
+  if (req.method === "OPTIONS") {
+    if (origin !== allowedOrigin) { res.writeHead(403); return res.end(JSON.stringify({ ok: false })); }
+    res.writeHead(204); return res.end();
+  }
   var url = (req.url || "").split("?")[0];
   if (url === "/status") {
     return res.end(JSON.stringify({ ok: true, catraca: !!socket && !socket.destroyed && !socket.connecting, internet: online, alunos: (cache.students || []).length, pendentes: queue.length }));
   }
   if (url === "/liberar") {
+    if (origin !== allowedOrigin) { res.writeHead(403); return res.end(JSON.stringify({ ok: false })); }
     var ok = release("Liberado pela recepcao");
     pushEvent({ student_id: null, credential: null, source: "remoto", allowed: true, reason: null, direction: "entrada", occurred_at: new Date().toISOString() });
     return res.end(JSON.stringify({ ok: ok }));
