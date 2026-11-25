@@ -1,0 +1,244 @@
+/*
+ * AGENTE LOCAL — ACADEMIA ALT FITNESS
+ * Catraca Henry Primme Acesso SF  <->  Sistema na nuvem
+ *
+ * Roda no computador da recepcao (Windows) com Node.js 18 ou superior.
+ * Nao precisa instalar nenhuma biblioteca.
+ *
+ * O que faz:
+ *  1. Conecta por TCP na catraca (IP e porta do config.json).
+ *  2. Mantem uma copia local dos alunos (alunos-cache.json) para funcionar sem internet.
+ *  3. Valida cada tentativa de acesso (matricula, senha, cartao, digital ou QR Code).
+ *  4. Libera por N segundos ou bloqueia com aviso no visor.
+ *  5. Envia os registros para o Controle de Frequencia (guarda e reenvia se a internet cair).
+ *  6. Abre http://localhost:PORTA/liberar para o botao "Liberar catraca" do sistema.
+ */
+"use strict";
+var net = require("net");
+var http = require("http");
+var fs = require("fs");
+var path = require("path");
+
+var DIR = __dirname;
+var CONFIG = JSON.parse(fs.readFileSync(path.join(DIR, "config.json"), "utf8"));
+var CACHE_FILE = path.join(DIR, "alunos-cache.json");
+var QUEUE_FILE = path.join(DIR, "eventos-pendentes.json");
+var LOG_FILE = path.join(DIR, "agente.log");
+
+var cache = { settings: null, students: [] };
+var queue = [];
+var socket = null;
+var buffer = Buffer.alloc(0);
+var online = false;
+
+function log() {
+  var line = "[" + new Date().toLocaleString("pt-BR") + "] " + Array.prototype.slice.call(arguments).join(" ");
+  console.log(line);
+  try { fs.appendFileSync(LOG_FILE, line + "\r\n"); } catch (e) {}
+}
+function readJson(file, fallback) { try { return JSON.parse(fs.readFileSync(file, "utf8")); } catch (e) { return fallback; } }
+function writeJson(file, data) { try { fs.writeFileSync(file, JSON.stringify(data)); } catch (e) { log("Erro ao gravar", file, e.message); } }
+
+cache = readJson(CACHE_FILE, cache);
+queue = readJson(QUEUE_FILE, []);
+
+function cfg(name, fallback) {
+  var s = cache.settings || {};
+  if (CONFIG[name] !== undefined && CONFIG[name] !== null && CONFIG[name] !== "") return CONFIG[name];
+  if (s[name] !== undefined && s[name] !== null) return s[name];
+  return fallback;
+}
+
+/* ---------------- Regras de acesso (iguais as do sistema) ---------------- */
+function todayISO() {
+  var d = new Date();
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+}
+function addDays(iso, days) {
+  var d = new Date(iso + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+function checkAccess(s) {
+  var tol = Number(cfg("tolerance_days", 5));
+  var today = todayISO();
+  if (s.status === "bloqueado") return { allowed: false, message: "Procure a Recepcao" };
+  if (s.status === "inativo") return { allowed: false, message: "Aluno Inativo" };
+  if (!s.valid_until) return { allowed: false, message: "Procure a Recepcao" };
+  if (today > addDays(s.valid_until, tol)) return { allowed: false, message: "Mensalidade Vencida" };
+  if (s.overdue_since && today > addDays(s.overdue_since, tol)) return { allowed: false, message: "Mensalidade Vencida" };
+  return { allowed: true, message: String(cfg("welcome_message", "Bem-vindo")) };
+}
+function findStudent(credential) {
+  var c = String(credential || "").replace(/^0+/, "").trim();
+  var raw = String(credential || "").trim();
+  var list = cache.students || [];
+  for (var i = 0; i < list.length; i++) {
+    var s = list[i];
+    if (String(s.matricula) === c) return { s: s, source: "teclado" };
+    if (s.access_password && (s.access_password === c || s.access_password === raw)) return { s: s, source: "teclado" };
+    if (s.qr_code && (s.qr_code === raw || s.qr_code.replace(/^0+/, "") === c)) return { s: s, source: "qrcode" };
+    if (s.card_number && (s.card_number === raw || s.card_number.replace(/^0+/, "") === c)) return { s: s, source: "cartao" };
+  }
+  return null;
+}
+
+/* ---------------- Comunicacao com a nuvem ---------------- */
+function api(method, route, body) {
+  return fetch(CONFIG.system_url.replace(/\/+$/, "") + route, {
+    method: method,
+    headers: { "content-type": "application/json", "x-agent-token": CONFIG.token },
+    body: body ? JSON.stringify(body) : undefined,
+  }).then(function (r) {
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r.json();
+  });
+}
+function sync(onlyCommands) {
+  return api("GET", "/api/public/agent/sync" + (onlyCommands ? "?only=commands" : ""))
+    .then(function (data) {
+      if (!online) log("Internet OK - sincronizado com a nuvem.");
+      online = true;
+      if (!onlyCommands) {
+        cache = { settings: data.settings, students: data.students };
+        writeJson(CACHE_FILE, cache);
+      }
+      (data.commands || []).forEach(function () { release("Liberado pela recepcao"); });
+      return flushQueue();
+    })
+    .catch(function (e) {
+      if (online) log("Sem internet (" + e.message + ") - usando a copia local dos alunos.");
+      online = false;
+    });
+}
+function pushEvent(ev) {
+  queue.push(ev);
+  writeJson(QUEUE_FILE, queue);
+  flushQueue();
+}
+function flushQueue() {
+  if (!queue.length) return Promise.resolve();
+  var sending = queue.slice(0, 200);
+  return api("POST", "/api/public/agent/events", { events: sending })
+    .then(function () {
+      queue = queue.slice(sending.length);
+      writeJson(QUEUE_FILE, queue);
+    })
+    .catch(function () {});
+}
+
+/* ---------------- Protocolo Henry (TCP) ----------------
+ * Pacote: 0x02 | tamanho (2 bytes) | texto | checksum (XOR) | 0x03
+ * Pedido da catraca:  NN+REON+000+0]CREDENCIAL]DATA HORA]SENTIDO]...
+ * Resposta:           NN+REON+00+COMANDO]SEGUNDOS]MENSAGEM]
+ */
+function frame(text) {
+  var data = Buffer.from(text, "latin1");
+  var out = Buffer.alloc(data.length + 5);
+  out[0] = 0x02;
+  out[1] = data.length & 0xff;
+  out[2] = (data.length >> 8) & 0xff;
+  data.copy(out, 3);
+  var cs = out[1] ^ out[2];
+  for (var i = 0; i < data.length; i++) cs ^= data[i];
+  out[3 + data.length] = cs;
+  out[4 + data.length] = 0x03;
+  return out;
+}
+function send(text) {
+  if (!socket || socket.destroyed) { log("Catraca desconectada - comando nao enviado:", text); return false; }
+  log(">> catraca:", text);
+  socket.write(frame(text));
+  return true;
+}
+function clean(msg) {
+  return String(msg).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[\]\[+]/g, " ").slice(0, 32);
+}
+function release(message, index) {
+  var secs = Number(cfg("release_seconds", 5));
+  return send((index || "01") + "+REON+00+" + CONFIG.codigo_liberar + "]" + secs + "]" + clean(message) + "]");
+}
+function deny(message, index) {
+  return send((index || "01") + "+REON+00+" + CONFIG.codigo_bloquear + "]" + CONFIG.segundos_aviso + "]" + clean(message) + "]");
+}
+function handleMessage(text) {
+  log("<< catraca:", text);
+  var parts = text.split("+");
+  if (parts.length < 4 || parts[1] !== "REON") return;
+  var index = parts[0];
+  var fields = parts.slice(3).join("+").split("]");
+  var eventCode = fields[0];
+  if (eventCode !== "0") return; /* so interessa o pedido de acesso */
+  var credential = (fields[1] || "").trim();
+  var found = findStudent(credential);
+  var result, ev;
+  if (!found) {
+    result = { allowed: false, message: "Procure a Recepcao" };
+    ev = { student_id: null, credential: credential, source: "catraca" };
+  } else {
+    result = cfg("block_inactive", true) === false ? { allowed: true, message: String(cfg("welcome_message", "Bem-vindo")) } : checkAccess(found.s);
+    ev = { student_id: found.s.id, credential: credential, source: found.source };
+  }
+  if (result.allowed) release(result.message + " " + (found ? found.s.name.split(" ")[0] : ""), index);
+  else deny(result.message, index);
+  ev.allowed = result.allowed;
+  ev.reason = result.allowed ? null : result.message;
+  ev.direction = "entrada";
+  ev.occurred_at = new Date().toISOString();
+  log(result.allowed ? "LIBERADO" : "BLOQUEADO", credential, found ? found.s.name : "(nao identificado)", result.allowed ? "" : "- " + result.message);
+  pushEvent(ev);
+}
+function onData(chunk) {
+  buffer = Buffer.concat([buffer, chunk]);
+  while (buffer.length >= 5) {
+    var start = buffer.indexOf(0x02);
+    if (start < 0) { buffer = Buffer.alloc(0); return; }
+    if (start > 0) buffer = buffer.slice(start);
+    if (buffer.length < 5) return;
+    var len = buffer[1] | (buffer[2] << 8);
+    if (len > 2000) { buffer = buffer.slice(1); continue; }
+    if (buffer.length < len + 5) return;
+    var text = buffer.slice(3, 3 + len).toString("latin1");
+    buffer = buffer.slice(len + 5);
+    try { handleMessage(text); } catch (e) { log("Erro ao tratar mensagem:", e.message); }
+  }
+}
+function connect() {
+  var ip = cfg("turnstile_ip", "192.168.0.229");
+  var port = Number(cfg("turnstile_port", 3000));
+  log("Conectando na catraca " + ip + ":" + port + " ...");
+  socket = net.createConnection({ host: ip, port: port });
+  socket.setKeepAlive(true, 10000);
+  socket.on("connect", function () { log("Catraca conectada."); });
+  socket.on("data", onData);
+  socket.on("error", function (e) { log("Erro na catraca:", e.message); });
+  socket.on("close", function () { log("Conexao com a catraca encerrada. Nova tentativa em 5s."); setTimeout(connect, 5000); });
+}
+
+/* ---------------- Servidor local (botao Liberar catraca) ---------------- */
+http.createServer(function (req, res) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "content-type");
+  res.setHeader("Access-Control-Allow-Private-Network", "true");
+  res.setHeader("content-type", "application/json");
+  if (req.method === "OPTIONS") { res.writeHead(204); return res.end(); }
+  var url = (req.url || "").split("?")[0];
+  if (url === "/status") {
+    return res.end(JSON.stringify({ ok: true, catraca: !!socket && !socket.destroyed && !socket.connecting, internet: online, alunos: (cache.students || []).length, pendentes: queue.length }));
+  }
+  if (url === "/liberar") {
+    var ok = release("Liberado pela recepcao");
+    pushEvent({ student_id: null, credential: null, source: "remoto", allowed: true, reason: null, direction: "entrada", occurred_at: new Date().toISOString() });
+    return res.end(JSON.stringify({ ok: ok }));
+  }
+  res.writeHead(404);
+  res.end(JSON.stringify({ ok: false }));
+}).listen(Number(CONFIG.porta_local || 3001), "127.0.0.1", function () {
+  log("Servidor local em http://localhost:" + (CONFIG.porta_local || 3001));
+});
+
+log("=== Agente ALT FITNESS iniciado ===  alunos na copia local: " + (cache.students || []).length);
+sync(false).then(connect);
+setInterval(function () { sync(false); }, 60000);
+setInterval(function () { sync(true); }, 5000);
