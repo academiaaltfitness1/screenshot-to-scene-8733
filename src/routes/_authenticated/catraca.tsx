@@ -43,6 +43,8 @@ function CatracaPage() {
   const save = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("settings").update({
+        turnstile_model: "Henry Primme Acesso SF",
+        turnstile_firmware: "2.0.26",
         turnstile_ip: String(f.turnstile_ip || "192.168.0.229").trim(),
         turnstile_port: Number(f.turnstile_port || 3000),
         release_seconds: Number(f.release_seconds || 5),
