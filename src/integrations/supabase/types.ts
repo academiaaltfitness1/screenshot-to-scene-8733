@@ -707,6 +707,7 @@ export type Database = {
           address: string
           agent_last_seen: string | null
           allow_card: boolean
+          allow_face: boolean
           allow_matricula: boolean
           allow_password: boolean
           allow_qrcode: boolean
@@ -733,6 +734,7 @@ export type Database = {
           address?: string
           agent_last_seen?: string | null
           allow_card?: boolean
+          allow_face?: boolean
           allow_matricula?: boolean
           allow_password?: boolean
           allow_qrcode?: boolean
@@ -759,6 +761,7 @@ export type Database = {
           address?: string
           agent_last_seen?: string | null
           allow_card?: boolean
+          allow_face?: boolean
           allow_matricula?: boolean
           allow_password?: boolean
           allow_qrcode?: boolean
