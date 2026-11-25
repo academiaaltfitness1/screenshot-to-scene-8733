@@ -2,11 +2,11 @@ import net from "node:net";
 import { createClient } from "@supabase/supabase-js";
 import { FrameReader, buildFrame, allowCommand, denyCommand } from "./henry-protocol.js";
 
-const required = ["SUPABASE_URL", "SUPABASE_ANON_KEY", "AGENT_EMAIL", "AGENT_PASSWORD"];
+const required = ["SUPABASE_URL", "SUPABASE_PUBLISHABLE_KEY", "AGENT_EMAIL", "AGENT_PASSWORD"];
 for (const key of required) {
   if (!process.env[key]) throw new Error(`Missing environment variable: ${key}`);
 }
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
   auth: { persistSession: false, autoRefreshToken: true },
 });
 const host = process.env.HENRY_HOST || "192.168.0.229";
@@ -124,17 +124,7 @@ async function processEvent(socket, event) {
   log(result.allowed ? "LIBERADO" : "BLOQUEADO", student?.matricula ?? credential, student?.name ?? "aluno não identificado", result.reason ?? "");
 }
 
-async function connectTurnstile() {
-  const socket = net.createConnection({ host, port });
-  socket.setKeepAlive(true, 15000);
-  await new Promise((resolve, reject) => {
-    socket.once("connect", resolve);
-    socket.once("error", reject);
-  });
-  return { socket, reader: new FrameReader(socket) };
-}
-
-async function main() {
+async async function main() {
   const { error } = await supabase.auth.signInWithPassword({
     email: process.env.AGENT_EMAIL,
     password: process.env.AGENT_PASSWORD,
