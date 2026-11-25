@@ -137,7 +137,9 @@ function CatracaPage() {
 
   const save = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("settings").update({
+      // Keep this payload aligned with the live public.settings schema.
+      // Do not send legacy face_column_offset / face_column fields: they do not exist.
+      const settingsUpdate = {
         turnstile_model: "Henry Primme Acesso SF",
         turnstile_firmware: "2.0.26",
         turnstile_ip: String(f.turnstile_ip || "192.168.0.229").trim(),
@@ -146,7 +148,7 @@ function CatracaPage() {
         block_inactive: f.block_inactive !== false,
         allow_qrcode: f.allow_qrcode !== false,
         allow_sko12: f.allow_sko12 !== false,
-        allow_face: (f as any).allow_face === true,
+        allow_face: f.allow_face === true,
         allow_password: f.allow_password !== false,
         allow_matricula: f.allow_matricula !== false,
         allow_card: f.allow_card !== false,
@@ -154,8 +156,15 @@ function CatracaPage() {
         keypad_rule: String(f.keypad_rule || "CONSULTAR NÚMERO DE MATRÍCULA"),
         welcome_message: String(f.welcome_message || "Bem-vindo"),
         updated_at: new Date().toISOString(),
-      }).eq("id", 1);
+      };
+      const { data: saved, error } = await supabase
+        .from("settings")
+        .update(settingsUpdate)
+        .eq("id", 1)
+        .select("id")
+        .single();
       if (error) throw error;
+      if (!saved) throw new Error("Nenhuma configuração foi atualizada. Verifique a permissão de administrador.");
     },
     onSuccess: () => {
       toast.success("Configurações da catraca salvas");
