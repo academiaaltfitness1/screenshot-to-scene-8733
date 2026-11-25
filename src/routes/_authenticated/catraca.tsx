@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { FacialAccess } from "@/components/app/FacialAccess";
 import { settingsQuery, useStaff } from "@/hooks/use-staff";
 import { buildAgentZip } from "@/lib/agent-package";
 import { fmtDateTime, errMsg } from "@/lib/format";
@@ -43,7 +44,7 @@ function CatracaPage() {
     if (data) setF(data);
   }, [data]);
 
-  async function identifyAtComputer(credential: string, source: "teclado" | "qrcode") {
+  async function identifyAtComputer(credential: string, source: "teclado" | "qrcode" | "facial") {
     const code = credential.trim();
     if (!code) return;
     try {
@@ -145,6 +146,7 @@ function CatracaPage() {
         block_inactive: f.block_inactive !== false,
         allow_qrcode: f.allow_qrcode !== false,
         allow_sko12: f.allow_sko12 !== false,
+        allow_face: (f as any).allow_face === true,
         allow_password: f.allow_password !== false,
         allow_matricula: f.allow_matricula !== false,
         allow_card: f.allow_card !== false,
@@ -294,10 +296,11 @@ function CatracaPage() {
           <label className="flex items-center gap-2 text-sm"><Checkbox checked={f.allow_password !== false} onCheckedChange={(v) => set("allow_password", v === true)} /> Senha no teclado</label>
           <label className="flex items-center gap-2 text-sm"><Checkbox checked={f.allow_card !== false} onCheckedChange={(v) => set("allow_card", v === true)} /> Cartão / proximidade</label>
           <label className="flex items-center gap-2 text-sm"><Checkbox checked={f.allow_qrcode !== false} onCheckedChange={(v) => set("allow_qrcode", v === true)} /> QR Code</label>
-          <label className="flex items-center gap-2 text-sm opacity-70 sm:col-span-2"><Checkbox checked={false} disabled /> Reconhecimento facial — módulo biométrico em desenvolvimento</label>
-          <p className="text-xs text-muted-foreground sm:col-span-2">O reconhecimento facial ainda não está disponível. A opção só será liberada após cadastro com autorização, proteção dos dados biométricos e testes de validação. Enquanto isso, use matrícula, SKO 12 ou QR Code.</p>
+          <label className="flex items-center gap-2 text-sm sm:col-span-2"><Checkbox checked={(f as any).allow_face === true} onCheckedChange={(v) => set("allow_face" as keyof Settings, v === true)} /> Reconhecimento facial (cadastro opcional e autorizado)</label>
           <label className="flex items-center gap-2 text-sm sm:col-span-2"><Checkbox checked={f.block_inactive !== false} onCheckedChange={(v) => set("block_inactive", v === true)} /> Bloquear alunos inativos</label>
         </section>
+
+        <FacialAccess enabled={(f as any).allow_face === true} onIdentify={(matricula) => void identifyAtComputer(matricula, "facial")} />
 
         <div className="flex flex-wrap gap-2">
           <Button onClick={() => save.mutate()} disabled={save.isPending || isLoading}>
