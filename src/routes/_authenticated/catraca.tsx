@@ -101,7 +101,7 @@ function CatracaPage() {
           setCameraActive(false);
           return;
         }
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
         if (stopped || !videoRef.current) { stream.getTracks().forEach((track) => track.stop()); return; }
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
