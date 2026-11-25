@@ -2,11 +2,11 @@
 
 ## Banco de dados e segurança
 - [x] Estrutura principal no Supabase: alunos, matrículas, planos, mensalidades/recebíveis, frequência, equipe/permissões, turmas, produtos, vendas, contas, caixa, avaliações, treinos e configurações.
-- [x] RLS ativada nas tabelas do sistema e permissões de execução das funções de autorização restringidas.
+- [x] RLS ativada nas 23 tabelas; funções auxiliares de autorização movidas para o schema privado, fora da API pública.
 - [x] Bucket privado `fotos` criado com políticas de acesso para equipe autorizada.
 - [x] Dois registros da tabela antiga `public."Alunos"` copiados para `students` e `enrollments`; tabela original preservada sem exclusão.
 - [x] Metadados de consentimento de foto e reconhecimento facial adicionados; reconhecimento facial permanece desativado por padrão.
-- [x] Tipos TypeScript do Supabase regenerados e sincronizados com o banco.
+- [x] Tipos TypeScript do Supabase regenerados e sincronizados com o banco após o hardening de segurança.
 - [ ] Revisar e otimizar avisos de performance dos advisors após os primeiros testes reais.
 - [ ] Cadastrar o primeiro administrador: o banco estava sem usuários Auth e promove automaticamente o primeiro cadastro a admin.
 
@@ -27,5 +27,5 @@
 
 ## Registro técnico — 25/11/2026
 - Projeto Supabase: `xyyuvwyyneadvkfwbvfb` (sa-east-1).
-- Migrações de estrutura aplicadas sem inserir os produtos/planos fictícios da migração original.
+- Seis migrações aplicadas (schema, storage, login, importação/consentimento e hardening); sem inserir produtos/planos fictícios da migração original.
 - A tabela legada foi mantida como cópia de segurança lógica; não foram inferidos pagamentos a partir de vencimento/valor.
