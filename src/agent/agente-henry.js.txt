@@ -103,8 +103,16 @@ function sync(onlyCommands) {
         cache = { settings: data.settings, students: data.students };
         writeJson(CACHE_FILE, cache);
       }
-      (data.commands || []).forEach(function () { release("Liberado pela recepcao"); });
-      return flushQueue();
+      var commandIds = [];
+      (data.commands || []).forEach(function (command) {
+        if (release("Liberado pela recepcao")) commandIds.push(command.id);
+      });
+      var ack = commandIds.length
+        ? api("POST", "/api/public/agent/commands", { ids: commandIds }).catch(function (e) {
+            log("Nao foi possivel confirmar comando remoto:", e.message);
+          })
+        : Promise.resolve();
+      return ack.then(flushQueue);
     })
     .catch(function (e) {
       if (online) log("Sem internet (" + e.message + ") - usando a copia local dos alunos.");
