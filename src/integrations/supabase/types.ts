@@ -820,7 +820,7 @@ export type Database = {
         Row: {
           consent_at: string
           consent_text_version: string
-          consent_user_id: string | null
+          recorded_by: string | null
           created_at: string
           descriptor: Json
           student_id: string
@@ -829,7 +829,7 @@ export type Database = {
         Insert: {
           consent_at: string
           consent_text_version: string
-          consent_user_id?: string | null
+          recorded_by?: string | null
           created_at?: string
           descriptor: Json
           student_id: string
@@ -838,7 +838,7 @@ export type Database = {
         Update: {
           consent_at?: string
           consent_text_version?: string
-          consent_user_id?: string | null
+          recorded_by?: string | null
           created_at?: string
           descriptor?: Json
           student_id?: string
