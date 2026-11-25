@@ -27,5 +27,5 @@
 
 ## Registro técnico — 25/11/2026
 - Projeto Supabase: `xyyuvwyyneadvkfwbvfb` (sa-east-1).
-- Seis migrações aplicadas (schema, storage, login, importação/consentimento e hardening); sem inserir produtos/planos fictícios da migração original.
+- Sete migrações aplicadas (schema, storage, login, importação/consentimento e hardening); sem inserir produtos/planos fictícios da migração original.
 - A tabela legada foi mantida como cópia de segurança lógica; não foram inferidos pagamentos a partir de vencimento/valor.
