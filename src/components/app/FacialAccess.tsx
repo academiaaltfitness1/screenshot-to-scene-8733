@@ -246,7 +246,7 @@ export function FacialAccess({ enabled, onIdentify }: { enabled: boolean; onIden
         </div>
       )}
       <p className="text-sm text-muted-foreground" role="status">{status}</p>
-      <p className="text-xs text-muted-foreground">Privacidade e segurança: a câmera é processada no próprio navegador; a biblioteca e os modelos são baixados do CDN jsDelivr, mas o vídeo não é enviado ao CDN. O módulo grava um vetor biométrico, não a fotografia, e o banco limita o acesso à permissão de catraca. A confirmação registra o atendente que declarou ter recebido a autorização. A piscada é uma verificação básica de presença, não uma certificação anti-fraude; mantenha matrícula/QR como alternativas e valide o desempenho antes de depender só da face.</p>
+      <p className="text-xs text-muted-foreground">Privacidade e segurança: a câmera é processada no próprio navegador; a biblioteca e os modelos são baixados do CDN jsDelivr, mas o vídeo não é enviado ao CDN. O módulo grava um vetor biométrico, não a fotografia, e o banco limita o acesso à permissão de catraca. A confirmação registra o atendente que declarou ter recebido a autorização. ATENÇÃO: a biblioteca facial utilizada está arquivada e este módulo é experimental; não habilite como meio oficial de acesso antes de substituir/avaliar a dependência e realizar auditoria e testes. A piscada é uma verificação básica de presença, não uma certificação anti-fraude; mantenha matrícula/QR como alternativas.</p>
     </section>
   );
 }
