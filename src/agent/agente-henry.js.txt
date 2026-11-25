@@ -257,6 +257,14 @@ http.createServer(function (req, res) {
         var payload = JSON.parse(body || "{}");
         var credential = String(payload.credential || "").trim();
         var source = payload.source === "qrcode" ? "qrcode" : "teclado";
+        if (source === "teclado" && cfg("allow_sko12", true) === false) {
+          res.writeHead(403);
+          return res.end(JSON.stringify({ ok: false, error: "teclado_desativado", message: "O teclado SKO 12 está desativado nas configurações." }));
+        }
+        if (source === "qrcode" && cfg("allow_qrcode", true) === false) {
+          res.writeHead(403);
+          return res.end(JSON.stringify({ ok: false, error: "qrcode_desativado", message: "A leitura de QR Code está desativada nas configurações." }));
+        }
         if (!credential || credential.length > 80) { res.writeHead(400); return res.end(JSON.stringify({ ok: false, error: "codigo_invalido" })); }
         var found = findStudent(credential);
         if (!found) {
