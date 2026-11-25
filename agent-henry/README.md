@@ -12,7 +12,7 @@ Este serviço faz a ponte entre a catraca Henry na rede local e o sistema ALT FI
 ## Instalação
 
 1. Copie `.env.example` para `.env`.
-2. Preencha `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `AGENT_EMAIL` e `AGENT_PASSWORD`. Use um usuário próprio para o agente com acesso ao módulo catraca. **Não use a chave service_role.**
+2. Preencha `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `AGENT_EMAIL` e `AGENT_PASSWORD`. Use um usuário próprio para o agente com acesso ao módulo catraca. **Não use a chave service_role.**
 3. Confirme `HENRY_HOST=192.168.0.229` e `HENRY_PORT=3000` ou ajuste para os valores reais da rede.
 4. No terminal, dentro desta pasta, execute `npm install`.
 5. Execute `npm test` e depois `npm start`.
