@@ -74,12 +74,20 @@ async function recordAttempt(student, credential, result) {
   if (error) throw error;
 }
 
+async function getCurrentSettings() {
+  const { data, error } = await supabase.from("settings")
+    .select("tolerance_days,release_seconds,welcome_message")
+    .eq("id", 1).single();
+  if (error) throw error;
+  return data;
+}
+
 async function refreshAgentHeartbeat() {
   const { error } = await supabase.from("settings").update({ agent_last_seen: new Date().toISOString() }).eq("id", 1);
   if (error) log("Não foi possível atualizar o status do agente:", error.message);
 }
 
-async function processEvent(socket, event, settings) {
+async function processEvent(socket, event) {
   if (event.err_or_version !== "00") {
     log("Evento Henry retornou código", event.err_or_version, event.data);
     return;
@@ -94,7 +102,9 @@ async function processEvent(socket, event, settings) {
 
   let student = null;
   let result;
+  let settings;
   try {
+    settings = await getCurrentSettings();
     student = await lookupStudent(credential);
     result = evaluateAccess(student, todaySaoPaulo(), settings.tolerance_days ?? 5);
     // Fail closed: do not open the turnstile if the attempt cannot be recorded.
@@ -145,7 +155,7 @@ async function main() {
       log("Conectado à catraca; aguardando identificações.");
       while (true) {
         const event = await connection.reader.next(31000);
-        await processEvent(connection.socket, event, settings);
+        await processEvent(connection.socket, event);
         // The controller acknowledges the release/deny command with the next frame.
         try {
           const ack = await connection.reader.next(5000);
