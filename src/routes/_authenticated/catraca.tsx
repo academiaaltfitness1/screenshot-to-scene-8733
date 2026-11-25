@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Download, Save, Unlock, Wifi, WifiOff, ShieldCheck } from "lucide-react";
@@ -32,10 +32,102 @@ function CatracaPage() {
   const { staff } = useStaff();
   const { data, isLoading } = useQuery({ ...settingsQuery, refetchInterval: 10_000 });
   const [f, setF] = useState<Partial<Settings>>({});
+  const [cameraActive, setCameraActive] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const keyboardBuffer = useRef("");
+  const lastKeyAt = useRef(0);
+
 
   useEffect(() => {
     if (data) setF(data);
   }, [data]);
+
+  async function identifyAtComputer(credential: string, source: "teclado" | "qrcode") {
+    const code = credential.trim();
+    if (!code) return;
+    try {
+      const response = await fetch("http://127.0.0.1:3001/identificar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential: code, source }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.ok) {
+        toast.error(result.message || (result.error === "aluno_nao_encontrado" ? "Código não encontrado." : "Não foi possível comunicar com a catraca."));
+        return;
+      }
+      toast.success(result.allowed ? "Acesso liberado: " + result.name : "Acesso bloqueado: " + result.message);
+    } catch {
+      toast.error("Agente local indisponível. Confira se está instalado e aberto no computador da recepção.");
+    }
+  }
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      const target = event.target as HTMLElement | null;
+      if (target && ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) return;
+      if (event.key === "Enter") {
+        const value = keyboardBuffer.current;
+        keyboardBuffer.current = "";
+        if (value) { event.preventDefault(); void identifyAtComputer(value, "teclado"); }
+        return;
+      }
+      if (/^[0-9]$/.test(event.key) || /^Numpad[0-9]$/.test(event.code)) {
+        const digit = /^[0-9]$/.test(event.key) ? event.key : event.code.replace("Numpad", "");
+        const now = Date.now();
+        if (now - lastKeyAt.current > 1500) keyboardBuffer.current = "";
+        lastKeyAt.current = now;
+        keyboardBuffer.current = (keyboardBuffer.current + digit).slice(-30);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  useEffect(() => {
+    if (!cameraActive) return;
+    let stream: MediaStream | null = null;
+    let timer = 0;
+    let busy = false;
+    let stopped = false;
+    async function startScanner() {
+      try {
+        const BarcodeDetectorCtor = (window as any).BarcodeDetector;
+        if (!BarcodeDetectorCtor) {
+          toast.error("Leitura QR nativa não disponível neste navegador. Use Chrome ou Edge atualizado.");
+          setCameraActive(false);
+          return;
+        }
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+        if (stopped || !videoRef.current) { stream.getTracks().forEach((track) => track.stop()); return; }
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+        const detector = new BarcodeDetectorCtor({ formats: ["qr_code"] });
+        timer = window.setInterval(async () => {
+          if (busy || !videoRef.current) return;
+          busy = true;
+          try {
+            const codes = await detector.detect(videoRef.current);
+            const value = codes?.[0]?.rawValue;
+            if (value) {
+              setCameraActive(false);
+              await identifyAtComputer(value, "qrcode");
+            }
+          } catch { /* aguarda o próximo quadro */ }
+          finally { busy = false; }
+        }, 400);
+      } catch {
+        toast.error("Não foi possível abrir a webcam. Verifique a permissão de câmera do navegador.");
+        setCameraActive(false);
+      }
+    }
+    void startScanner();
+    return () => {
+      stopped = true;
+      if (timer) window.clearInterval(timer);
+      stream?.getTracks().forEach((track) => track.stop());
+    };
+  }, [cameraActive]);
 
   const online = !!data?.agent_last_seen &&
     Date.now() - new Date(data.agent_last_seen).getTime() < 3 * 60_000;
@@ -135,6 +227,20 @@ function CatracaPage() {
           ) : (
             <Badge variant="destructive"><WifiOff className="mr-1 h-3.5 w-3.5" /> Sem sinal do agente</Badge>
           )}
+        </section>
+
+        <section className="grid gap-3 rounded-lg border border-primary/30 bg-card p-4">
+          <h3 className="text-base font-bold">Identificação pelo computador da recepção</h3>
+          <p className="text-sm text-muted-foreground">O teclado USB SKO 12 é o teclado principal: digite a matrícula ou senha e pressione Enter. A webcam conectada à CPU lê o QR Code do aplicativo do aluno.</p>
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="success">SKO 12 — teclado principal</Badge>
+            <Badge variant="secondary">Webcam USB — QR Code</Badge>
+          </div>
+          <Button variant="outline" onClick={() => setCameraActive((v) => !v)}>
+            {cameraActive ? "Parar leitura da webcam" : "Abrir câmera para ler QR Code"}
+          </Button>
+          {cameraActive && <video ref={videoRef} className="max-h-72 w-full rounded-lg bg-black object-contain" muted playsInline />}
+          <p className="text-xs text-muted-foreground">Mantenha esta tela aberta no computador. O teclado SKO 12 funciona quando a janela do sistema está em foco; a leitura pela webcam usa a câmera conectada ao mesmo computador.</p>
         </section>
 
         <section className="grid gap-3 rounded-lg border border-border bg-card p-4 sm:grid-cols-3">
