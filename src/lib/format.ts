@@ -19,6 +19,18 @@ export function addMonthsISO(iso: string, months: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+export function addMonthsSameDayISO(iso: string, months: number): string {
+  const [year, month, day] = iso.split("-").map(Number);
+  const target = new Date(year, month - 1 + months, 1);
+  const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+  const result = new Date(target.getFullYear(), target.getMonth(), Math.min(day, lastDay));
+  return [
+    result.getFullYear(),
+    String(result.getMonth() + 1).padStart(2, "0"),
+    String(result.getDate()).padStart(2, "0"),
+  ].join("-");
+}
+
 export function addDaysISO(iso: string, days: number): string {
   const d = new Date(`${iso}T12:00:00`);
   d.setDate(d.getDate() + days);

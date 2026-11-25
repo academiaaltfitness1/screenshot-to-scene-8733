@@ -24,10 +24,13 @@ import { Route as AuthenticatedPagarRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as AuthenticatedProdutosRouteImport } from './routes/_authenticated/produtos'
 import { Route as AuthenticatedReceberRouteImport } from './routes/_authenticated/receber'
+import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
 import { Route as AuthenticatedSistemaRouteImport } from './routes/_authenticated/sistema'
 import { Route as AuthenticatedTreinosRouteImport } from './routes/_authenticated/treinos'
 import { Route as AuthenticatedTurmasRouteImport } from './routes/_authenticated/turmas'
 import { Route as AuthenticatedVendaRouteImport } from './routes/_authenticated/venda'
+import { Route as ApiPublicAgentEventsRouteImport } from './routes/api/public/agent/events'
+import { Route as ApiPublicAgentSyncRouteImport } from './routes/api/public/agent/sync'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -104,6 +107,11 @@ const AuthenticatedReceberRoute = AuthenticatedReceberRouteImport.update({
   path: '/receber',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedRelatoriosRoute = AuthenticatedRelatoriosRouteImport.update({
+  id: '/relatorios',
+  path: '/relatorios',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSistemaRoute = AuthenticatedSistemaRouteImport.update({
   id: '/sistema',
   path: '/sistema',
@@ -124,6 +132,16 @@ const AuthenticatedVendaRoute = AuthenticatedVendaRouteImport.update({
   path: '/venda',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicAgentEventsRoute = ApiPublicAgentEventsRouteImport.update({
+  id: '/api/public/agent/events',
+  path: '/api/public/agent/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAgentSyncRoute = ApiPublicAgentSyncRouteImport.update({
+  id: '/api/public/agent/sync',
+  path: '/api/public/agent/sync',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -140,10 +158,13 @@ export interface FileRoutesByFullPath {
   '/painel': typeof AuthenticatedPainelRoute
   '/produtos': typeof AuthenticatedProdutosRoute
   '/receber': typeof AuthenticatedReceberRoute
+  '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/sistema': typeof AuthenticatedSistemaRoute
   '/treinos': typeof AuthenticatedTreinosRoute
   '/turmas': typeof AuthenticatedTurmasRoute
   '/venda': typeof AuthenticatedVendaRoute
+  '/api/public/agent/events': typeof ApiPublicAgentEventsRoute
+  '/api/public/agent/sync': typeof ApiPublicAgentSyncRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -160,10 +181,13 @@ export interface FileRoutesByTo {
   '/painel': typeof AuthenticatedPainelRoute
   '/produtos': typeof AuthenticatedProdutosRoute
   '/receber': typeof AuthenticatedReceberRoute
+  '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/sistema': typeof AuthenticatedSistemaRoute
   '/treinos': typeof AuthenticatedTreinosRoute
   '/turmas': typeof AuthenticatedTurmasRoute
   '/venda': typeof AuthenticatedVendaRoute
+  '/api/public/agent/events': typeof ApiPublicAgentEventsRoute
+  '/api/public/agent/sync': typeof ApiPublicAgentSyncRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -182,10 +206,13 @@ export interface FileRoutesById {
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/_authenticated/produtos': typeof AuthenticatedProdutosRoute
   '/_authenticated/receber': typeof AuthenticatedReceberRoute
+  '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/sistema': typeof AuthenticatedSistemaRoute
   '/_authenticated/treinos': typeof AuthenticatedTreinosRoute
   '/_authenticated/turmas': typeof AuthenticatedTurmasRoute
   '/_authenticated/venda': typeof AuthenticatedVendaRoute
+  '/api/public/agent/events': typeof ApiPublicAgentEventsRoute
+  '/api/public/agent/sync': typeof ApiPublicAgentSyncRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -204,10 +231,13 @@ export interface FileRouteTypes {
     | '/painel'
     | '/produtos'
     | '/receber'
+    | '/relatorios'
     | '/sistema'
     | '/treinos'
     | '/turmas'
     | '/venda'
+    | '/api/public/agent/events'
+    | '/api/public/agent/sync'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -224,10 +254,13 @@ export interface FileRouteTypes {
     | '/painel'
     | '/produtos'
     | '/receber'
+    | '/relatorios'
     | '/sistema'
     | '/treinos'
     | '/turmas'
     | '/venda'
+    | '/api/public/agent/events'
+    | '/api/public/agent/sync'
   id:
     | '__root__'
     | '/'
@@ -245,10 +278,13 @@ export interface FileRouteTypes {
     | '/_authenticated/painel'
     | '/_authenticated/produtos'
     | '/_authenticated/receber'
+    | '/_authenticated/relatorios'
     | '/_authenticated/sistema'
     | '/_authenticated/treinos'
     | '/_authenticated/turmas'
     | '/_authenticated/venda'
+    | '/api/public/agent/events'
+    | '/api/public/agent/sync'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -256,6 +292,8 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiPublicAgentEventsRoute: typeof ApiPublicAgentEventsRoute
+  ApiPublicAgentSyncRoute: typeof ApiPublicAgentSyncRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -365,6 +403,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReceberRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/relatorios': {
+      id: '/_authenticated/relatorios'
+      path: '/relatorios'
+      fullPath: '/relatorios'
+      preLoaderRoute: typeof AuthenticatedRelatoriosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/sistema': {
       id: '/_authenticated/sistema'
       path: '/sistema'
@@ -393,6 +438,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedVendaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/agent/events': {
+      id: '/api/public/agent/events'
+      path: '/api/public/agent/events'
+      fullPath: '/api/public/agent/events'
+      preLoaderRoute: typeof ApiPublicAgentEventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/agent/sync': {
+      id: '/api/public/agent/sync'
+      path: '/api/public/agent/sync'
+      fullPath: '/api/public/agent/sync'
+      preLoaderRoute: typeof ApiPublicAgentSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -408,6 +467,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
   AuthenticatedProdutosRoute: typeof AuthenticatedProdutosRoute
   AuthenticatedReceberRoute: typeof AuthenticatedReceberRoute
+  AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
   AuthenticatedSistemaRoute: typeof AuthenticatedSistemaRoute
   AuthenticatedTreinosRoute: typeof AuthenticatedTreinosRoute
   AuthenticatedTurmasRoute: typeof AuthenticatedTurmasRoute
@@ -426,6 +486,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
   AuthenticatedProdutosRoute: AuthenticatedProdutosRoute,
   AuthenticatedReceberRoute: AuthenticatedReceberRoute,
+  AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
   AuthenticatedSistemaRoute: AuthenticatedSistemaRoute,
   AuthenticatedTreinosRoute: AuthenticatedTreinosRoute,
   AuthenticatedTurmasRoute: AuthenticatedTurmasRoute,
@@ -440,6 +501,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiPublicAgentEventsRoute: ApiPublicAgentEventsRoute,
+  ApiPublicAgentSyncRoute: ApiPublicAgentSyncRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

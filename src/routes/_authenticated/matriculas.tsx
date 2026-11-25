@@ -1,6 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Plus, RefreshCw, Ban, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,10 +17,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { brl, fmtDate, addMonthsISO, addDaysISO, errMsg } from "@/lib/format";
+import { brl, fmtDate, addMonthsSameDayISO, addDaysISO, errMsg } from "@/lib/format";
 import { todayISO } from "@/lib/access";
 
 export const Route = createFileRoute("/_authenticated/matriculas")({
+  validateSearch: z.object({ studentId: z.string().optional() }),
   head: () => ({
     meta: [
       { title: "Controle de Matrículas — ALT FITNESS" },
@@ -46,6 +48,8 @@ interface Draft {
 }
 
 function MatriculasPage() {
+  const search = Route.useSearch();
+  const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [onlyActive, setOnlyActive] = useState(true);
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -100,6 +104,12 @@ function MatriculasPage() {
       method: "Dinheiro",
     });
   }
+
+  useEffect(() => {
+    if (!search.studentId || plans.length === 0) return;
+    openNew(search.studentId);
+    navigate({ to: "/matriculas", search: {}, replace: true });
+  }, [search.studentId, plans]);
 
   return (
     <ModuleWindow
@@ -204,7 +214,7 @@ function MatriculasPage() {
 function EnrollDialog({ draft, setDraft, plans }: { draft: Draft; setDraft: (d: Draft | null) => void; plans: Plan[] }) {
   const qc = useQueryClient();
   const plan = plans.find((p) => p.id === draft.plan_id);
-  const end = plan ? addMonthsISO(draft.start_date, plan.months) : "";
+  const end = plan ? addMonthsSameDayISO(draft.start_date, plan.months) : "";
   const upd = (p: Partial<Draft>) => setDraft({ ...draft, ...p });
 
   const save = useMutation({

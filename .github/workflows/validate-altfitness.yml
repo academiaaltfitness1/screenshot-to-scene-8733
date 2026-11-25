@@ -1,0 +1,15 @@
+name: Validate ALT FITNESS app
+on:
+  pull_request:
+    branches: [main]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: cp src/agent/agente-henry.js.txt /tmp/agente-henry.cjs && node --check /tmp/agente-henry.cjs
+      - run: bun run build

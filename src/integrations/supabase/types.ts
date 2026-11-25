@@ -674,10 +674,13 @@ export type Database = {
           address: string
           agent_last_seen: string | null
           allow_card: boolean
+          allow_face: boolean
           allow_matricula: boolean
           allow_password: boolean
           allow_qrcode: boolean
+          allow_sko12: boolean
           bill_alert_days: number
+          dashboard_mascot_url: string | null
           block_inactive: boolean
           fingerprint_rule: string
           gym_name: string
@@ -700,10 +703,14 @@ export type Database = {
           address?: string
           agent_last_seen?: string | null
           allow_card?: boolean
+          allow_face?: boolean
           allow_matricula?: boolean
           allow_password?: boolean
           allow_qrcode?: boolean
+          allow_sko12?: boolean
           bill_alert_days?: number
+          dashboard_mascot_url?: string | null
+          dashboard_mascot_url?: string | null
           block_inactive?: boolean
           fingerprint_rule?: string
           gym_name?: string
@@ -726,9 +733,11 @@ export type Database = {
           address?: string
           agent_last_seen?: string | null
           allow_card?: boolean
+          allow_face?: boolean
           allow_matricula?: boolean
           allow_password?: boolean
           allow_qrcode?: boolean
+          allow_sko12?: boolean
           bill_alert_days?: number
           block_inactive?: boolean
           fingerprint_rule?: string
@@ -809,6 +818,44 @@ export type Database = {
           whatsapp?: string | null
         }
         Relationships: []
+      }
+      student_face_templates: {
+        Row: {
+          consent_at: string
+          consent_text_version: string
+          recorded_by: string | null
+          created_at: string
+          descriptor: Json
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          consent_at: string
+          consent_text_version: string
+          recorded_by?: string | null
+          created_at?: string
+          descriptor: Json
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          consent_at?: string
+          consent_text_version?: string
+          recorded_by?: string | null
+          created_at?: string
+          descriptor?: Json
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_face_templates_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: true
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       turnstile_commands: {
         Row: {
