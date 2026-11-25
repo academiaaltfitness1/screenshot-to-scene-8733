@@ -11,4 +11,5 @@ jobs:
         with:
           bun-version: latest
       - run: bun install --frozen-lockfile
+      - run: cp src/agent/agente-henry.js.txt /tmp/agente-henry.cjs && node --check /tmp/agente-henry.cjs
       - run: bun run build
