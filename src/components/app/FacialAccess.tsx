@@ -185,7 +185,7 @@ export function FacialAccess({ enabled, onIdentify }: { enabled: boolean; onIden
         descriptor: Array.from(detections[0].descriptor as Float32Array),
         consent_at: new Date().toISOString(),
         consent_text_version: CONSENT_VERSION,
-        consent_user_id: auth.user?.id ?? null,
+        recorded_by: auth.user?.id ?? null,
         updated_at: new Date().toISOString(),
       }, { onConflict: "student_id" });
       if (error) throw error;
