@@ -242,6 +242,7 @@ function CatracaPage() {
           <div className="flex gap-2">
             <Input
               autoFocus
+              disabled={f.allow_sko12 === false}
               value={keyboardCode}
               onChange={(event) => setKeyboardCode(event.target.value.replace(/[^0-9]/g, "").slice(0, 30))}
               onKeyDown={(event) => {
@@ -255,9 +256,9 @@ function CatracaPage() {
               inputMode="numeric"
               aria-label="Entrada pelo teclado SKO 12"
             />
-            <Button onClick={() => { if (keyboardCode.trim()) { void identifyAtComputer(keyboardCode, "teclado"); setKeyboardCode(""); } }}>Confirmar</Button>
+            <Button disabled={f.allow_sko12 === false} onClick={() => { if (keyboardCode.trim()) { void identifyAtComputer(keyboardCode, "teclado"); setKeyboardCode(""); } }}>Confirmar</Button>
           </div>
-          <Button variant="outline" onClick={() => setCameraActive((v) => !v)}>
+          <Button variant="outline" disabled={f.allow_qrcode === false} onClick={() => setCameraActive((v) => !v)}>
             {cameraActive ? "Parar leitura da webcam" : "Abrir câmera para ler QR Code"}
           </Button>
           {cameraActive && <video ref={videoRef} className="max-h-72 w-full rounded-lg bg-black object-contain" muted playsInline />}
