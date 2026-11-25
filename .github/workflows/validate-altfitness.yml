@@ -1,0 +1,17 @@
+name: Validate ALT FITNESS app
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [altfitness/implementacao-prd-2026-11-24]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install --no-audit --no-fund
+      - run: npm run build
