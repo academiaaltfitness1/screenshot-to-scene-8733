@@ -67,6 +67,7 @@ export function FacialAccess({ enabled, onIdentify }: { enabled: boolean; onIden
   useEffect(() => { onIdentifyRef.current = onIdentify; }, [onIdentify]);
   const streamRef = useRef<MediaStream | null>(null);
   const blinkRef = useRef(0);
+  const candidateRef = useRef<{ label: string; count: number } | null>(null);
   const busyRef = useRef(false);
   const [mode, setMode] = useState<FaceMode>("register");
   const [cameraActive, setCameraActive] = useState(false);
@@ -111,6 +112,12 @@ export function FacialAccess({ enabled, onIdentify }: { enabled: boolean; onIden
               const matcher = new api.FaceMatcher(labeled, 0.48);
               const match = matcher.findBestMatch(result.descriptor);
               if (match.label !== "unknown") {
+                if (candidateRef.current?.label === match.label) candidateRef.current.count += 1;
+                else candidateRef.current = { label: match.label, count: 1 };
+                if (candidateRef.current.count < 2) {
+                  setStatus("Rosto localizado. Mantenha o rosto de frente por um instante…");
+                  return;
+                }
                 const found = (data ?? []).find((row: any) => String(row.students?.matricula) === match.label);
                 if (found) {
                   setStatus("Rosto reconhecido: " + (found.students?.name ?? "aluno") + ". Validando acesso…");
@@ -118,6 +125,7 @@ export function FacialAccess({ enabled, onIdentify }: { enabled: boolean; onIden
                   onIdentifyRef.current(match.label);
                 }
               } else {
+                candidateRef.current = null;
                 setStatus("Rosto não reconhecido. Tente novamente ou use matrícula/QR Code.");
                 blinkRef.current = 0;
               }
@@ -150,6 +158,7 @@ export function FacialAccess({ enabled, onIdentify }: { enabled: boolean; onIden
     try {
       await loadModels();
       blinkRef.current = 0;
+      candidateRef.current = null;
       setMode(nextMode);
       setCameraActive(true);
     } catch (error) {
