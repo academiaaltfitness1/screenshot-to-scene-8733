@@ -29,6 +29,39 @@ export type Database = {
         }
         Relationships: []
       }
+      Alunos: {
+        Row: {
+          created_at: string
+          id: number
+          Matricula: string | null
+          Modalidade: string | null
+          Nome: string | null
+          Telefone: string | null
+          valor: number | null
+          vencimento: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          Matricula?: string | null
+          Modalidade?: string | null
+          Nome?: string | null
+          Telefone?: string | null
+          valor?: number | null
+          vencimento?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          Matricula?: string | null
+          Modalidade?: string | null
+          Nome?: string | null
+          Telefone?: string | null
+          valor?: number | null
+          vencimento?: string | null
+        }
+        Relationships: []
+      }
       assessments: {
         Row: {
           abdomen: number | null
@@ -759,12 +792,18 @@ export type Database = {
           cpf: string | null
           created_at: string
           email: string | null
+          face_consent_at: string | null
+          face_consent_revoked_at: string | null
+          face_consent_version: string | null
+          face_recognition_enabled: boolean
           gender: string | null
           id: string
           matricula: number
           medical_notes: string | null
           name: string
           notes: string | null
+          photo_consent_at: string | null
+          photo_consent_version: string | null
           photo_url: string | null
           qr_code: string
           status: string
@@ -778,12 +817,18 @@ export type Database = {
           cpf?: string | null
           created_at?: string
           email?: string | null
+          face_consent_at?: string | null
+          face_consent_revoked_at?: string | null
+          face_consent_version?: string | null
+          face_recognition_enabled?: boolean
           gender?: string | null
           id?: string
           matricula?: number
           medical_notes?: string | null
           name: string
           notes?: string | null
+          photo_consent_at?: string | null
+          photo_consent_version?: string | null
           photo_url?: string | null
           qr_code?: string
           status?: string
@@ -797,12 +842,18 @@ export type Database = {
           cpf?: string | null
           created_at?: string
           email?: string | null
+          face_consent_at?: string | null
+          face_consent_revoked_at?: string | null
+          face_consent_version?: string | null
+          face_recognition_enabled?: boolean
           gender?: string | null
           id?: string
           matricula?: number
           medical_notes?: string | null
           name?: string
           notes?: string | null
+          photo_consent_at?: string | null
+          photo_consent_version?: string | null
           photo_url?: string | null
           qr_code?: string
           status?: string
