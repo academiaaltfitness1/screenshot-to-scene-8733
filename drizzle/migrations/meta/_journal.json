@@ -29,6 +29,13 @@
       "when": 1795616364684,
       "tag": "0003_turnstile_sko12_setting",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795617000000,
+      "tag": "0004_student_face_templates",
+      "breakpoints": true
     }
   ]
 }
