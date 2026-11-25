@@ -63,6 +63,8 @@ function eyeRatio(points: any[]): number {
 
 export function FacialAccess({ enabled, onIdentify }: { enabled: boolean; onIdentify: (matricula: string) => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const onIdentifyRef = useRef(onIdentify);
+  useEffect(() => { onIdentifyRef.current = onIdentify; }, [onIdentify]);
   const streamRef = useRef<MediaStream | null>(null);
   const blinkRef = useRef(0);
   const busyRef = useRef(false);
@@ -113,7 +115,7 @@ export function FacialAccess({ enabled, onIdentify }: { enabled: boolean; onIden
                 if (found) {
                   setStatus("Rosto reconhecido: " + (found.students?.name ?? "aluno") + ". Validando acesso…");
                   setCameraActive(false);
-                  onIdentify(match.label);
+                  onIdentifyRef.current(match.label);
                 }
               } else {
                 setStatus("Rosto não reconhecido. Tente novamente ou use matrícula/QR Code.");
@@ -141,7 +143,7 @@ export function FacialAccess({ enabled, onIdentify }: { enabled: boolean; onIden
       streamRef.current?.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     };
-  }, [cameraActive, mode, onIdentify]);
+  }, [cameraActive, mode]);
 
   async function start(nextMode: FaceMode) {
     setWorking(true);
