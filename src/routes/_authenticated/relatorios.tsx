@@ -53,7 +53,7 @@ function VencimentosReport() {
     if (startDate && row.due_date < startDate) return false;
     if (endDate && row.due_date > endDate) return false;
     if (status === "recebidos" && !row.paid_at) return false;
-    if (status !== "recebidos" && row.paid_at) return false;
+    if (status !== "recebidos" && status !== "todos" && row.paid_at) return false;
     if (status === "hoje" && row.due_date !== today) return false;
     if (status === "a_vencer" && (row.due_date <= today || row.due_date > soonLimit)) return false;
     if (status === "pendentes" && row.due_date <= soonLimit) return false;
@@ -159,7 +159,10 @@ function VencimentosReport() {
                   <td className={grid.td}>{brl(row.amount)}</td>
                   <td className={grid.td}>
                     {row.paid_at ? <Badge variant="success">Recebido · {fmtDate(row.paid_at)}</Badge>
-                      : <Badge variant="warning">Pendente</Badge>}
+                      : row.due_date < today ? <Badge variant="destructive">Vencido</Badge>
+                      : row.due_date === today ? <Badge variant="warning">Vence hoje</Badge>
+                      : row.due_date <= soonLimit ? <Badge variant="warning">A vencer</Badge>
+                      : <Badge variant="secondary">Pendente</Badge>}
                   </td>
                 </tr>
               ))}
