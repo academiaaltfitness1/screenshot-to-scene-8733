@@ -71,6 +71,13 @@
       "when": 1795653600000,
       "tag": "0009_student_attendance_read",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1795653900000,
+      "tag": "0010_student_temporary_qr",
+      "breakpoints": true
     }
   ]
 }
