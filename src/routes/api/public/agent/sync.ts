@@ -19,7 +19,7 @@ export const Route = createFileRoute("/api/public/agent/sync")({
             .limit(100);
           cmds = data ?? [];
         }
-        await db.from("settings").update({ agent_last_seen: new Date().toISOString() }).eq("id", 1);
+        await db.from("settings").update({ agent_last_seen: new Date().toISOString(), agent_version: request.headers.get("x-agent-version") }).eq("id", 1);
         if (onlyCommands) return Response.json({ commands: cmds });
 
         const [{ data: settings }, { data: students }, { data: qrSecrets }] = await Promise.all([
