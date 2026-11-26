@@ -284,10 +284,11 @@ function TreinosPage() {
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
-              <table className="w-full text-sm">
+              <div className="w-full overflow-x-auto">
+              <table className="w-full min-w-[720px] table-fixed text-sm">
                 <thead className="bg-secondary text-xs uppercase text-secondary-foreground">
                   <tr>
-                    <th className="px-2 py-1 text-left">Exercício</th>
+                    <th className="w-[280px] px-2 py-2 text-left">Exercício (nome completo)</th>
                     <th className="w-14 px-1 py-1">Séries</th>
                     <th className="w-16 px-1 py-1">Reps</th>
                     <th className="w-16 px-1 py-1">Carga</th>
@@ -298,8 +299,8 @@ function TreinosPage() {
                 <tbody>
                   {w.exercises.map((e, k) => (
                     <tr key={k} className="border-b border-border">
-                      <td className="px-1 py-0.5">
-                        <Input list="ex-suggest" className="h-8" value={e.exercise} onChange={(ev) => updEx(i, k, { exercise: ev.target.value })} />
+                      <td className="px-2 py-1">
+                        <Input list="ex-suggest" aria-label="Nome completo do exercício" className="h-10 min-w-[250px] w-full text-sm" value={e.exercise} onChange={(ev) => updEx(i, k, { exercise: ev.target.value })} />
                       </td>
                       {(["sets", "reps", "load", "rest"] as const).map((f) => (
                         <td key={f} className="px-0.5 py-0.5">
@@ -315,6 +316,7 @@ function TreinosPage() {
                   ))}
                 </tbody>
               </table>
+              </div>
               <div className="flex items-center gap-2 p-2">
                 <Button size="sm" variant="ghost" onClick={() => upd(i, { exercises: [...w.exercises, newEx()] })}>
                   <Plus /> Exercício
