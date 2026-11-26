@@ -18,6 +18,8 @@ export function StudentWorkoutExecution({ workouts }: { workouts: Workout[] }) {
   const [loads, setLoads] = useState<Record<string, string>>({});
   const [reps, setReps] = useState<Record<string, string>>({});
   const [durations, setDurations] = useState<Record<string, string>>({});
+  const [restTimers, setRestTimers] = useState<Record<string, number>>({});
+  const [clock, setClock] = useState(Date.now());
   const activeWorkout = useMemo(() => workouts.find(w => w.id === selectedWorkout), [workouts, selectedWorkout]);
   const { data: sessions = [] } = useQuery({
     queryKey: ["student-workout-history"],
@@ -29,6 +31,19 @@ export function StudentWorkoutExecution({ workouts }: { workouts: Workout[] }) {
       return data ?? [];
     },
   });
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setClock(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  function restSeconds(value: string | number | null | undefined) {
+    const raw = String(value ?? "60").toLocaleLowerCase("pt-BR");
+    const amount = Number.parseFloat(raw.replace(",", ".")) || 60;
+    return Math.max(1, Math.min(900, Math.round(amount * (raw.includes("min") ? 60 : 1))));
+  }
+  function startRest(ex: Workout["workout_exercises"][number]) {
+    setRestTimers(current => ({ ...current, [ex.id]: Date.now() + restSeconds(ex.rest) * 1000 }));
+  }
 
   const { data: lastLogs = [] } = useQuery({
     queryKey: ["student-last-set-logs"],
@@ -138,7 +153,10 @@ export function StudentWorkoutExecution({ workouts }: { workouts: Workout[] }) {
     {sessionId && activeWorkout ? <div className="mb-4 rounded-lg border border-[#facc15]/40 bg-black p-3">
       <p className="font-bold text-[#facc15]">Em andamento · Treino {activeWorkout.letter} — {activeWorkout.name}</p>
       <div className="mt-3 space-y-3">{[...activeWorkout.workout_exercises].sort((a,b)=>a.sort_order-b.sort_order).map(ex=><div key={ex.id} className="rounded-lg border border-white/10 p-3">
-        <p className="font-semibold">{ex.exercise}</p><p className="text-xs text-zinc-400">{ex.sets} séries · {ex.reps} repetições · descanso {ex.rest}</p>{lastByName.get(ex.exercise.trim().toLocaleLowerCase("pt-BR"))?.load != null && <p className="mt-1 text-xs text-emerald-400">Última carga registrada: {Number(lastByName.get(ex.exercise.trim().toLocaleLowerCase("pt-BR"))?.load).toLocaleString("pt-BR")} kg</p>}
+        <p className="font-semibold">{ex.exercise}</p><p className="text-xs text-zinc-400">{ex.sets} séries · {ex.reps} repetições · descanso {ex.rest}</p>
+        <button type="button" onClick={()=>startRest(ex)} className="mt-2 rounded border border-[#facc15]/40 px-3 py-1.5 text-xs font-bold text-[#facc15]">
+          {restTimers[ex.id] && restTimers[ex.id] > clock ? "Descansando " + Math.ceil((restTimers[ex.id] - clock) / 1000) + "s" : "Iniciar descanso (" + restSeconds(ex.rest) + "s)"}
+        </button>{lastByName.get(ex.exercise.trim().toLocaleLowerCase("pt-BR"))?.load != null && <p className="mt-1 text-xs text-emerald-400">Última carga registrada: {Number(lastByName.get(ex.exercise.trim().toLocaleLowerCase("pt-BR"))?.load).toLocaleString("pt-BR")} kg</p>}
         <div className="mt-3 space-y-2">
           {Array.from({length: Math.max(1, Math.min(20, Number.parseInt(ex.sets, 10) || 1))}, (_, index) => {
             const key = ex.id + ":" + (index + 1);
