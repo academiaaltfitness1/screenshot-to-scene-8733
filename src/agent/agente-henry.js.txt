@@ -72,6 +72,7 @@ function checkAccess(s) {
   return { allowed: true, message: String(cfg("welcome_message", "Bem-vindo")) };
 }
 function findDynamicQr(credential) {
+  if (cfg("allow_qrcode", true) === false) return null;
   var raw = String(credential || "").trim();
   var currentWindow = Math.floor(Date.now() / 30000);
   var list = cache.students || [];
