@@ -32,11 +32,21 @@ function AdminMobile() {
         can("alunos") ? supabase.from("students").select("id", { count: "exact", head: true }).eq("status", "ativo").not("cpf", "is", null).neq("cpf", "").not("birth_date", "is", null) : Promise.resolve({ count: null }),
         can("receber") ? supabase.from("receivables").select("id", { count: "exact", head: true }).is("paid_at", null).lt("due_date", today) : Promise.resolve({ count: null }),
         can("receber") ? supabase.from("payment_proofs").select("id", { count: "exact", head: true }).eq("status", "pendente") : Promise.resolve({ count: null }),
-        can("receber") ? (supabase as any).from("payment_proofs").select("id,file_path,note,created_at,students(name,matricula),receivables(description,amount,due_date)").eq("status", "pendente").order("created_at", { ascending: true }).limit(20) : Promise.resolve({ data: [] }),
+        can("receber") ? (supabase as any).from("payment_proofs").select("id,file_path,note,created_at,student_id,receivable_id").eq("status", "pendente").order("created_at", { ascending: true }).limit(20) : Promise.resolve({ data: [] }),
         can("treinos") ? (supabase as any).from("student_goal_events").select("id,student_id,week_start,target_sessions,completed_sessions,reached_at,students(name,matricula)").order("reached_at", { ascending: false }).limit(5) : Promise.resolve({ data: [] }),
         can("treinos") ? (supabase as any).from("student_workout_review_requests").select("id,student_id,note,created_at,students(name,matricula)").eq("status", "pendente").order("created_at", { ascending: false }).limit(10) : Promise.resolve({ data: [] }),
       ]);
-      return { students: students.count ?? 0, ready: ready.count ?? 0, overdue: overdue.count ?? 0, proofs: proofs.count ?? 0, proofRows: proofRows.data ?? [], goals: goals.data ?? [], reviews: reviews.data ?? [] };
+      const pendingProofs = proofRows.data ?? [];
+      const studentIds = [...new Set(pendingProofs.map((proof: any) => proof.student_id))];
+      const receivableIds = [...new Set(pendingProofs.map((proof: any) => proof.receivable_id))];
+      const [proofStudents, proofReceivables] = await Promise.all([
+        studentIds.length ? supabase.from("students").select("id,name,matricula").in("id", studentIds) : Promise.resolve({ data: [] }),
+        receivableIds.length ? supabase.from("receivables").select("id,description,amount,due_date").in("id", receivableIds) : Promise.resolve({ data: [] }),
+      ]);
+      const studentMap = new Map((proofStudents.data ?? []).map((student: any) => [student.id, student]));
+      const receivableMap = new Map((proofReceivables.data ?? []).map((receivable: any) => [receivable.id, receivable]));
+      const enrichedProofs = pendingProofs.map((proof: any) => ({ ...proof, students: studentMap.get(proof.student_id), receivables: receivableMap.get(proof.receivable_id) }));
+      return { students: students.count ?? 0, ready: ready.count ?? 0, overdue: overdue.count ?? 0, proofs: proofs.count ?? 0, proofRows: enrichedProofs, goals: goals.data ?? [], reviews: reviews.data ?? [] };
     },
     refetchInterval: 15000,
   });
