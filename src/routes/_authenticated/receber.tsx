@@ -16,6 +16,7 @@ import { useStaff, settingsQuery } from "@/hooks/use-staff";
 import { brl, fmtDate, addDaysISO, errMsg } from "@/lib/format";
 import { todayISO } from "@/lib/access";
 import { PAYMENT_METHODS, recordCash } from "@/lib/cash";
+import { PaymentProofReview } from "@/components/aluno/PaymentProofReview";
 
 export const Route = createFileRoute("/_authenticated/receber")({
   head: () => ({
@@ -179,7 +180,8 @@ function ReceberPage() {
       </table>
       {paying && <PayDialog bill={paying} onClose={() => setPaying(null)} />}
       {creating && <NewReceivable onClose={() => setCreating(false)} />}
-    </ModuleWindow>
+          <PaymentProofReview />
+</ModuleWindow>
   );
 }
 
