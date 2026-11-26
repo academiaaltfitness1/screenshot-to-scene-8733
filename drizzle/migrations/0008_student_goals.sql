@@ -1,4 +1,6 @@
 -- ALT ALUNO goals: instructor-managed weekly targets and durable goal-reached events.
+DROP POLICY IF EXISTS "aluno cria propria meta" ON public.student_goals;
+DROP POLICY IF EXISTS "aluno altera propria meta" ON public.student_goals;
 DROP POLICY IF EXISTS "equipe gerencia metas" ON public.student_goals;
 CREATE POLICY "equipe gerencia metas" ON public.student_goals
   FOR ALL TO authenticated
