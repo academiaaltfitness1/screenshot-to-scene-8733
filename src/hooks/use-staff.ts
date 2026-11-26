@@ -23,14 +23,22 @@ export const staffQuery = queryOptions({
       supabase.from("user_roles").select("role").eq("user_id", user.id),
       supabase.from("employee_permissions").select("module").eq("user_id", user.id),
     ]);
+    // Fail closed: any query error or missing/inactive profile denies staff access.
+    if (profile.error) throw profile.error;
+    if (roles.error) throw roles.error;
+    if (perms.error) throw perms.error;
+    if (!profile.data || profile.data.active !== true) return null;
     const roleList = (roles.data ?? []).map((r) => r.role);
+    const isAdmin = roleList.includes("admin");
+    const isStaff = roleList.includes("staff");
+    if (!isAdmin && !isStaff) return null;
     return {
       userId: user.id,
       email: user.email ?? "",
-      name: profile.data?.full_name || user.email || "Usuário",
-      cargo: profile.data?.cargo ?? "",
-      isAdmin: roleList.includes("admin"),
-      isStaff: roleList.length > 0 && profile.data?.active !== false,
+      name: profile.data.full_name || user.email || "Usuário",
+      cargo: profile.data.cargo ?? "",
+      isAdmin,
+      isStaff,
       permissions: (perms.data ?? []).map((p) => p.module),
     };
   },
