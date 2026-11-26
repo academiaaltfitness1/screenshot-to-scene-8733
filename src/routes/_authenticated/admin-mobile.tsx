@@ -36,6 +36,7 @@ function AdminMobile() {
       ]);
       return { students: students.count ?? 0, overdue: overdue.count ?? 0, proofs: proofs.count ?? 0, goals: goals.data ?? [], reviews: reviews.data ?? [] };
     },
+    refetchInterval: 15000,
   });
   const modules = (Object.values(MODULES) as ModuleDef[])
     .filter(module => can(module.key));
