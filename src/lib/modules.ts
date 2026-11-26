@@ -16,6 +16,7 @@ import {
   DatabaseBackup,
   DoorOpen,
   BarChart3,
+  Megaphone,
 } from "lucide-react";
 
 export type ModuleKey =
@@ -34,7 +35,8 @@ export type ModuleKey =
   | "sistema"
   | "backup"
   | "catraca"
-  | "relatorios";
+  | "relatorios"
+  | "comunicados";
 
 export type ModulePath =
   | "/alunos"
@@ -52,7 +54,8 @@ export type ModulePath =
   | "/sistema"
   | "/backup"
   | "/catraca"
-  | "/relatorios";
+  | "/relatorios"
+  | "/comunicados";
 
 export interface ModuleDef {
   key: ModuleKey;
@@ -80,6 +83,7 @@ export const MODULES: Record<ModuleKey, ModuleDef> = {
   backup: { key: "backup", label: "Backup", title: "Backup dos Dados", path: "/backup", icon: DatabaseBackup },
   catraca: { key: "catraca", label: "Catraca", title: "Catraca Henry", path: "/catraca", icon: DoorOpen },
   relatorios: { key: "relatorios", label: "Relatórios", title: "Relatórios", path: "/relatorios", icon: BarChart3 },
+  comunicados: { key: "comunicados", label: "Comunicados", title: "Comunicados e promoções", path: "/comunicados", icon: Megaphone },
 };
 
 /** The 12 toolbar buttons, in SCA Fit order (Sair is rendered separately). */
