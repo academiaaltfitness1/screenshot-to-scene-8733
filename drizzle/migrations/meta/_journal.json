@@ -113,6 +113,13 @@
       "when": 1795655400000,
       "tag": "0015_auth_trigger_permissions",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1795655700000,
+      "tag": "0016_keep_active_session_workout_visible",
+      "breakpoints": true
     }
   ]
 }
