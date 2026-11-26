@@ -19,10 +19,10 @@ export const createStudentQrToken = createServerFn({ method: "POST" })
     const [{ data: student, error: studentError }, { data: secret, error: secretError }, { data: setting, error: settingError }] = await Promise.all([
       supabaseAdmin.from("students").select("matricula,qr_code").eq("id", account.student_id).maybeSingle(),
       supabaseAdmin.from("student_qr_secrets").select("secret").eq("student_id", account.student_id).maybeSingle(),
-      (supabaseAdmin as any).from("settings").select("dynamic_qr_enabled,agent_version").eq("id", 1).maybeSingle(),
+      (supabaseAdmin as any).from("settings").select("dynamic_qr_enabled,agent_version,allow_qrcode").eq("id", 1).maybeSingle(),
     ]);
     if (studentError || !student) throw new Error("Não foi possível carregar sua carteirinha.");
-    if (settingError || !setting?.dynamic_qr_enabled || setting.agent_version !== "alt-hmac-qr-1") {
+    if (settingError || !setting?.dynamic_qr_enabled || setting.allow_qrcode !== true || setting.agent_version !== "alt-hmac-qr-1") {
       if (!student.qr_code) throw new Error("A carteirinha fixa não está cadastrada. Procure a recepção.");
       return { token: String(student.qr_code), mode: "fixed" as const, expiresAt: Date.now() + 60000, refreshInMs: 60000 };
     }
