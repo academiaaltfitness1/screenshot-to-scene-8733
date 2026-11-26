@@ -55,8 +55,9 @@ function AuthPage() {
   });
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/painel", replace: true });
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user?.app_metadata?.kind === "student") navigate({ to: "/aluno", replace: true });
+      else if (data.user) navigate({ to: "/painel", replace: true });
     });
   }, [navigate]);
 
