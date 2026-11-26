@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Send } from "lucide-react";
+import { Send, Settings2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ModuleWindow } from "@/components/shell/ModuleWindow";
 import { Field, ModuleBar, EmptyRow, grid } from "@/components/app/common";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,10 +26,24 @@ export const Route = createFileRoute("/_authenticated/relatorios")({
 });
 
 type StatusFilter = "todos" | "recebidos" | "hoje" | "a_vencer" | "vencidos";
+type MessageTemplates = { a_vencer: string; hoje: string; vencidos: string; recebidos: string };
+const defaultTemplates: MessageTemplates = {
+  a_vencer: "Olá {nome}! Aqui é da {academia}. Sua mensalidade de {valor} vence em {vencimento}.{pix}",
+  hoje: "Olá {nome}! Aqui é da {academia}. Sua mensalidade de {valor} vence hoje ({vencimento}).{pix}",
+  vencidos: "Olá {nome}! Aqui é da {academia}. Sua mensalidade de {valor} venceu em {vencimento} e está em aberto.{pix}",
+  recebidos: "Olá {nome}! Aqui é da {academia}. Confirmamos o recebimento da sua mensalidade de {valor}, com vencimento em {vencimento}. Obrigado!",
+};
 
 function VencimentosReport() {
   const today = todayISO();
   const { data: settings } = useQuery(settingsQuery);
+  const queryClient = useQueryClient();
+  const [showMessageSettings, setShowMessageSettings] = useState(false);
+  const [templates, setTemplates] = useState<MessageTemplates>(defaultTemplates);
+  const [savingTemplates, setSavingTemplates] = useState(false);
+  useEffect(() => {
+    if (settings?.receivables_message_templates) setTemplates({ ...defaultTemplates, ...(settings.receivables_message_templates as Partial<MessageTemplates>) });
+  }, [settings?.receivables_message_templates]);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [status, setStatus] = useState<StatusFilter>("a_vencer");
@@ -62,7 +77,7 @@ function VencimentosReport() {
   }), [rows, startDate, endDate, status, today, soonLimit]);
 
   const phoneDigits = (phone: string | null | undefined) => (phone ?? "").replace(/\D/g, "");
-  const selectableRows = filtered.filter((row) => !row.paid_at && phoneDigits(row.students?.whatsapp).length >= 10);
+  const selectableRows = filtered.filter((row) => phoneDigits(row.students?.whatsapp).length >= 10);
   const selectedRows = selectableRows.filter((row) => selectedIds.includes(row.id));
   const allSelectableSelected = selectableRows.length > 0 && selectableRows.every((row) => selectedIds.includes(row.id));
   const someSelectableSelected = selectableRows.some((row) => selectedIds.includes(row.id));
@@ -76,10 +91,24 @@ function VencimentosReport() {
   };
   const messageFor = (row: (typeof rows)[number]) => {
     const name = row.students?.name ?? "aluno";
-    const dueVerb = row.due_date < today ? "venceu em" : "vence em";
-    const message = `Olá ${name.split(" ")[0]}! Aqui é da ${settings?.gym_name ?? "Academia ALT FITNESS"}. Sua mensalidade de ${brl(Number(row.amount))} ${dueVerb} ${fmtDate(row.due_date)}.${settings?.pix_key ? ` Chave Pix: ${settings.pix_key}` : ""}`;
+    const templateKey: keyof MessageTemplates = row.paid_at ? "recebidos" : row.due_date < today ? "vencidos" : row.due_date === today ? "hoje" : "a_vencer";
+    const message = templates[templateKey]
+      .replaceAll("{nome}", name.split(" ")[0])
+      .replaceAll("{academia}", settings?.gym_name ?? "Academia ALT FITNESS")
+      .replaceAll("{valor}", brl(Number(row.amount)))
+      .replaceAll("{vencimento}", fmtDate(row.due_date))
+      .replaceAll("{chave_pix}", settings?.pix_key ?? "")
+      .replaceAll("{pix}", settings?.pix_key ? ` Chave Pix: ${settings.pix_key}` : "");
     const phone = phoneDigits(row.students?.whatsapp);
     return `https://wa.me/${phone.length <= 11 ? "55" + phone : phone}?text=${encodeURIComponent(message)}`;
+  };
+  const saveTemplates = async () => {
+    setSavingTemplates(true);
+    const { error } = await supabase.from("settings").update({ receivables_message_templates: templates }).eq("id", 1);
+    setSavingTemplates(false);
+    if (error) { toast.error("Não foi possível salvar os modelos de mensagem."); return; }
+    await queryClient.invalidateQueries({ queryKey: ["settings"] });
+    toast.success("Modelos de mensagem salvos.");
   };
   const openNextSelectedMessage = () => {
     if (!selectedRows.length) { toast.error("Selecione pelo menos um aluno com WhatsApp."); return; }
@@ -103,6 +132,12 @@ function VencimentosReport() {
           <h2 className="text-lg font-bold">Vencimentos de Alunos</h2>
           <p className="text-sm text-muted-foreground">Consulte quem vence em uma data específica, em um período ou quem está pendente.</p>
         </div>
+        <div className="flex justify-end"><Button size="sm" variant="outline" onClick={() => setShowMessageSettings((value) => !value)}><Settings2 className="mr-2 h-4 w-4" />{showMessageSettings ? "Fechar modelos" : "Configurar mensagens"}</Button></div>
+        {showMessageSettings && <section className="space-y-3 rounded-lg border border-border bg-card p-3">
+          <div><h3 className="font-semibold">Modelos de mensagens do WhatsApp</h3><p className="text-xs text-muted-foreground">Edite os textos. Variáveis disponíveis: {`{nome}`}, {`{academia}`}, {`{valor}`}, {`{vencimento}`}, {`{pix}`} e {`{chave_pix}`}.</p></div>
+          {([{ key: "a_vencer", label: "A vencer" }, { key: "hoje", label: "Vence hoje" }, { key: "vencidos", label: "Vencidos" }, { key: "recebidos", label: "Recebidos" }] as const).map(({ key, label }) => <Field key={key} label={label}><Textarea value={templates[key]} onChange={(event) => setTemplates((current) => ({ ...current, [key]: event.target.value }))} rows={3} /></Field>)}
+          <div className="flex justify-end"><Button size="sm" onClick={saveTemplates} disabled={savingTemplates}>{savingTemplates ? "Salvando…" : "Salvar modelos"}</Button></div>
+        </section>}
         <ModuleBar>
           <Field label="Data inicial">
             <Input type="date" value={startDate} onChange={(event) => { setStartDate(event.target.value); setSelectedIds([]); setMessageIndex(0); }} />
@@ -163,7 +198,7 @@ function VencimentosReport() {
               {!isLoading && filtered.length === 0 && <EmptyRow cols={7} text="Nenhum vencimento encontrado nesse filtro." />}
               {!(startDate && endDate && startDate > endDate) && filtered.map((row) => (
                 <tr key={row.id} className={grid.tr}>
-                  <td className={grid.td}>{!row.paid_at && phoneDigits(row.students?.whatsapp).length >= 10 ? <input aria-label={`Selecionar ${row.students?.name}`} type="checkbox" checked={selectedIds.includes(row.id)} onChange={() => { setSelectedIds((current) => current.includes(row.id) ? current.filter((id) => id !== row.id) : [...current, row.id]); setMessageIndex(0); }} /> : "—"}</td>
+                  <td className={grid.td}>{phoneDigits(row.students?.whatsapp).length >= 10 ? <input aria-label={`Selecionar ${row.students?.name}`} type="checkbox" checked={selectedIds.includes(row.id)} onChange={() => { setSelectedIds((current) => current.includes(row.id) ? current.filter((id) => id !== row.id) : [...current, row.id]); setMessageIndex(0); }} /> : "—"}</td>
                   <td className={grid.td}>{fmtDate(row.due_date)}</td>
                   <td className={grid.td}>{row.students?.matricula ?? "—"}</td>
                   <td className={grid.td}>{row.students?.name ?? "—"}</td>
