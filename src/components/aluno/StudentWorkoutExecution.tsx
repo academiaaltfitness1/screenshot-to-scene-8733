@@ -43,7 +43,7 @@ function normalizeExerciseName(value: string) {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 }
 
-function ExerciseIllustration({ exercise }: { exercise: string }) {
+export function ExerciseIllustration({ exercise }: { exercise: string }) {
   const { data: library = [], isLoading } = useQuery<ExerciseMediaRecord[]>({
     queryKey: ["repdb-exercise-illustrations"],
     queryFn: async () => {
