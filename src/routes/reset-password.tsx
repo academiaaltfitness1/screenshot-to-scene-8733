@@ -39,7 +39,7 @@ function ResetPassword() {
         <h1 className="text-2xl font-bold">Definir nova senha</h1>
         <div className="space-y-1.5">
           <Label htmlFor="pw">Nova senha</Label>
-          <Input id="pw" type="password" minLength={6} required value={password} onChange={(e) => setPassword(e.target.value)} />
+          <Input id="pw" type="password" minLength={8} required value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
         <Button type="submit" variant="hero" className="w-full" disabled={busy}>
           Salvar
