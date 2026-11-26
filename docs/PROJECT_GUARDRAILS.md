@@ -34,11 +34,11 @@ Este documento é a referência operacional obrigatória para toda alteração f
 
 ## Estado conhecido em 2026-11-26
 - Comparação entre `main` e `altfitness/implementacao-prd-2026-11-24`: divergente.
-- Na comparação consultada, a branch do Lovable estava 271 commits à frente e 17 atrás da `main`.
-- O Lovable confirmou o SHA `fb6a2f1ab9ebcecf323eaa9daf8ef8a71e462e6c`, igual ao commit atual da branch conectada no momento da consulta.
+- Na comparação consultada, a branch do Lovable estava 272 commits à frente e 17 atrás da `main`.
+- O Lovable confirmou o SHA `fb6a2f1ab9ebcecf323eaa9daf8ef8a71e462e6c` antes da atualização deste documento.
 - A `main` apontava para `07d145a8b71a079d4bda3a5606ada732f5a4adee`.
 - Existem branches de backup `backup/pre-consolidacao-lovable-2026-11-26` e `backup/pre-consolidacao-main-2026-11-26`.
-- Em 2026-11-26, o Lovable passou a confirmar o mesmo SHA `fb6a2f1ab9ebcecf323eaa9daf8ef8a71e462e6c` da branch conectada. Isso confirma sincronização dessa branch, mas NÃO consolidação com `main`.
+- Em 2026-11-26, o Lovable confirmou o SHA `fb6a2f1ab9ebcecf323eaa9daf8ef8a71e462e6c`; depois, o GitHub recebeu o commit `e20861f7212258dae7610e38011cdb7a812808a7` com a atualização deste documento. A sincronização do commit `e20861f` ainda precisa ser confirmada no Lovable. Isso não é consolidação com `main`.
 - A comparação encontrou 72 arquivos diferentes entre as pontas das branches; a branch conectada contém a implementação do ALT Aluno, painel móvel administrativo, integrações Henry/QR e migrações adicionais. Não descartar esses arquivos.
 - A branch conectada ainda tem `supabase/config.toml` apontando para `btcltrckmbmnbkbwmzid`, enquanto o projeto Supabase disponível na conta conectada é `xyyuvwyyneadvkfwbvfb`. Não executar migrações até resolver o destino.
 - O histórico de migrações consultado no Supabase ativo contém 10 entradas; o journal do código da branch conectada contém 18 entradas (0000 a 0017). É necessária reconciliação migração por migração, sem reaplicar operações cegamente.
