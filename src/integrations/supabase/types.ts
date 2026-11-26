@@ -1265,6 +1265,7 @@ export type Database = {
         Row: {
           exercise: string
           id: string
+          video_url: string | null
           load: string
           notes: string | null
           reps: string
@@ -1276,6 +1277,7 @@ export type Database = {
         Insert: {
           exercise: string
           id?: string
+          video_url?: string | null
           load?: string
           notes?: string | null
           reps?: string

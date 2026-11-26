@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 type Workout = {
   id: string; letter: string; name: string;
-  workout_exercises: { id: string; exercise: string; sets: string; reps: string; load: string; rest: string; sort_order: number }[];
+  workout_exercises: { id: string; exercise: string; sets: string; reps: string; load: string; rest: string; sort_order: number; video_url?: string | null }[];
 };
 
 
@@ -43,7 +43,7 @@ function normalizeExerciseName(value: string) {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 }
 
-export function ExerciseIllustration({ exercise }: { exercise: string }) {
+export function ExerciseIllustration({ exercise, videoUrl }: { exercise: string; videoUrl?: string | null }) {
   const { data: library = [], isLoading } = useQuery<ExerciseMediaRecord[]>({
     queryKey: ["repdb-exercise-illustrations"],
     queryFn: async () => {
@@ -56,6 +56,7 @@ export function ExerciseIllustration({ exercise }: { exercise: string }) {
     retry: 1,
   });
 
+  const safeVideoUrl = (() => { if (!videoUrl?.trim()) return null; try { const url = new URL(videoUrl); return url.protocol === "https:" && ["youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be", "www.youtube-nocookie.com"].includes(url.hostname) ? url.href : null; } catch { return null; } })();
   const normalized = normalizeExerciseName(exercise);
   const aliases = EXERCISE_SEARCH_ALIASES[normalized] ?? [normalized];
   const match = library.find((item) => {
@@ -84,13 +85,13 @@ export function ExerciseIllustration({ exercise }: { exercise: string }) {
       </div>
       <p className="mt-2 text-[10px] text-zinc-500">Demonstração visual em loop entre as posições inicial e final. Esta ilustração não é uma gravação real do exercício. Imagens: <a href="https://repdb.co" target="_blank" rel="noreferrer" className="underline">Exercise data by RepDB</a>.</p>
       <a
-        href={`https://www.youtube.com/results?search_query=${encodeURIComponent(exercise + " execução correta")}`}
+        href={safeVideoUrl ?? `https://www.youtube.com/results?search_query=${encodeURIComponent(exercise + " execução correta")}`}
         target="_blank"
         rel="noopener noreferrer"
         className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-[#facc15] px-3 py-2.5 text-sm font-extrabold text-black transition hover:bg-yellow-300"
         aria-label={`Buscar vídeo demonstrativo de ${exercise} no YouTube`}
       >
-        <Youtube size={18} /> Assistir demonstração no YouTube
+        <Youtube size={18} /> {safeVideoUrl ? "Assistir vídeo indicado pelo professor" : "Buscar demonstração no YouTube"}
       </a>
     </div>
   );
@@ -252,7 +253,7 @@ export function StudentWorkoutExecution({ workouts }: { workouts: Workout[] }) {
       <p className="font-bold text-[#facc15]">Em andamento · Treino {activeWorkout.letter} — {activeWorkout.name}</p>
       <div className="mt-3 space-y-3">{[...activeWorkout.workout_exercises].sort((a,b)=>a.sort_order-b.sort_order).map(ex=><div key={ex.id} className="rounded-lg border border-white/10 p-3">
         <p className="break-words text-base font-bold leading-snug">{ex.exercise}</p>
-        <ExerciseIllustration exercise={ex.exercise} />
+        <ExerciseIllustration exercise={ex.exercise} videoUrl={ex.video_url} />
         <p className="mt-2 text-xs text-zinc-400">{ex.sets} séries · {ex.reps} repetições · descanso {ex.rest}</p>
         <button type="button" onClick={()=>startRest(ex)} className="mt-2 rounded border border-[#facc15]/40 px-3 py-1.5 text-xs font-bold text-[#facc15]">
           {restTimers[ex.id] && restTimers[ex.id] > clock ? "Descansando " + Math.ceil((restTimers[ex.id] - clock) / 1000) + "s" : "Iniciar descanso (" + restSeconds(ex.rest) + "s)"}

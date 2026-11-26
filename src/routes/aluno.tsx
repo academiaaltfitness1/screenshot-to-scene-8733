@@ -40,7 +40,7 @@ function StudentPortal() {
     enabled: signedIn && !!profile?.id,
     queryFn: async () => {
       const { data, error } = await supabase.from("workouts")
-        .select("id,letter,name,notes,workout_exercises(id,exercise,sets,reps,load,rest,sort_order)")
+        .select("id,letter,name,notes,workout_exercises(id,exercise,sets,reps,load,rest,sort_order,video_url)")
         .eq("student_id", profile!.id).eq("active", true).order("letter");
       if (error) throw error;
       return data ?? [];
@@ -92,7 +92,7 @@ function StudentPortal() {
           <h2 className="mb-3 flex items-center gap-2 text-lg font-extrabold"><Dumbbell className="text-[#facc15]"/> Meus treinos</h2>
           {workouts.length ? <div className="space-y-3">{workouts.map(w=><article key={w.id} className="rounded-lg border border-white/10 bg-black p-3"><div className="flex items-center gap-2"><span className="rounded bg-[#facc15] px-2 py-1 font-black text-black">{w.letter}</span><h3 className="font-bold">{w.name}</h3></div>{w.notes && <p className="mt-2 text-sm text-zinc-400">{w.notes}</p>}<ul className="mt-3 space-y-2">{[...(w.workout_exercises??[])].sort((a,b)=>a.sort_order-b.sort_order).map(ex=><li key={ex.id} className="border-b border-white/5 pb-3 text-sm">
   <div className="flex justify-between gap-3"><span className="min-w-0 flex-1 whitespace-normal break-words font-semibold">{ex.exercise}</span><span className="shrink-0 text-zinc-400">{ex.sets} × {ex.reps}</span></div>
-  <ExerciseIllustration exercise={ex.exercise} />
+  <ExerciseIllustration exercise={ex.exercise} videoUrl={ex.video_url} />
 </li>)}</ul></article>)}</div> : <p className="text-sm text-zinc-400">Nenhuma ficha ativa cadastrada ainda.</p>}
         </section>
         <StudentMembershipQr />

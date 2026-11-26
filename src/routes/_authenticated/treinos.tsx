@@ -32,6 +32,7 @@ interface Ex {
   reps: string;
   load: string;
   rest: string;
+  video_url: string;
 }
 interface Workout {
   id?: string;
@@ -47,7 +48,9 @@ const SUGGESTIONS = [
   "Rosca alternada", "Tríceps pulley", "Tríceps testa", "Panturrilha em pé", "Abdominal supra", "Prancha",
 ];
 
-const newEx = (): Ex => ({ exercise: "", sets: "3", reps: "12", load: "", rest: "60s" });
+const newEx = (): Ex => ({ exercise: "", sets: "3", reps: "12", load: "", rest: "60s", video_url: "" });
+
+function isAllowedYoutubeUrl(value: string) { try { const url = new URL(value); return url.protocol === "https:" && ["youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be", "www.youtube-nocookie.com"].includes(url.hostname); } catch { return false; } }
 
 type CatalogExercise = { id: string; name_en: string; name_es?: string; body_part?: string; equipment?: string; difficulty?: string };
 const PT_EXERCISE_NAMES: Record<string, string> = {
@@ -151,7 +154,7 @@ function TreinosPage() {
         letter: w.letter,
         name: w.name,
         notes: w.notes ?? "",
-        exercises: [...w.workout_exercises].sort((a, b) => a.sort_order - b.sort_order).map((e) => ({ exercise: e.exercise, sets: e.sets, reps: e.reps, load: e.load, rest: e.rest })),
+        exercises: [...w.workout_exercises].sort((a, b) => a.sort_order - b.sort_order).map((e) => ({ exercise: e.exercise, sets: e.sets, reps: e.reps, load: e.load, rest: e.rest, video_url: e.video_url ?? "", video_url: e.video_url ?? "" })),
       })),
     );
   }, [data]);
@@ -194,6 +197,8 @@ function TreinosPage() {
 
   async function save() {
     if (!student) return;
+    const invalidVideo = plan.flatMap((w) => w.exercises).find((e) => e.video_url.trim() && !isAllowedYoutubeUrl(e.video_url.trim()));
+    if (invalidVideo) { toast.error("Use um link válido do YouTube (youtube.com ou youtu.be)."); return; }
     setSaving(true);
     const createdIds: string[] = [];
     try {
@@ -225,6 +230,7 @@ function TreinosPage() {
             reps: e.reps,
             load: e.load,
             rest: e.rest,
+            video_url: e.video_url.trim() || null,
             workout_id: nw.id,
             sort_order: k,
           }));
@@ -348,6 +354,13 @@ function TreinosPage() {
                         <button type="button" aria-label="Remover exercício" onClick={() => upd(i, { exercises: w.exercises.filter((_, j) => j !== k) })}>
                           <X className="h-4 w-4 text-destructive" />
                         </button>
+                      </td>
+                    </tr>
+                    <tr className="border-b border-border bg-muted/30">
+                      <td colSpan={6} className="px-2 pb-3 pt-1">
+                        <label className="mb-1 block text-xs font-semibold text-muted-foreground">Link personalizado do YouTube (opcional)</label>
+                        <Input className="h-9 w-full" type="url" placeholder="Cole aqui o link do vídeo deste exercício" value={e.video_url ?? ""} onChange={(ev) => updEx(i, k, { video_url: ev.target.value })} />
+                        {e.video_url?.trim() && <span className="mt-1 block text-xs text-muted-foreground">{isAllowedYoutubeUrl(e.video_url.trim()) ? "Link pronto para salvar." : "Informe um link do YouTube (youtube.com ou youtu.be)."}</span>}
                       </td>
                     </tr>
                   ))}
