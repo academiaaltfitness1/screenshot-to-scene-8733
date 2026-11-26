@@ -81,7 +81,7 @@ export function ExerciseIllustration({ exercise }: { exercise: string }) {
         {(startPath || mainPath) && <img src={imageBase + (startPath || mainPath)} alt={exercise + " — posição inicial"} loading="lazy" className="aspect-square w-full rounded-md bg-white object-contain" />}
         {(peakPath || mainPath) && <img src={imageBase + (peakPath || mainPath)} alt={exercise + " — posição final"} loading="lazy" className="aspect-square w-full rounded-md bg-white object-contain" />}
       </div>
-      <p className="mt-2 text-[10px] text-zinc-500">Imagem ilustrativa: posição inicial e final do movimento.</p>
+      <p className="mt-2 text-[10px] text-zinc-500">Imagem ilustrativa: posição inicial e final do movimento. Ilustrações: <a href="https://repdb.co" target="_blank" rel="noreferrer" className="underline">Exercise data by RepDB</a>.</p>
     </div>
   );
 }
