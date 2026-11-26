@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useStaff } from "@/hooks/use-staff";
 import { MODULES } from "@/lib/modules";
 import type { ModuleDef } from "@/lib/modules";
+import { todayISO } from "@/lib/access";
 
 export const Route = createFileRoute("/_authenticated/admin-mobile")({
   head: () => ({ meta: [
@@ -17,13 +18,14 @@ export const Route = createFileRoute("/_authenticated/admin-mobile")({
 function AdminMobile() {
   const navigate = useNavigate();
   const { staff, can, isLoading } = useStaff();
+  const today = todayISO();
   const { data: stats } = useQuery({
-    queryKey: ["admin-mobile-stats", can("alunos"), can("receber"), can("treinos")],
+    queryKey: ["admin-mobile-stats", today, can("alunos"), can("receber"), can("treinos")],
     enabled: !!staff,
     queryFn: async () => {
       const [students, overdue, proofs, goals] = await Promise.all([
         can("alunos") ? supabase.from("students").select("id", { count: "exact", head: true }).eq("status", "ativo") : Promise.resolve({ count: null }),
-        can("receber") ? supabase.from("receivables").select("id", { count: "exact", head: true }).is("paid_at", null).lt("due_date", new Date().toISOString().slice(0,10)) : Promise.resolve({ count: null }),
+        can("receber") ? supabase.from("receivables").select("id", { count: "exact", head: true }).is("paid_at", null).lt("due_date", today) : Promise.resolve({ count: null }),
         can("receber") ? supabase.from("payment_proofs").select("id", { count: "exact", head: true }).eq("status", "pendente") : Promise.resolve({ count: null }),
         can("treinos") ? (supabase as any).from("student_goal_events").select("id,student_id,week_start,target_sessions,completed_sessions,reached_at,students(name,matricula)").order("reached_at", { ascending: false }).limit(5) : Promise.resolve({ data: [] }),
       ]);
