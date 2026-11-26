@@ -22,11 +22,18 @@ export const Route = createFileRoute("/api/public/agent/sync")({
         await db.from("settings").update({ agent_last_seen: new Date().toISOString() }).eq("id", 1);
         if (onlyCommands) return Response.json({ commands: cmds });
 
-        const [{ data: settings }, { data: students }] = await Promise.all([
+        const [{ data: settings }, { data: students }, { data: qrSecrets }] = await Promise.all([
           db.from("settings").select("tolerance_days, turnstile_ip, turnstile_port, release_seconds, block_inactive, welcome_message, allow_card, allow_matricula, allow_password, allow_qrcode, allow_sko12, allow_face").eq("id", 1).single(),
           db.from("student_overview").select("id, matricula, name, status, access_password, card_number, qr_code, valid_until, overdue_since").limit(5000),
+          db.from("student_qr_secrets").select("student_id, secret"),
         ]);
-        return Response.json({ settings, students: students ?? [], commands: [] });
+        // This private, agent-token-protected endpoint is the only client allowed to receive QR secrets.
+        const secretByStudent = new Map((qrSecrets ?? []).map((row) => [row.student_id, row.secret]));
+        const agentStudents = (students ?? []).map((student) => ({
+          ...student,
+          qr_secret: secretByStudent.get(student.id) ?? null,
+        }));
+        return Response.json({ settings, students: agentStudents, commands: [] });
       },
     },
   },
