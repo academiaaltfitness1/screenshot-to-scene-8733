@@ -92,7 +92,7 @@ function StudentPortal() {
         </section>
         <StudentMembershipQr />
         <StudentWorkoutExecution workouts={workouts as any} />
-        <StudentGoalProgress />
+        {profile?.id && <StudentGoalProgress studentId={profile.id} />}
         <StudentAttendanceHistory />
         <section className="rounded-xl border border-white/10 bg-[#151515] p-4">
           <h2 className="mb-3 flex items-center gap-2 text-lg font-extrabold"><Wallet className="text-[#facc15]"/> Minhas mensalidades</h2>
