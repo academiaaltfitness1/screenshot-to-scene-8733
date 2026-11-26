@@ -29,7 +29,7 @@ function AdminMobile() {
     queryFn: async () => {
       const [students, ready, overdue, proofs, goals, reviews] = await Promise.all([
         can("alunos") ? supabase.from("students").select("id", { count: "exact", head: true }).eq("status", "ativo") : Promise.resolve({ count: null }),
-        can("alunos") ? supabase.from("students").select("id", { count: "exact", head: true }).eq("status", "ativo").not("cpf", "is", null).not("birth_date", "is", null) : Promise.resolve({ count: null }),
+        can("alunos") ? supabase.from("students").select("id", { count: "exact", head: true }).eq("status", "ativo").not("cpf", "is", null).neq("cpf", "").not("birth_date", "is", null) : Promise.resolve({ count: null }),
         can("receber") ? supabase.from("receivables").select("id", { count: "exact", head: true }).is("paid_at", null).lt("due_date", today) : Promise.resolve({ count: null }),
         can("receber") ? supabase.from("payment_proofs").select("id", { count: "exact", head: true }).eq("status", "pendente") : Promise.resolve({ count: null }),
         can("treinos") ? (supabase as any).from("student_goal_events").select("id,student_id,week_start,target_sessions,completed_sessions,reached_at,students(name,matricula)").order("reached_at", { ascending: false }).limit(5) : Promise.resolve({ data: [] }),
