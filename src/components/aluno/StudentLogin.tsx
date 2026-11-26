@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2, MailCheck, KeyRound, UserRoundPlus } from "lucide-react";
+import sharkAsset from "@/assets/alt-mascote.webp.asset.json";
+const shark = sharkAsset.url;
 import { supabase } from "@/integrations/supabase/client";
 import { studentSignIn, beginStudentActivation, resendStudentActivationOtp, requestStudentPasswordReset } from "@/lib/student.functions";
 
@@ -85,7 +87,7 @@ export function StudentLogin({ onSignedIn }: { onSignedIn: () => void }) {
 
   return <div className="mx-auto w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-[#151515] shadow-2xl">
     <div className="border-b border-white/10 bg-black px-6 py-8 text-center">
-      <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#facc15] text-black"><KeyRound size={30}/></div>
+      <img src={shark} alt="Mascote ALT FITNESS" className="mx-auto mb-3 h-24 w-24 object-contain"/>
       <p className="text-xs font-bold tracking-[.3em] text-[#facc15]">ACADEMIA</p>
       <h1 className="mt-1 text-3xl font-black">ALT FITNESS</h1>
       <p className="mt-2 text-sm text-zinc-400">ALT ALUNO · {title}</p>
