@@ -77,11 +77,12 @@ export function ExerciseIllustration({ exercise }: { exercise: string }) {
   return (
     <div className="mt-3 rounded-lg border border-white/10 bg-[#101010] p-2">
       <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-[#facc15]">Demonstração ilustrativa</p>
-      <div className="grid grid-cols-2 gap-2">
-        {(startPath || mainPath) && <img src={imageBase + (startPath || mainPath)} alt={exercise + " — posição inicial"} loading="lazy" className="aspect-square w-full rounded-md bg-white object-contain" />}
-        {(peakPath || mainPath) && <img src={imageBase + (peakPath || mainPath)} alt={exercise + " — posição final"} loading="lazy" className="aspect-square w-full rounded-md bg-white object-contain" />}
+      <style>{"@keyframes alt-exercise-loop { 0%, 42% { opacity: 1; } 50%, 92% { opacity: 0; } 100% { opacity: 1; } } @keyframes alt-exercise-loop-reverse { 0%, 42% { opacity: 0; } 50%, 92% { opacity: 1; } 100% { opacity: 0; } }"}</style>
+      <div className="relative mx-auto aspect-square w-full max-w-[280px] overflow-hidden rounded-lg bg-white">
+        {(startPath || mainPath) && <img src={imageBase + (startPath || mainPath)} alt={exercise + " — posição inicial"} loading="lazy" className="absolute inset-0 h-full w-full object-contain" style={{ animation: peakPath ? "alt-exercise-loop 2.4s ease-in-out infinite" : "none" }} />}
+        {peakPath && <img src={imageBase + peakPath} alt={exercise + " — posição final"} loading="lazy" className="absolute inset-0 h-full w-full object-contain" style={{ animation: "alt-exercise-loop-reverse 2.4s ease-in-out infinite" }} />}
       </div>
-      <p className="mt-2 text-[10px] text-zinc-500">Imagem ilustrativa: posição inicial e final do movimento. Ilustrações: <a href="https://repdb.co" target="_blank" rel="noreferrer" className="underline">Exercise data by RepDB</a>.</p>
+      <p className="mt-2 text-[10px] text-zinc-500">Demonstração visual em loop entre as posições inicial e final (transição ilustrativa, não é vídeo de captura real). Imagens: <a href="https://repdb.co" target="_blank" rel="noreferrer" className="underline">Exercise data by RepDB</a>.</p>
     </div>
   );
 }
