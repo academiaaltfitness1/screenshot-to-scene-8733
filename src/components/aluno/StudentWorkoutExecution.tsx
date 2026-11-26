@@ -18,6 +18,16 @@ export function StudentWorkoutExecution({ workouts }: { workouts: Workout[] }) {
   const [loads, setLoads] = useState<Record<string, string>>({});
   const [reps, setReps] = useState<Record<string, string>>({});
   const [durations, setDurations] = useState<Record<string, string>>({});
+  const activeSession = sessions.find((session) => session.status === "em_andamento" && session.workout_id);
+  const { data: activeSessionWorkout } = useQuery({
+    queryKey: ["student-active-session-workout", activeSession?.workout_id],
+    enabled: !!activeSession?.workout_id,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("workouts").select("*, workout_exercises(*)").eq("id", activeSession!.workout_id!).single();
+      if (error) throw error;
+      return data;
+    },
+  });
   const [restTimers, setRestTimers] = useState<Record<string, number>>({});
   const [clock, setClock] = useState(Date.now());
   const activeWorkout = useMemo(() => workouts.find(w => w.id === selectedWorkout), [workouts, selectedWorkout]);
@@ -66,7 +76,7 @@ export function StudentWorkoutExecution({ workouts }: { workouts: Workout[] }) {
 
   useEffect(() => {
     const current = sessions.find((session) => session.status === "em_andamento" && session.workout_id);
-    if (current?.workout_id && workouts.some((workout) => workout.id === current.workout_id)) {
+    if (current?.workout_id) {
       setSessionId(current.id);
       setSelectedWorkout(current.workout_id);
     } else if (!current) {
