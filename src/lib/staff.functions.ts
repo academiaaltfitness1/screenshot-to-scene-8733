@@ -27,9 +27,18 @@ export const staffSignIn = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: prof } = await supabaseAdmin.from("profiles").select("active").eq("id", data.userId).maybeSingle();
-    if (!prof?.active) return { ok: false as const, error: "Usuário inativo ou não encontrado." };
-    const { data: u } = await supabaseAdmin.auth.admin.getUserById(data.userId);
+    const [profile, roles] = await Promise.all([
+      supabaseAdmin.from("profiles").select("active").eq("id", data.userId).maybeSingle(),
+      supabaseAdmin.from("user_roles").select("role").eq("user_id", data.userId),
+    ]);
+    if (profile.error || roles.error) {
+      return { ok: false as const, error: "Não foi possível validar o acesso da equipe. Tente novamente." };
+    }
+    if (!profile.data || profile.data.active !== true || !(roles.data ?? []).some((row) => row.role === "admin" || row.role === "staff")) {
+      return { ok: false as const, error: "Usuário inativo ou sem permissão de equipe." };
+    }
+    const { data: u, error: userError } = await supabaseAdmin.auth.admin.getUserById(data.userId);
+    if (userError) return { ok: false as const, error: "Usuário não encontrado." };
     const email = u.user?.email;
     if (!email) return { ok: false as const, error: "Usuário não encontrado." };
     const { data: s, error } = await publicClient().auth.signInWithPassword({ email, password: data.password });
