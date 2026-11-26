@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Play, Square, Loader2 } from "lucide-react";
+import { CheckCircle2, Play, Square, Loader2, Youtube } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -82,7 +82,16 @@ export function ExerciseIllustration({ exercise }: { exercise: string }) {
         {(startPath || mainPath) && <img src={imageBase + (startPath || mainPath)} alt={exercise + " — posição inicial"} loading="lazy" className="absolute inset-0 h-full w-full object-contain" style={{ animation: peakPath ? "alt-exercise-loop 2.4s ease-in-out infinite" : "none" }} />}
         {peakPath && <img src={imageBase + peakPath} alt={exercise + " — posição final"} loading="lazy" className="absolute inset-0 h-full w-full object-contain" style={{ animation: "alt-exercise-loop-reverse 2.4s ease-in-out infinite" }} />}
       </div>
-      <p className="mt-2 text-[10px] text-zinc-500">Demonstração visual em loop entre as posições inicial e final (transição ilustrativa, não é vídeo de captura real). Imagens: <a href="https://repdb.co" target="_blank" rel="noreferrer" className="underline">Exercise data by RepDB</a>.</p>
+      <p className="mt-2 text-[10px] text-zinc-500">Demonstração visual em loop entre as posições inicial e final. Esta ilustração não é uma gravação real do exercício. Imagens: <a href="https://repdb.co" target="_blank" rel="noreferrer" className="underline">Exercise data by RepDB</a>.</p>
+      <a
+        href={`https://www.youtube.com/results?search_query=${encodeURIComponent(exercise + " execução correta")}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-[#facc15] px-3 py-2.5 text-sm font-extrabold text-black transition hover:bg-yellow-300"
+        aria-label={`Buscar vídeo demonstrativo de ${exercise} no YouTube`}
+      >
+        <Youtube size={18} /> Assistir demonstração no YouTube
+      </a>
     </div>
   );
 }
