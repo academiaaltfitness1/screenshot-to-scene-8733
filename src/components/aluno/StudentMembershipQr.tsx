@@ -28,6 +28,7 @@ export function StudentMembershipQr() {
   const fixedFallback = data?.mode === "fixed" || (showFixed && !!data?.fallbackToken);
   const displayToken = showFixed && data?.fallbackToken ? data.fallbackToken : data?.token;
   const remaining = fixedFallback ? Number.POSITIVE_INFINITY : data ? Math.max(0, Math.ceil((data.expiresAt - now) / 1000)) : 0;
+
   return <section className="rounded-xl border border-[#facc15]/30 bg-[#151515] p-4 text-center">
     <h2 className="mb-2 text-lg font-extrabold text-[#facc15]">Minha carteirinha digital</h2>
     {displayToken && (fixedFallback || remaining > 0) ? <div className="mx-auto w-fit rounded-xl bg-white p-3">
@@ -38,9 +39,12 @@ export function StudentMembershipQr() {
     <p className="mt-3 font-mono text-sm tracking-widest">{displayToken ?? "—"}</p>
     <p className="mt-1 text-xs text-zinc-400">{fixedFallback ? "QR fixo da academia · alternativa" : data?.mode === "dynamic" ? "Código temporário · atualiza a cada 30 segundos" : "Carteirinha digital"}</p>
     {data?.mode === "dynamic" && !fixedFallback && <p className="mt-2 text-sm font-bold text-[#facc15]">{remaining > 0 ? "Expira em " + remaining + "s" : "Atualizando código…"}</p>}
-    <div className="mt-3 flex flex-wrap justify-center gap-2">{data?.mode === "dynamic" && data.fallbackToken && <button type="button" onClick={()=>setShowFixed(v=>!v)} className="rounded-lg border border-[#facc15]/40 px-3 py-2 text-sm text-[#facc15]">{showFixed ? "Voltar ao QR temporário" : "Usar QR fixo (alternativa)"}</button>}<button type="button" onClick={()=>void refetch()} disabled={isFetching} className="mt-3 inline-flex items-center gap-2 rounded-lg border border-white/15 px-3 py-2 text-sm text-zinc-200 disabled:opacity-50">
-      <RefreshCw size={15} className={isFetching?"animate-spin":""}/> Atualizar agora
-    </button>
-    <p className="mt-3 flex items-center justify-center gap-1 text-[11px] text-zinc-500"><ShieldCheck size={13}/> {data?.mode === "dynamic" ? "O código temporário só pode ser usado uma vez por janela na catraca habilitada." : "Apresente seu QR fixo atual na catraca, conforme orientação da recepção."}</p>
+    <div className="mt-3 flex flex-wrap justify-center gap-2">
+      {data?.mode === "dynamic" && data.fallbackToken && <button type="button" onClick={()=>setShowFixed(v=>!v)} className="rounded-lg border border-[#facc15]/40 px-3 py-2 text-sm text-[#facc15]">{showFixed ? "Voltar ao QR temporário" : "Usar QR fixo (alternativa)"}</button>}
+      <button type="button" onClick={()=>void refetch()} disabled={isFetching} className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-3 py-2 text-sm text-zinc-200 disabled:opacity-50">
+        <RefreshCw size={15} className={isFetching?"animate-spin":""}/> Atualizar agora
+      </button>
+    </div>
+    <p className="mt-3 flex items-center justify-center gap-1 text-[11px] text-zinc-500"><ShieldCheck size={13}/> {data?.mode === "dynamic" && !fixedFallback ? "O código temporário só pode ser usado uma vez por janela na catraca habilitada." : "Apresente seu QR fixo atual na catraca, conforme orientação da recepção."}</p>
   </section>;
 }
