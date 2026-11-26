@@ -6,8 +6,8 @@ import gymBg from "@/assets/gym-bg.webp";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Academia ALT FITNESS — Sistema e App do Aluno" },
-      { name: "description", content: "Acesso da equipe ao sistema de gestão e app gratuito do aluno da Academia ALT FITNESS." },
+      { title: "Academia ALT FITNESS — Sistema e ALT ALUNO" },
+      { name: "description", content: "Acesso ao ALT ADMIN para gestão da academia e ao ALT ALUNO para treinos e serviços." },
       { property: "og:title", content: "Academia ALT FITNESS — Sistema e App do Aluno" },
       { property: "og:description", content: "Acesso da equipe ao sistema de gestão e app gratuito do aluno da Academia ALT FITNESS." },
     ],
