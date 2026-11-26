@@ -18,12 +18,14 @@ var net = require("net");
 var http = require("http");
 var fs = require("fs");
 var path = require("path");
+var crypto = require("crypto");
 
 var DIR = __dirname;
 var CONFIG = JSON.parse(fs.readFileSync(path.join(DIR, "config.json"), "utf8"));
 var CACHE_FILE = path.join(DIR, "alunos-cache.json");
 var QUEUE_FILE = path.join(DIR, "eventos-pendentes.json");
 var LOG_FILE = path.join(DIR, "agente.log");
+var QR_REPLAY_FILE = path.join(DIR, "qr-ultimos-usos.json");
 
 var cache = { settings: null, students: [] };
 var queue = [];
@@ -69,9 +71,37 @@ function checkAccess(s) {
   if (s.overdue_since && today > addDays(s.overdue_since, tol)) return { allowed: false, message: "Mensalidade Vencida" };
   return { allowed: true, message: String(cfg("welcome_message", "Bem-vindo")) };
 }
+function findDynamicQr(credential) {
+  var raw = String(credential || "").trim();
+  var currentWindow = Math.floor(Date.now() / 30000);
+  var list = cache.students || [];
+  for (var i = 0; i < list.length; i++) {
+    var s = list[i];
+    if (!s.qr_secret) continue;
+    var matricula = String(s.matricula);
+    if (raw.length !== matricula.length + 8 || raw.slice(0, matricula.length) !== matricula) continue;
+    var supplied = raw.slice(matricula.length);
+    var lastUsed = Number(qrLastUsed[s.id] || 0);
+    for (var windowNumber = currentWindow - 1; windowNumber <= currentWindow + 1; windowNumber++) {
+      if (windowNumber <= lastUsed) continue;
+      var digest = crypto.createHmac("sha256", String(s.qr_secret))
+        .update(matricula + ":" + windowNumber).digest();
+      var expected = String(digest.readUInt32BE(0) % 100000000).padStart(8, "0");
+      if (supplied === expected) {
+        qrLastUsed[s.id] = windowNumber;
+        writeJson(QR_REPLAY_FILE, qrLastUsed);
+        return { s: s, source: "qrcode" };
+      }
+    }
+  }
+  return null;
+}
+
 function findStudent(credential) {
   var c = String(credential || "").replace(/^0+/, "").trim();
   var raw = String(credential || "").trim();
+  var dynamicQr = findDynamicQr(raw);
+  if (dynamicQr) return dynamicQr;
   var list = cache.students || [];
   for (var i = 0; i < list.length; i++) {
     var s = list[i];
