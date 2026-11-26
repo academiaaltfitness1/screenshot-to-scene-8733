@@ -1,5 +1,4 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
@@ -303,7 +302,7 @@ function StudentDialog({ student, onClose, onEnroll }: { student: Partial<Studen
                   <p className="mt-1 text-xs text-muted-foreground">O aluno informa o código padrão, sua matrícula e cria a própria senha. Não é necessário gerar código individual, informar CPF, data de nascimento ou e-mail.</p>
                   <p className="mt-2 font-mono text-xl font-bold tracking-widest">02226770</p>
                   <p className="mt-1 text-xs text-muted-foreground">O código é fixo e não expira. A senha do aplicativo é pessoal e diferente da senha da catraca.</p>
-                </div>}/div>}
+                </div>}
                 <Field label="Senha da catraca (não é a senha do app)">
                   <Input value={f.access_password ?? ""} onChange={(e) => set("access_password", e.target.value.replace(/\D/g, ""))} placeholder="Somente números, ex.: 4321" inputMode="numeric" />
                 </Field>
