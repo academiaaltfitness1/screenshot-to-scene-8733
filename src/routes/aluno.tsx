@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Dumbbell, Wallet, LogOut, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +20,7 @@ export const Route = createFileRoute("/aluno")({
 
 function StudentPortal() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [signedIn, setSignedIn] = useState(false);
   const { data: profile } = useQuery({
     queryKey: ["student-portal-profile"],
@@ -53,13 +54,14 @@ function StudentPortal() {
   });
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setSignedIn(true);
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user?.app_metadata?.kind === "student") setSignedIn(true);
     });
   }, []);
 
   async function logout() {
     await supabase.auth.signOut();
+    queryClient.removeQueries({ predicate: (query) => String(query.queryKey[0] ?? "").startsWith("student-") });
     setSignedIn(false);
     navigate({ to: "/aluno", replace: true });
   }
