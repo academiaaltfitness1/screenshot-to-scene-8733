@@ -18,15 +18,16 @@ function AdminMobile() {
   const navigate = useNavigate();
   const { staff, can, isLoading } = useStaff();
   const { data: stats } = useQuery({
-    queryKey: ["admin-mobile-stats", can("alunos"), can("receber")],
+    queryKey: ["admin-mobile-stats", can("alunos"), can("receber"), can("treinos")],
     enabled: !!staff,
     queryFn: async () => {
-      const [students, overdue, proofs] = await Promise.all([
+      const [students, overdue, proofs, goals] = await Promise.all([
         can("alunos") ? supabase.from("students").select("id", { count: "exact", head: true }).eq("status", "ativo") : Promise.resolve({ count: null }),
         can("receber") ? supabase.from("receivables").select("id", { count: "exact", head: true }).is("paid_at", null).lt("due_date", new Date().toISOString().slice(0,10)) : Promise.resolve({ count: null }),
         can("receber") ? supabase.from("payment_proofs").select("id", { count: "exact", head: true }).eq("status", "pendente") : Promise.resolve({ count: null }),
+        can("treinos") ? (supabase as any).from("student_goal_events").select("id,student_id,week_start,target_sessions,completed_sessions,reached_at,students(name,matricula)").order("reached_at", { ascending: false }).limit(5) : Promise.resolve({ data: [] }),
       ]);
-      return { students: students.count ?? 0, overdue: overdue.count ?? 0, proofs: proofs.count ?? 0 };
+      return { students: students.count ?? 0, overdue: overdue.count ?? 0, proofs: proofs.count ?? 0, goals: goals.data ?? [] };
     },
   });
   const modules = (Object.values(MODULES) as ModuleDef[])
@@ -49,6 +50,13 @@ function AdminMobile() {
         {can("receber") && <article className="rounded-xl border border-white/10 bg-[#151515] p-3"><AlertTriangle className="mb-2 text-amber-400"/><strong className="text-2xl">{stats?.overdue ?? "—"}</strong><p className="text-xs text-zinc-400">Em atraso</p></article>}
         {can("receber") && <article className="rounded-xl border border-white/10 bg-[#151515] p-3"><ClipboardList className="mb-2 text-[#facc15]"/><strong className="text-2xl">{stats?.proofs ?? "—"}</strong><p className="text-xs text-zinc-400">Comprovantes</p></article>}
       </section>
+      {can("treinos") && <section className="rounded-xl border border-white/10 bg-[#151515] p-4">
+        <h2 className="mb-2 text-lg font-extrabold text-[#facc15]">Metas de alunos alcançadas</h2>
+        {stats?.goals?.length ? <ul className="space-y-2">{stats.goals.map((event: any)=><li key={event.id} className="rounded-lg bg-black p-3 text-sm">
+          <strong>{event.students?.name ?? "Aluno"} · {event.students?.matricula ?? "—"}</strong>
+          <p className="text-zinc-400">{event.completed_sessions}/{event.target_sessions} treinos na semana · {new Date(event.reached_at).toLocaleString("pt-BR")}</p>
+        </li>)}</ul> : <p className="text-sm text-zinc-400">Nenhuma meta alcançada recentemente.</p>}
+      </section>}
       <section className="space-y-2">
         <h2 className="text-lg font-extrabold">Módulos disponíveis</h2>
         <div className="grid gap-2 sm:grid-cols-2">
