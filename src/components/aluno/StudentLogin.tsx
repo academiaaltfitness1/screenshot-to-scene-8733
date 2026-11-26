@@ -71,7 +71,7 @@ export function StudentLogin({ onSignedIn }: { onSignedIn: () => void }) {
   function forgot(e: React.FormEvent) {
     e.preventDefault();
     void run(async () => {
-      const result = await reset({ data: { identifier } });
+      const result = await reset({ data: { identifier, redirectTo: `${window.location.origin}/reset-password` } });
       toast.success(result.message);
       setMode("login");
     });
