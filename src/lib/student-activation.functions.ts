@@ -17,9 +17,23 @@ export const createStudentActivationCode = createServerFn({ method: "POST" })
       supabaseAdmin.from("user_roles").select("role").eq("user_id", user.id),
       supabaseAdmin.from("employee_permissions").select("module").eq("user_id", user.id),
     ]);
-    const isAdmin = (roles.data ?? []).some(r => r.role === "admin");
-    const canManageStudents = isAdmin || (profile.data?.active !== false && (permissions.data ?? []).some(p => p.module === "alunos"));
-    if (profile.data?.active === false || !canManageStudents) throw new Error("Sem permissão para gerar código de ativação.");
+
+    // Fail closed: database errors, missing profiles, and inactive profiles
+    // must never grant staff access to student activation.
+    if (profile.error) throw new Error("Não foi possível validar o perfil da equipe.");
+    if (roles.error) throw new Error("Não foi possível validar as permissões da equipe.");
+    if (permissions.error) throw new Error("Não foi possível validar as permissões da equipe.");
+    if (!profile.data || profile.data.active !== true) {
+      throw new Error("Perfil de funcionário inexistente ou inativo.");
+    }
+
+    const roleList = (roles.data ?? []).map((row) => row.role);
+    const isAdmin = roleList.includes("admin");
+    const canManageStudents = isAdmin || (
+      roleList.includes("staff") &&
+      (permissions.data ?? []).some((permission) => permission.module === "alunos")
+    );
+    if (!canManageStudents) throw new Error("Sem permissão para gerar código de ativação.");
 
     const { data: student, error: studentError } = await supabaseAdmin.from("students")
       .select("id").eq("id", data.studentId).maybeSingle();
