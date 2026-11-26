@@ -17,6 +17,7 @@ import { Route as AuthenticatedAlunosRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedAvaliacaoRouteImport } from './routes/_authenticated/avaliacao'
 import { Route as AuthenticatedBackupRouteImport } from './routes/_authenticated/backup'
 import { Route as AuthenticatedCaixaRouteImport } from './routes/_authenticated/caixa'
+import { Route as AuthenticatedCatracaRouteImport } from './routes/_authenticated/catraca'
 import { Route as AuthenticatedFrequenciaRouteImport } from './routes/_authenticated/frequencia'
 import { Route as AuthenticatedFuncionariosRouteImport } from './routes/_authenticated/funcionarios'
 import { Route as AuthenticatedMatriculasRouteImport } from './routes/_authenticated/matriculas'
@@ -29,6 +30,7 @@ import { Route as AuthenticatedSistemaRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedTreinosRouteImport } from './routes/_authenticated/treinos'
 import { Route as AuthenticatedTurmasRouteImport } from './routes/_authenticated/turmas'
 import { Route as AuthenticatedVendaRouteImport } from './routes/_authenticated/venda'
+import { Route as ApiPublicAgentCommandsRouteImport } from './routes/api/public/agent/commands'
 import { Route as ApiPublicAgentEventsRouteImport } from './routes/api/public/agent/events'
 import { Route as ApiPublicAgentSyncRouteImport } from './routes/api/public/agent/sync'
 
@@ -69,6 +71,11 @@ const AuthenticatedBackupRoute = AuthenticatedBackupRouteImport.update({
 const AuthenticatedCaixaRoute = AuthenticatedCaixaRouteImport.update({
   id: '/caixa',
   path: '/caixa',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCatracaRoute = AuthenticatedCatracaRouteImport.update({
+  id: '/catraca',
+  path: '/catraca',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedFrequenciaRoute = AuthenticatedFrequenciaRouteImport.update({
@@ -132,6 +139,11 @@ const AuthenticatedVendaRoute = AuthenticatedVendaRouteImport.update({
   path: '/venda',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicAgentCommandsRoute = ApiPublicAgentCommandsRouteImport.update({
+  id: '/api/public/agent/commands',
+  path: '/api/public/agent/commands',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicAgentEventsRoute = ApiPublicAgentEventsRouteImport.update({
   id: '/api/public/agent/events',
   path: '/api/public/agent/events',
@@ -151,6 +163,7 @@ export interface FileRoutesByFullPath {
   '/avaliacao': typeof AuthenticatedAvaliacaoRoute
   '/backup': typeof AuthenticatedBackupRoute
   '/caixa': typeof AuthenticatedCaixaRoute
+  '/catraca': typeof AuthenticatedCatracaRoute
   '/frequencia': typeof AuthenticatedFrequenciaRoute
   '/funcionarios': typeof AuthenticatedFuncionariosRoute
   '/matriculas': typeof AuthenticatedMatriculasRoute
@@ -163,6 +176,7 @@ export interface FileRoutesByFullPath {
   '/treinos': typeof AuthenticatedTreinosRoute
   '/turmas': typeof AuthenticatedTurmasRoute
   '/venda': typeof AuthenticatedVendaRoute
+  '/api/public/agent/commands': typeof ApiPublicAgentCommandsRoute
   '/api/public/agent/events': typeof ApiPublicAgentEventsRoute
   '/api/public/agent/sync': typeof ApiPublicAgentSyncRoute
 }
@@ -174,6 +188,7 @@ export interface FileRoutesByTo {
   '/avaliacao': typeof AuthenticatedAvaliacaoRoute
   '/backup': typeof AuthenticatedBackupRoute
   '/caixa': typeof AuthenticatedCaixaRoute
+  '/catraca': typeof AuthenticatedCatracaRoute
   '/frequencia': typeof AuthenticatedFrequenciaRoute
   '/funcionarios': typeof AuthenticatedFuncionariosRoute
   '/matriculas': typeof AuthenticatedMatriculasRoute
@@ -186,6 +201,7 @@ export interface FileRoutesByTo {
   '/treinos': typeof AuthenticatedTreinosRoute
   '/turmas': typeof AuthenticatedTurmasRoute
   '/venda': typeof AuthenticatedVendaRoute
+  '/api/public/agent/commands': typeof ApiPublicAgentCommandsRoute
   '/api/public/agent/events': typeof ApiPublicAgentEventsRoute
   '/api/public/agent/sync': typeof ApiPublicAgentSyncRoute
 }
@@ -199,6 +215,7 @@ export interface FileRoutesById {
   '/_authenticated/avaliacao': typeof AuthenticatedAvaliacaoRoute
   '/_authenticated/backup': typeof AuthenticatedBackupRoute
   '/_authenticated/caixa': typeof AuthenticatedCaixaRoute
+  '/_authenticated/catraca': typeof AuthenticatedCatracaRoute
   '/_authenticated/frequencia': typeof AuthenticatedFrequenciaRoute
   '/_authenticated/funcionarios': typeof AuthenticatedFuncionariosRoute
   '/_authenticated/matriculas': typeof AuthenticatedMatriculasRoute
@@ -211,6 +228,7 @@ export interface FileRoutesById {
   '/_authenticated/treinos': typeof AuthenticatedTreinosRoute
   '/_authenticated/turmas': typeof AuthenticatedTurmasRoute
   '/_authenticated/venda': typeof AuthenticatedVendaRoute
+  '/api/public/agent/commands': typeof ApiPublicAgentCommandsRoute
   '/api/public/agent/events': typeof ApiPublicAgentEventsRoute
   '/api/public/agent/sync': typeof ApiPublicAgentSyncRoute
 }
@@ -224,6 +242,7 @@ export interface FileRouteTypes {
     | '/avaliacao'
     | '/backup'
     | '/caixa'
+    | '/catraca'
     | '/frequencia'
     | '/funcionarios'
     | '/matriculas'
@@ -236,6 +255,7 @@ export interface FileRouteTypes {
     | '/treinos'
     | '/turmas'
     | '/venda'
+    | '/api/public/agent/commands'
     | '/api/public/agent/events'
     | '/api/public/agent/sync'
   fileRoutesByTo: FileRoutesByTo
@@ -247,6 +267,7 @@ export interface FileRouteTypes {
     | '/avaliacao'
     | '/backup'
     | '/caixa'
+    | '/catraca'
     | '/frequencia'
     | '/funcionarios'
     | '/matriculas'
@@ -259,6 +280,7 @@ export interface FileRouteTypes {
     | '/treinos'
     | '/turmas'
     | '/venda'
+    | '/api/public/agent/commands'
     | '/api/public/agent/events'
     | '/api/public/agent/sync'
   id:
@@ -271,6 +293,7 @@ export interface FileRouteTypes {
     | '/_authenticated/avaliacao'
     | '/_authenticated/backup'
     | '/_authenticated/caixa'
+    | '/_authenticated/catraca'
     | '/_authenticated/frequencia'
     | '/_authenticated/funcionarios'
     | '/_authenticated/matriculas'
@@ -283,6 +306,7 @@ export interface FileRouteTypes {
     | '/_authenticated/treinos'
     | '/_authenticated/turmas'
     | '/_authenticated/venda'
+    | '/api/public/agent/commands'
     | '/api/public/agent/events'
     | '/api/public/agent/sync'
   fileRoutesById: FileRoutesById
@@ -292,6 +316,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiPublicAgentCommandsRoute: typeof ApiPublicAgentCommandsRoute
   ApiPublicAgentEventsRoute: typeof ApiPublicAgentEventsRoute
   ApiPublicAgentSyncRoute: typeof ApiPublicAgentSyncRoute
 }
@@ -352,6 +377,13 @@ declare module '@tanstack/react-router' {
       path: '/caixa'
       fullPath: '/caixa'
       preLoaderRoute: typeof AuthenticatedCaixaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/catraca': {
+      id: '/_authenticated/catraca'
+      path: '/catraca'
+      fullPath: '/catraca'
+      preLoaderRoute: typeof AuthenticatedCatracaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/frequencia': {
@@ -438,6 +470,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedVendaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/agent/commands': {
+      id: '/api/public/agent/commands'
+      path: '/api/public/agent/commands'
+      fullPath: '/api/public/agent/commands'
+      preLoaderRoute: typeof ApiPublicAgentCommandsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/agent/events': {
       id: '/api/public/agent/events'
       path: '/api/public/agent/events'
@@ -460,6 +499,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAvaliacaoRoute: typeof AuthenticatedAvaliacaoRoute
   AuthenticatedBackupRoute: typeof AuthenticatedBackupRoute
   AuthenticatedCaixaRoute: typeof AuthenticatedCaixaRoute
+  AuthenticatedCatracaRoute: typeof AuthenticatedCatracaRoute
   AuthenticatedFrequenciaRoute: typeof AuthenticatedFrequenciaRoute
   AuthenticatedFuncionariosRoute: typeof AuthenticatedFuncionariosRoute
   AuthenticatedMatriculasRoute: typeof AuthenticatedMatriculasRoute
@@ -479,6 +519,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAvaliacaoRoute: AuthenticatedAvaliacaoRoute,
   AuthenticatedBackupRoute: AuthenticatedBackupRoute,
   AuthenticatedCaixaRoute: AuthenticatedCaixaRoute,
+  AuthenticatedCatracaRoute: AuthenticatedCatracaRoute,
   AuthenticatedFrequenciaRoute: AuthenticatedFrequenciaRoute,
   AuthenticatedFuncionariosRoute: AuthenticatedFuncionariosRoute,
   AuthenticatedMatriculasRoute: AuthenticatedMatriculasRoute,
@@ -501,6 +542,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiPublicAgentCommandsRoute: ApiPublicAgentCommandsRoute,
   ApiPublicAgentEventsRoute: ApiPublicAgentEventsRoute,
   ApiPublicAgentSyncRoute: ApiPublicAgentSyncRoute,
 }
