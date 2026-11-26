@@ -92,6 +92,13 @@
       "when": 1795654500000,
       "tag": "0012_dynamic_qr_gate",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1795654800000,
+      "tag": "0013_agent_version_handshake",
+      "breakpoints": true
     }
   ]
 }
