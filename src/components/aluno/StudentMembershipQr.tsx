@@ -9,6 +9,7 @@ import { createStudentQrToken } from "@/lib/student-qr.functions";
 export function StudentMembershipQr() {
   const generate = useServerFn(createStudentQrToken);
   const [now, setNow] = useState(Date.now());
+  const [showFixed, setShowFixed] = useState(false);
   const { data, error, isFetching, refetch } = useQuery({
     queryKey: ["student-temporary-qr"],
     queryFn: async () => {
@@ -24,18 +25,20 @@ export function StudentMembershipQr() {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(timer);
   }, []);
-  const remaining = data?.mode === "fixed" ? Number.POSITIVE_INFINITY : data ? Math.max(0, Math.ceil((data.expiresAt - now) / 1000)) : 0;
+  const fixedFallback = data?.mode === "fixed" || (showFixed && !!data?.fallbackToken);
+  const displayToken = showFixed && data?.fallbackToken ? data.fallbackToken : data?.token;
+  const remaining = fixedFallback ? Number.POSITIVE_INFINITY : data ? Math.max(0, Math.ceil((data.expiresAt - now) / 1000)) : 0;
   return <section className="rounded-xl border border-[#facc15]/30 bg-[#151515] p-4 text-center">
     <h2 className="mb-2 text-lg font-extrabold text-[#facc15]">Minha carteirinha digital</h2>
-    {data?.token && (data.mode === "fixed" || remaining > 0) ? <div className="mx-auto w-fit rounded-xl bg-white p-3">
-      <QRCodeSVG value={data.token} size={190} level="M" includeMargin/>
+    {displayToken && (fixedFallback || remaining > 0) ? <div className="mx-auto w-fit rounded-xl bg-white p-3">
+      <QRCodeSVG value={displayToken} size={190} level="M" includeMargin/>
     </div> : <div className="mx-auto flex h-[214px] w-[214px] items-center justify-center rounded-xl bg-black text-sm text-zinc-400">
       {error instanceof Error ? error.message : "Gerando QR temporário…"}
     </div>}
-    <p className="mt-3 font-mono text-sm tracking-widest">{data?.token ?? "—"}</p>
-    <p className="mt-1 text-xs text-zinc-400">{data?.mode === "dynamic" ? "Código temporário · atualiza a cada 30 segundos" : data?.mode === "fixed" ? "QR fixo atual da academia" : "Carteirinha digital"}</p>
-    {data?.mode === "dynamic" && <p className="mt-2 text-sm font-bold text-[#facc15]">{remaining > 0 ? "Expira em " + remaining + "s" : "Atualizando código…"}</p>}
-    <button type="button" onClick={()=>void refetch()} disabled={isFetching} className="mt-3 inline-flex items-center gap-2 rounded-lg border border-white/15 px-3 py-2 text-sm text-zinc-200 disabled:opacity-50">
+    <p className="mt-3 font-mono text-sm tracking-widest">{displayToken ?? "—"}</p>
+    <p className="mt-1 text-xs text-zinc-400">{fixedFallback ? "QR fixo da academia · alternativa" : data?.mode === "dynamic" ? "Código temporário · atualiza a cada 30 segundos" : "Carteirinha digital"}</p>
+    {data?.mode === "dynamic" && !fixedFallback && <p className="mt-2 text-sm font-bold text-[#facc15]">{remaining > 0 ? "Expira em " + remaining + "s" : "Atualizando código…"}</p>}
+    <div className="mt-3 flex flex-wrap justify-center gap-2">{data?.mode === "dynamic" && data.fallbackToken && <button type="button" onClick={()=>setShowFixed(v=>!v)} className="rounded-lg border border-[#facc15]/40 px-3 py-2 text-sm text-[#facc15]">{showFixed ? "Voltar ao QR temporário" : "Usar QR fixo (alternativa)"}</button>}<button type="button" onClick={()=>void refetch()} disabled={isFetching} className="mt-3 inline-flex items-center gap-2 rounded-lg border border-white/15 px-3 py-2 text-sm text-zinc-200 disabled:opacity-50">
       <RefreshCw size={15} className={isFetching?"animate-spin":""}/> Atualizar agora
     </button>
     <p className="mt-3 flex items-center justify-center gap-1 text-[11px] text-zinc-500"><ShieldCheck size={13}/> {data?.mode === "dynamic" ? "O código temporário só pode ser usado uma vez por janela na catraca habilitada." : "Apresente seu QR fixo atual na catraca, conforme orientação da recepção."}</p>
