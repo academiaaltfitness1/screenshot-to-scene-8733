@@ -63,7 +63,7 @@ export const studentSignIn = createServerFn({ method: "POST" })
 
     const { data: session, error } = await publicClient().auth.signInWithPassword({ email, password: data.password });
     await recordAttempt(!error && !!session.session);
-    if (error || !session.session) return { ok: false as const, error: "Matrícula/CPF ou senha inválidos." };
+    if (error || !session.session) return { ok: false as const, error: "Matrícula ou senha inválidos." };
     return { ok: true as const, access_token: session.session.access_token, refresh_token: session.session.refresh_token };
   });
 
@@ -120,7 +120,8 @@ export const beginStudentActivation = createServerFn({ method: "POST" })
       user_metadata: { student_id: student.id },
     });
     if (createError || !created.user) {
-      return { ok: false as const, error: "Não foi possível criar o acesso. Procure a recepção." };
+      console.error("[ALT ALUNO] Falha ao criar usuário de primeiro acesso:", createError?.message ?? "Usuário não retornado");
+      return { ok: false as const, error: "Não foi possível criar o acesso. Confira se a matrícula está ativa e tente novamente. Se persistir, procure a recepção." };
     }
 
     const { error: accountError } = await supabaseAdmin.from("student_accounts").insert({
@@ -130,7 +131,8 @@ export const beginStudentActivation = createServerFn({ method: "POST" })
     });
     if (accountError) {
       await supabaseAdmin.auth.admin.deleteUser(created.user.id);
-      return { ok: false as const, error: "Esta matrícula já possui acesso ou não foi possível concluir o cadastro." };
+      console.error("[ALT ALUNO] Falha ao vincular conta à matrícula:", accountError.message);
+      return { ok: false as const, error: "Esta matrícula já possui acesso ou não foi possível concluir o cadastro. Procure a recepção para conferir." };
     }
 
     const { data: session, error: signInError } = await publicClient().auth.signInWithPassword({
@@ -138,6 +140,7 @@ export const beginStudentActivation = createServerFn({ method: "POST" })
       password: data.password,
     });
     if (signInError || !session.session) {
+      console.error("[ALT ALUNO] Conta criada, mas o login automático falhou:", signInError?.message ?? "Sessão não retornada");
       return { ok: true as const, activated: true as const, access_token: null, refresh_token: null, message: "Acesso criado. Entre com sua matrícula e a senha cadastrada." };
     }
     return {
