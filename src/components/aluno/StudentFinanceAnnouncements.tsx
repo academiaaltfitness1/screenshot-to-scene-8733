@@ -40,6 +40,7 @@ export function StudentFinanceAnnouncements({ studentId, bills }: { studentId: s
       if (error) throw error;
       return data ?? [];
     },
+    refetchInterval: 60000,
   });
   const { data: reads = [] } = useQuery({
     queryKey: ["student-announcement-reads"],
@@ -49,6 +50,7 @@ export function StudentFinanceAnnouncements({ studentId, bills }: { studentId: s
       if (error) throw error;
       return data ?? [];
     },
+    refetchInterval: 30000,
   });
   async function markRead(announcementId: string) {
     const { error } = await supabase.from("announcement_reads").insert({
