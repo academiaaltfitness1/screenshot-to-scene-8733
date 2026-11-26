@@ -63,7 +63,7 @@ function ReceberPage() {
       if (filter === "abertas" && r.paid_at) return false;
       if (filter === "vencidas" && (r.paid_at || daysUntilDue >= 0)) return false;
       if (filter === "hoje" && (r.paid_at || daysUntilDue !== 0)) return false;
-      if (filter === "a_vencer" && (r.paid_at || daysUntilDue < 0 || daysUntilDue > (settings?.bill_alert_days ?? 3))) return false;
+      if (filter === "a_vencer" && (r.paid_at || daysUntilDue <= 0 || daysUntilDue > (settings?.bill_alert_days ?? 3))) return false;
       if (filter === "pendentes" && (r.paid_at || daysUntilDue <= (settings?.bill_alert_days ?? 3))) return false;
       if (filter === "pagas" && !r.paid_at) return false;
       return !t || r.students?.name.toLowerCase().includes(t) || r.description.toLowerCase().includes(t);
