@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { errMsg } from "@/lib/format";
 import { StudentGoalManager } from "@/components/aluno/StudentGoalManager";
 import { StudentWorkoutHistoryReview } from "@/components/aluno/StudentWorkoutHistoryReview";
+import { ExerciseIllustration } from "@/components/aluno/StudentWorkoutExecution";
 
 export const Route = createFileRoute("/_authenticated/treinos")({
   head: () => ({
@@ -357,10 +358,19 @@ function TreinosPage() {
                       </td>
                     </tr>
                     <tr className="border-b border-border bg-muted/30">
-                      <td colSpan={6} className="px-2 pb-3 pt-1">
-                        <label className="mb-1 block text-xs font-semibold text-muted-foreground">Link personalizado do YouTube (opcional)</label>
-                        <Input className="h-9 w-full" type="url" placeholder="Cole aqui o link do vídeo deste exercício" value={e.video_url ?? ""} onChange={(ev) => updEx(i, k, { video_url: ev.target.value })} />
-                        {e.video_url?.trim() && <span className="mt-1 block text-xs text-muted-foreground">{isAllowedYoutubeUrl(e.video_url.trim()) ? "Link pronto para salvar." : "Informe um link do YouTube (youtube.com ou youtu.be)."}</span>}
+                      <td colSpan={6} className="px-2 pb-3 pt-2">
+                        <div className="grid gap-3 rounded-lg border border-border bg-background/70 p-3 lg:grid-cols-[minmax(0,1fr)_240px]">
+                          <div className="min-w-0">
+                            <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-foreground">Vídeo do exercício</label>
+                            <Input className="h-10 w-full" type="url" placeholder="Cole o link do YouTube escolhido pelo professor" value={e.video_url ?? ""} onChange={(ev) => updEx(i, k, { video_url: ev.target.value })} />
+                            <p className="mt-1 text-xs text-muted-foreground">O link fica salvo nesta ficha e aparece para o aluno no ALT ALUNO. Se deixar vazio, o aluno verá a busca sugerida.</p>
+                            {e.video_url?.trim() && <p className={"mt-1 text-xs " + (isAllowedYoutubeUrl(e.video_url.trim()) ? "text-emerald-600" : "text-destructive")}>{isAllowedYoutubeUrl(e.video_url.trim()) ? "Link do YouTube válido — será salvo junto com o exercício." : "Link inválido. Use youtube.com ou youtu.be."}</p>}
+                          </div>
+                          {e.exercise.trim() ? <div className="min-w-0">
+                            <p className="mb-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">Prévia ilustrativa</p>
+                            <ExerciseIllustration exercise={e.exercise} videoUrl={e.video_url} />
+                          </div> : <div className="flex min-h-24 items-center justify-center rounded-md border border-dashed border-border px-3 text-center text-xs text-muted-foreground">Digite ou escolha um exercício para carregar a ilustração.</div>}
+                        </div>
                       </td>
                     </tr>
                   ))}
