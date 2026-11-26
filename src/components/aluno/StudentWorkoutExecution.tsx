@@ -18,6 +18,8 @@ export function StudentWorkoutExecution({ workouts }: { workouts: Workout[] }) {
   const [loads, setLoads] = useState<Record<string, string>>({});
   const [reps, setReps] = useState<Record<string, string>>({});
   const [durations, setDurations] = useState<Record<string, string>>({});
+  const [restTimers, setRestTimers] = useState<Record<string, number>>({});
+  const [clock, setClock] = useState(Date.now());
   const activeSession = sessions.find((session) => session.status === "em_andamento" && session.workout_id);
   const { data: activeSessionWorkout } = useQuery({
     queryKey: ["student-active-session-workout", activeSession?.workout_id],
@@ -28,9 +30,7 @@ export function StudentWorkoutExecution({ workouts }: { workouts: Workout[] }) {
       return data;
     },
   });
-  const [restTimers, setRestTimers] = useState<Record<string, number>>({});
-  const [clock, setClock] = useState(Date.now());
-  const activeWorkout = useMemo(() => workouts.find(w => w.id === selectedWorkout), [workouts, selectedWorkout]);
+  const activeWorkout = useMemo(() => workouts.find(w => w.id === selectedWorkout) ?? (activeSessionWorkout as Workout | undefined), [workouts, selectedWorkout, activeSessionWorkout]);
   const { data: sessions = [] } = useQuery({
     queryKey: ["student-workout-history"],
     queryFn: async () => {
