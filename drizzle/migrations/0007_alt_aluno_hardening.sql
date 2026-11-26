@@ -107,6 +107,15 @@ BEGIN
     RAISE EXCEPTION 'Registre as séries de todos os exercícios antes de concluir o treino.';
   END IF;
 
+  IF EXISTS (
+    SELECT 1 FROM public.workout_set_logs l
+    WHERE l.session_id = _session_id
+      AND l.status = 'pulado'
+      AND NULLIF(trim(l.skip_reason), '') IS NULL
+  ) THEN
+    RAISE EXCEPTION 'Informe o motivo de cada exercício pulado antes de concluir o treino.';
+  END IF;
+
   UPDATE public.workout_sessions SET status = 'concluido', finished_at = now()
   WHERE id = _session_id AND student_id = _sid AND status = 'em_andamento';
 
