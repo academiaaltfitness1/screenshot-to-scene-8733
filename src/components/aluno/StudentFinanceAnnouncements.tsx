@@ -34,11 +34,16 @@ export function StudentFinanceAnnouncements({ studentId, bills }: { studentId: s
     queryKey: ["student-announcements"],
     queryFn: async () => {
       const { data, error } = await supabase.from("announcements")
-        .select("id,title,body,pinned,starts_at,ends_at")
+        .select("id,title,body,pinned,starts_at,ends_at,media_path,media_type")
         .lte("starts_at", new Date().toISOString())
         .order("pinned", { ascending: false }).order("starts_at", { ascending: false });
       if (error) throw error;
-      return data ?? [];
+      return Promise.all((data ?? []).map(async (item) => {
+        if (!item.media_path) return { ...item, media_url: null };
+        const { data: signed, error: signedError } = await supabase.storage.from("comunicados").createSignedUrl(item.media_path, 3600);
+        if (signedError) { console.error("Falha ao abrir mídia do comunicado", signedError); return { ...item, media_url: null }; }
+        return { ...item, media_url: signed.signedUrl };
+      }));
     },
     refetchInterval: 60000,
   });
@@ -131,7 +136,7 @@ export function StudentFinanceAnnouncements({ studentId, bills }: { studentId: s
       <h2 className="mb-3 flex items-center gap-2 text-lg font-extrabold"><Megaphone className="text-[#facc15]"/> Avisos da academia</h2>
       {announcements.filter(a=>!a.ends_at||new Date(a.ends_at)>new Date()).length ? announcements.filter(a=>!a.ends_at||new Date(a.ends_at)>new Date()).map(a=><article key={a.id} className="mb-2 rounded-lg bg-black p-3">
         <div className="flex items-center gap-2"><h3 className="font-bold">{a.title}</h3>{a.pinned&&<span className="rounded bg-[#facc15] px-2 py-0.5 text-[10px] font-black text-black">IMPORTANTE</span>}</div>
-        <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-300">{a.body}</p>
+        <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-300">{a.body}</p>{a.media_url&&a.media_type==="image"&&<img src={a.media_url} alt={a.title} loading="lazy" className="mt-3 max-h-96 w-full rounded-lg object-contain"/>}{a.media_url&&a.media_type==="video"&&<video src={a.media_url} controls playsInline preload="metadata" className="mt-3 max-h-96 w-full rounded-lg"/>}
         {reads.some(r=>r.announcement_id===a.id) ? <p className="mt-2 text-xs font-semibold text-emerald-400">✓ Lido</p> : <button type="button" onClick={()=>void markRead(a.id)} className="mt-2 rounded border border-white/20 px-3 py-1.5 text-xs font-semibold text-zinc-200">Marcar como lido</button>}
       </article>) : <p className="text-sm text-zinc-400">Nenhum comunicado no momento.</p>}
     </section>
