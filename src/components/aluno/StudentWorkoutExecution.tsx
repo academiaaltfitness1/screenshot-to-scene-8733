@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Play, Square, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -22,12 +22,23 @@ export function StudentWorkoutExecution({ workouts }: { workouts: Workout[] }) {
     queryKey: ["student-workout-history"],
     queryFn: async () => {
       const { data, error } = await supabase.from("workout_sessions")
-        .select("id,letter,workout_name,status,started_at,finished_at")
+        .select("id,workout_id,letter,workout_name,status,started_at,finished_at")
         .order("started_at", { ascending: false }).limit(12);
       if (error) throw error;
       return data ?? [];
     },
   });
+
+  useEffect(() => {
+    const current = sessions.find((session) => session.status === "em_andamento" && session.workout_id);
+    if (current?.workout_id && workouts.some((workout) => workout.id === current.workout_id)) {
+      setSessionId(current.id);
+      setSelectedWorkout(current.workout_id);
+    } else if (!current) {
+      setSessionId(null);
+      setSelectedWorkout(null);
+    }
+  }, [sessions, workouts]);
 
   async function start(workout: Workout) {
     setBusy(true);
