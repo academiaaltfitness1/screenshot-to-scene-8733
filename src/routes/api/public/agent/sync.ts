@@ -19,11 +19,11 @@ export const Route = createFileRoute("/api/public/agent/sync")({
             .limit(100);
           cmds = data ?? [];
         }
-        await db.from("settings").update({ agent_last_seen: new Date().toISOString() }).eq("id", 1);
+        await (db as any).from("settings").update({ agent_last_seen: new Date().toISOString(), agent_version: request.headers.get("x-agent-version") }).eq("id", 1);
         if (onlyCommands) return Response.json({ commands: cmds });
 
         const [{ data: settings }, { data: students }, { data: qrSecrets }] = await Promise.all([
-          db.from("settings").select("tolerance_days, turnstile_ip, turnstile_port, release_seconds, block_inactive, welcome_message, allow_card, allow_matricula, allow_password, allow_qrcode, allow_sko12, allow_face").eq("id", 1).single(),
+          (db as any).from("settings").select("tolerance_days, turnstile_ip, turnstile_port, release_seconds, block_inactive, welcome_message, allow_card, allow_matricula, allow_password, allow_qrcode, allow_sko12, allow_face, dynamic_qr_enabled").eq("id", 1).single(),
           db.from("student_overview").select("id, matricula, name, status, access_password, card_number, qr_code, valid_until, overdue_since").limit(5000),
           db.from("student_qr_secrets").select("student_id, secret"),
         ]);
