@@ -6,7 +6,7 @@ export const createStudentQrToken = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ accessToken: z.string().min(20).max(10000) }).parse(input))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { createHmac } = await import("node:crypto");
+    const { makeTemporaryQrCode } = await import("@/lib/qr-hmac");
     const { data: auth, error: authError } = await supabaseAdmin.auth.getUser(data.accessToken);
     if (authError || !auth.user || auth.user.app_metadata?.kind !== "student") {
       throw new Error("Entre novamente no ALT ALUNO para gerar sua carteirinha.");
@@ -28,8 +28,7 @@ export const createStudentQrToken = createServerFn({ method: "POST" })
     }
     if (secretError || !secret?.secret) throw new Error("Carteirinha temporária ainda não configurada. Procure a recepção.");
     const window = Math.floor(Date.now() / 30000);
-    const digest = createHmac("sha256", secret.secret).update(String(student.matricula) + ":" + window).digest();
-    const code = String(digest.readUInt32BE(0) % 100000000).padStart(8, "0");
+    const code = makeTemporaryQrCode(secret.secret, student.matricula, window);
     return {
       token: String(student.matricula) + code,
       mode: "dynamic" as const,
