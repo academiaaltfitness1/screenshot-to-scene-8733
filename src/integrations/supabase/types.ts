@@ -835,6 +835,7 @@ export type Database = {
           turnstile_port: number
           updated_at: string
           welcome_message: string
+          receivables_message_templates: Json
         }
         Insert: {
           address?: string
@@ -864,6 +865,7 @@ export type Database = {
           turnstile_port?: number
           updated_at?: string
           welcome_message?: string
+          receivables_message_templates?: Json
         }
         Update: {
           address?: string
