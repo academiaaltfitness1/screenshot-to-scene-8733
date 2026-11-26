@@ -64,7 +64,7 @@ function AdminMobile() {
           <strong>{request.students?.name ?? "Aluno"} · {request.students?.matricula ?? "—"}</strong>
           {request.note && <p className="mt-1 text-zinc-300">{request.note}</p>}
           <p className="mt-1 text-xs text-zinc-500">{new Date(request.created_at).toLocaleString("pt-BR")}</p>
-          <button onClick={async()=>{const {data:{user}}=await supabase.auth.getUser();const {error}=await (supabase as any).from("student_workout_review_requests").update({status:"atendido",reviewed_by:user?.id??null,reviewed_at:new Date().toISOString()}).eq("id",request.id);if(error){toast.error("Não foi possível atualizar o pedido.");return;}toast.success("Pedido marcado como atendido.");await queryClient.invalidateQueries({queryKey:["admin-mobile-stats"]});}} className="mt-2 rounded bg-[#facc15] px-3 py-1.5 text-xs font-bold text-black">Marcar como atendido</button>
+          <button onClick={async()=>{const {data:{user}}=await supabase.auth.getUser();const {error}=await (supabase as any).from("student_workout_review_requests").update({status:"atendido",reviewed_by:user?.id??null,reviewed_at:new Date().toISOString()}).eq("id",request.id).eq("status","pendente");if(error){toast.error("Não foi possível atualizar o pedido.");return;}toast.success("Pedido marcado como atendido.");await queryClient.invalidateQueries({queryKey:["admin-mobile-stats"]});}} className="mt-2 rounded bg-[#facc15] px-3 py-1.5 text-xs font-bold text-black">Marcar como atendido</button>
         </li>)}</ul> : <p className="text-sm text-zinc-400">Nenhum pedido pendente.</p>}
       </section>}
       {can("treinos") && <section className="rounded-xl border border-white/10 bg-[#151515] p-4">
