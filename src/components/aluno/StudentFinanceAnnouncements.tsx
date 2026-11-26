@@ -46,7 +46,7 @@ export function StudentFinanceAnnouncements({ studentId, bills }: { studentId: s
     queryKey: ["student-announcement-reads"],
     queryFn: async () => {
       const { data, error } = await supabase.from("announcement_reads")
-        .select("announcement_id,read_at");
+        .select("announcement_id,read_at").eq("student_id", studentId);
       if (error) throw error;
       return data ?? [];
     },
@@ -64,7 +64,7 @@ export function StudentFinanceAnnouncements({ studentId, bills }: { studentId: s
     queryFn: async () => {
       const { data, error } = await supabase.from("payment_proofs")
         .select("id,receivable_id,status,note,created_at")
-        .order("created_at", { ascending: false }).limit(30);
+        .eq("student_id", studentId).order("created_at", { ascending: false }).limit(30);
       if (error) throw error;
       return data ?? [];
     },
