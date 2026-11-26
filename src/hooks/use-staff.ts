@@ -23,6 +23,12 @@ export const staffQuery = queryOptions({
       supabase.from("user_roles").select("role").eq("user_id", user.id),
       supabase.from("employee_permissions").select("module").eq("user_id", user.id),
     ]);
+    if (profile.error) throw profile.error;
+    if (roles.error) throw roles.error;
+    if (perms.error) throw perms.error;
+    // A valid staff session requires an existing, explicitly active profile.
+    // Missing profile rows must never be treated as active staff.
+    if (!profile.data || profile.data.active !== true || !(roles.data?.length)) return null;
     const roleList = (roles.data ?? []).map((r) => r.role);
     return {
       userId: user.id,
@@ -30,7 +36,7 @@ export const staffQuery = queryOptions({
       name: profile.data?.full_name || user.email || "Usuário",
       cargo: profile.data?.cargo ?? "",
       isAdmin: roleList.includes("admin"),
-      isStaff: roleList.length > 0 && profile.data?.active !== false,
+      isStaff: roleList.length > 0 && profile.data.active === true,
       permissions: (perms.data ?? []).map((p) => p.module),
     };
   },
