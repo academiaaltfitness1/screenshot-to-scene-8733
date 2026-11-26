@@ -58,8 +58,8 @@ export const studentSignIn = createServerFn({ method: "POST" })
 export const beginStudentActivation = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({
     identifier: z.string().trim().min(1).max(32),
-    birthDate: z.string().regex(/^\\d{4}-\\d{2}-\\d{2}$/),
-    code: z.string().regex(/^\\d{8}$/),
+    birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    code: z.string().regex(/^\d{8}$/),
     email: z.string().trim().email().max(254),
     password: z.string().min(8).max(200),
   }).parse(input))
