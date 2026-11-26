@@ -36,22 +36,22 @@ function StudentPortal() {
     refetchInterval: 30000,
   });
   const { data: workouts = [] } = useQuery({
-    queryKey: ["student-portal-workouts"],
-    enabled: signedIn,
+    queryKey: ["student-portal-workouts", profile?.id],
+    enabled: signedIn && !!profile?.id,
     queryFn: async () => {
       const { data, error } = await supabase.from("workouts")
         .select("id,letter,name,notes,workout_exercises(id,exercise,sets,reps,load,rest,sort_order)")
-        .eq("active", true).order("letter");
+        .eq("student_id", profile!.id).eq("active", true).order("letter");
       if (error) throw error;
       return data ?? [];
     },
   });
   const { data: bills = [] } = useQuery({
-    queryKey: ["student-portal-bills"],
-    enabled: signedIn,
+    queryKey: ["student-portal-bills", profile?.id],
+    enabled: signedIn && !!profile?.id,
     queryFn: async () => {
       const { data, error } = await supabase.from("receivables")
-        .select("id,description,amount,due_date,paid_at").order("due_date", { ascending: false }).limit(30);
+        .select("id,description,amount,due_date,paid_at").eq("student_id", profile!.id).order("due_date", { ascending: false }).limit(30);
       if (error) throw error;
       return data ?? [];
     },
