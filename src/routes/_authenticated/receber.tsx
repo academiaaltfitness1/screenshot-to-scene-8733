@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Plus, CheckCircle2, MessageCircle, Send } from "lucide-react";
+import { Plus, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ModuleWindow } from "@/components/shell/ModuleWindow";
 import { Field, ModuleBar, SearchBox, EmptyRow, grid } from "@/components/app/common";
@@ -32,10 +32,7 @@ export const Route = createFileRoute("/_authenticated/receber")({
 
 type Filter = "abertas" | "hoje" | "a_vencer" | "pendentes" | "vencidas" | "pagas" | "todas";
 
-type Filter = "abertas" | "hoje" | "a_vencer" | "pendentes" | "vencidas" | "pagas" | "todas";
-
 function ReceberPage() {
-  const qc = useQueryClient();
   const { data: settings } = useQuery(settingsQuery);
   const [filter, setFilter] = useState<Filter>("abertas");
   const [q, setQ] = useState("");
