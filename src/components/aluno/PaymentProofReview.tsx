@@ -19,7 +19,7 @@ export function PaymentProofReview() {
         return { ...p, signedUrl: signed?.signedUrl ?? null };
       }));
     },
-    refetchInterval: 15000,
+    refetchInterval: 60000,
   });
   const review = useMutation({
     mutationFn: async ({ id, approved }: { id: string; approved: boolean }) => {
