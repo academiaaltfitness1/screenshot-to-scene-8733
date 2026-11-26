@@ -30,6 +30,25 @@ export function StudentWorkoutExecution({ workouts }: { workouts: Workout[] }) {
     },
   });
 
+  const { data: lastLogs = [] } = useQuery({
+    queryKey: ["student-last-set-logs"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("workout_set_logs")
+        .select("exercise_name,load,reps,created_at")
+        .eq("status", "concluido").order("created_at", { ascending: false }).limit(500);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const lastByName = useMemo(() => {
+    const map = new Map<string, { load: number | null; reps: number | null; created_at: string }>();
+    for (const log of lastLogs) {
+      const key = log.exercise_name.trim().toLocaleLowerCase("pt-BR");
+      if (!map.has(key)) map.set(key, { load: log.load, reps: log.reps, created_at: log.created_at });
+    }
+    return map;
+  }, [lastLogs]);
+
   useEffect(() => {
     const current = sessions.find((session) => session.status === "em_andamento" && session.workout_id);
     if (current?.workout_id && workouts.some((workout) => workout.id === current.workout_id)) {
@@ -95,6 +114,7 @@ export function StudentWorkoutExecution({ workouts }: { workouts: Workout[] }) {
       const { error } = await supabase.from("workout_set_logs").insert(rows);
       if (error) throw error;
       toast.success(status === "pulado" ? "Exercício marcado como pulado." : "Séries registradas.");
+      await client.invalidateQueries({ queryKey: ["student-last-set-logs"] });
     } catch (e) { toast.error(e instanceof Error ? e.message : "Não foi possível registrar o exercício."); }
     finally { setBusy(false); }
   }
@@ -117,13 +137,13 @@ export function StudentWorkoutExecution({ workouts }: { workouts: Workout[] }) {
     {sessionId && activeWorkout ? <div className="mb-4 rounded-lg border border-[#facc15]/40 bg-black p-3">
       <p className="font-bold text-[#facc15]">Em andamento · Treino {activeWorkout.letter} — {activeWorkout.name}</p>
       <div className="mt-3 space-y-3">{[...activeWorkout.workout_exercises].sort((a,b)=>a.sort_order-b.sort_order).map(ex=><div key={ex.id} className="rounded-lg border border-white/10 p-3">
-        <p className="font-semibold">{ex.exercise}</p><p className="text-xs text-zinc-400">{ex.sets} séries · {ex.reps} repetições · descanso {ex.rest}</p>
+        <p className="font-semibold">{ex.exercise}</p><p className="text-xs text-zinc-400">{ex.sets} séries · {ex.reps} repetições · descanso {ex.rest}</p>{lastByName.get(ex.exercise.trim().toLocaleLowerCase("pt-BR"))?.load != null && <p className="mt-1 text-xs text-emerald-400">Última carga registrada: {Number(lastByName.get(ex.exercise.trim().toLocaleLowerCase("pt-BR"))?.load).toLocaleString("pt-BR")} kg</p>}
         <div className="mt-3 space-y-2">
           {Array.from({length: Math.max(1, Math.min(20, Number.parseInt(ex.sets, 10) || 1))}, (_, index) => {
             const key = ex.id + ":" + (index + 1);
             return <div key={key} className="grid grid-cols-3 items-end gap-2 rounded-md bg-black/70 p-2">
               <span className="col-span-3 text-xs font-bold text-[#facc15]">Série {index + 1}</span>
-              <label className="text-[11px] text-zinc-400">Carga kg<input inputMode="decimal" value={loads[key] ?? ex.load ?? ""} onChange={e=>setLoads(v=>({...v,[key]:e.target.value}))} className="mt-1 w-full rounded border border-white/15 bg-black p-2 text-sm text-white"/></label>
+              <label className="text-[11px] text-zinc-400">Carga kg<input inputMode="decimal" value={loads[key] ?? (lastByName.get(ex.exercise.trim().toLocaleLowerCase("pt-BR"))?.load != null ? String(lastByName.get(ex.exercise.trim().toLocaleLowerCase("pt-BR"))?.load) : ex.load ?? "")} onChange={e=>setLoads(v=>({...v,[key]:e.target.value}))} className="mt-1 w-full rounded border border-white/15 bg-black p-2 text-sm text-white"/></label>
               <label className="text-[11px] text-zinc-400">Reps<input inputMode="numeric" value={reps[key] ?? ex.reps ?? ""} onChange={e=>setReps(v=>({...v,[key]:e.target.value}))} className="mt-1 w-full rounded border border-white/15 bg-black p-2 text-sm text-white"/></label>
               <label className="text-[11px] text-zinc-400">Tempo seg.<input inputMode="numeric" value={durations[key] ?? ""} onChange={e=>setDurations(v=>({...v,[key]:e.target.value}))} className="mt-1 w-full rounded border border-white/15 bg-black p-2 text-sm text-white" placeholder="Opcional"/></label>
             </div>;
