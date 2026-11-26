@@ -25,11 +25,13 @@ function ResetPassword() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
+    const { data: authData } = await supabase.auth.getUser();
+    const isStudent = authData.user?.app_metadata?.kind === "student";
     const { error } = await supabase.auth.updateUser({ password });
     setBusy(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Senha alterada!");
-    navigate({ to: "/painel", replace: true });
+    navigate({ to: isStudent ? "/aluno" : "/painel", replace: true });
   }
   return (
     <div className="flex min-h-screen items-center justify-center bg-chrome-gradient p-4">
