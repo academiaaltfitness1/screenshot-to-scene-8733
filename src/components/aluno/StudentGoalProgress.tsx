@@ -13,7 +13,8 @@ export function StudentGoalProgress() {
       const [{ data: goal, error: goalError }, { count, error: countError }, { data: event, error: eventError }] = await Promise.all([
         supabase.from("student_goals").select("weekly_sessions,target_weight,note").maybeSingle(),
         supabase.from("workout_sessions").select("id", { count: "exact", head: true })
-          .eq("status", "concluido").gte("finished_at", weekIso),
+          .eq("status", "concluido").gte("finished_at", weekIso)
+          .lt("finished_at", new Date(new Date(weekIso).getTime() + 7 * 86400000).toISOString()),
         (supabase as any).from("student_goal_events").select("id,week_start,reached_at")
           .eq("week_start", weekIso.slice(0,10)).maybeSingle(),
       ]);
@@ -33,7 +34,8 @@ export function StudentGoalProgress() {
       <strong className="text-[#facc15]">{progress}%</strong>
     </div>
     <div className="mt-2 h-3 overflow-hidden rounded-full bg-black"><div className="h-full rounded-full bg-[#facc15] transition-all" style={{width: progress+"%"}}/></div>
-    {data.goal.note && <p className="mt-3 text-sm text-zinc-400">{data.goal.note}</p>}
+    {data.goal.target_weight != null && <p className="mt-2 text-sm text-zinc-300">Meta de peso: {Number(data.goal.target_weight).toLocaleString("pt-BR")} kg</p>}
+    {data.goal.note && <p className="mt-2 text-sm text-zinc-400">{data.goal.note}</p>}
     {data.reached && <p className="mt-3 flex items-center gap-2 font-bold text-emerald-400"><Trophy size={17}/> Meta semanal alcançada. Parabéns!</p>}
   </section>;
 }
