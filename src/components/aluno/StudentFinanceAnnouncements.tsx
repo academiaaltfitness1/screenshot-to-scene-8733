@@ -4,6 +4,7 @@ import { Copy, Megaphone, Upload, Wallet } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { buildPixPayload } from "@/lib/pix";
 
 type Bill = { id: string; description: string; amount: number; due_date: string; paid_at: string | null };
 
@@ -77,25 +78,34 @@ export function StudentFinanceAnnouncements({ studentId, bills }: { studentId: s
     } finally { setUploading(null); }
   }
 
+  const openBills = bills.filter(b => !b.paid_at);
   return <div className="space-y-5">
     <section className="rounded-xl border border-white/10 bg-[#151515] p-4">
       <h2 className="mb-3 flex items-center gap-2 text-lg font-extrabold"><Wallet className="text-[#facc15]"/> Pix e comprovantes</h2>
-      {pix?.pix_key ? <div className="flex flex-col items-center gap-3 rounded-lg bg-black p-4 sm:flex-row">
-        <QRCodeSVG value={String(pix.pix_key)} size={132} bgColor="#000000" fgColor="#facc15"/>
-        <div className="min-w-0 flex-1 text-center sm:text-left">
-          <p className="text-sm font-semibold">{pix.gym_name || "ALT FITNESS"}</p>
-          <p className="mt-1 break-all text-sm text-zinc-300">{pix.pix_key}</p>
-          <button onClick={()=>{void navigator.clipboard.writeText(String(pix.pix_key));toast.success("Chave Pix copiada.");}} className="mt-2 inline-flex items-center gap-2 rounded bg-[#facc15] px-3 py-2 text-sm font-bold text-black"><Copy size={15}/> Copiar chave Pix</button>
-          <p className="mt-2 text-xs text-zinc-500">Confira o valor e os dados antes de pagar. O pagamento só será confirmado após análise da equipe.</p>
-        </div>
+      {pix?.pix_key ? <div className="rounded-lg bg-black p-4">
+        <p className="font-semibold">{pix.gym_name || "ALT FITNESS"}</p>
+        <p className="mt-1 break-all text-sm text-zinc-300">Chave Pix: {pix.pix_key}</p>
+        <button onClick={()=>{void navigator.clipboard.writeText(String(pix.pix_key));toast.success("Chave Pix copiada.");}} className="mt-2 inline-flex items-center gap-2 rounded bg-[#facc15] px-3 py-2 text-sm font-bold text-black"><Copy size={15}/> Copiar chave Pix</button>
+        <p className="mt-2 text-xs text-zinc-500">Use o QR de cada mensalidade abaixo: ele já contém o valor exato daquele lançamento. Confira o nome do recebedor no aplicativo do banco antes de confirmar.</p>
       </div> : <p className="text-sm text-zinc-400">A chave Pix ainda não foi configurada pela academia.</p>}
-      <div className="mt-4 space-y-3">{bills.filter(b=>!b.paid_at).map(b=><div key={b.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-white/10 bg-black p-3">
-        <div><p className="font-semibold">{b.description}</p><p className="text-xs text-zinc-400">Vencimento {new Date(b.due_date+"T12:00:00").toLocaleDateString("pt-BR")} · R$ {Number(b.amount).toFixed(2).replace(".",",")}</p><p className={dueReminder(b.due_date).startsWith("Atrasada")?"mt-1 text-xs font-bold text-red-400":"mt-1 text-xs font-bold text-amber-300"}>{dueReminder(b.due_date)}</p></div>
-        <label className="inline-flex cursor-pointer items-center gap-2 rounded bg-[#facc15] px-3 py-2 text-sm font-bold text-black">
-          <Upload size={15}/>{uploading===b.id?"Enviando...":"Enviar comprovante"}
-          <input type="file" accept="image/jpeg,image/png,application/pdf" className="hidden" disabled={!!uploading} onChange={e=>{void uploadProof(b,e.target.files?.[0]);e.currentTarget.value="";}}/>
-        </label>
-      </div>)}</div>
+      <div className="mt-4 space-y-3">
+        {openBills.map(b=><div key={b.id} className="flex flex-col gap-3 rounded-lg border border-white/10 bg-black p-3 sm:flex-row sm:items-center">
+          <div className="flex-1">
+            <p className="font-semibold">{b.description}</p>
+            <p className="text-xs text-zinc-400">Vencimento {new Date(b.due_date+"T12:00:00").toLocaleDateString("pt-BR")} · R$ {Number(b.amount).toFixed(2).replace(".",",")}</p>
+            <p className={dueReminder(b.due_date).startsWith("Atrasada")?"mt-1 text-xs font-bold text-red-400":"mt-1 text-xs font-bold text-amber-300"}>{dueReminder(b.due_date)}</p>
+            <label className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded bg-[#facc15] px-3 py-2 text-sm font-bold text-black">
+              <Upload size={15}/>{uploading===b.id?"Enviando...":"Enviar comprovante"}
+              <input type="file" accept="image/jpeg,image/png,application/pdf" className="hidden" disabled={!!uploading} onChange={e=>{void uploadProof(b,e.target.files?.[0]);e.currentTarget.value="";}}/>
+            </label>
+          </div>
+          {pix?.pix_key ? <div className="flex shrink-0 flex-col items-center gap-1 rounded-lg bg-white p-2">
+            <QRCodeSVG value={buildPixPayload({key:String(pix.pix_key),merchantName:String(pix.gym_name||"ALT FITNESS"),merchantCity:"SUZANO",amount:Number(b.amount)})} size={116} level="M"/>
+            <span className="text-[10px] font-bold text-black">PIX · VALOR EXATO</span>
+          </div> : null}
+        </div>)}
+        {openBills.length===0 && <p className="text-sm text-zinc-400">Não há mensalidades em aberto.</p>}
+      </div>
       {proofs.length>0 && <div className="mt-4"><p className="mb-2 text-sm font-bold">Comprovantes enviados</p>{proofs.map(p=><div key={p.id} className="flex justify-between gap-3 border-t border-white/10 py-2 text-sm"><span>{new Date(p.created_at).toLocaleDateString("pt-BR")}</span><span className={p.status==="aprovado"?"text-emerald-400":p.status==="recusado"?"text-red-400":"text-amber-300"}>{p.status==="aprovado"?"Aprovado":p.status==="recusado"?"Recusado":"Aguardando análise"}</span></div>)}</div>}
     </section>
     <section className="rounded-xl border border-white/10 bg-[#151515] p-4">
