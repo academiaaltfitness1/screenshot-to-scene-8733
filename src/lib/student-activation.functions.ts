@@ -28,8 +28,9 @@ export const createStudentActivationCode = createServerFn({ method: "POST" })
     const { randomInt, createHash } = await import("node:crypto");
     const code = String(randomInt(10000000, 100000000));
     const codeHash = createHash("sha256").update(code).digest("hex");
-    await supabaseAdmin.from("student_activation_codes").update({ used_at: new Date().toISOString() })
+    const { error: invalidateError } = await supabaseAdmin.from("student_activation_codes").update({ used_at: new Date().toISOString() })
       .eq("student_id", data.studentId).is("used_at", null);
+    if (invalidateError) throw new Error("Não foi possível invalidar o código anterior. Tente novamente.");
     const { error } = await supabaseAdmin.from("student_activation_codes").insert({
       student_id: data.studentId,
       code_hash: codeHash,
