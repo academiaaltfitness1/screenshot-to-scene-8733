@@ -57,6 +57,7 @@ function AdminMobile() {
       <section className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {can("alunos") && <article className="rounded-xl border border-white/10 bg-[#151515] p-3"><Users className="mb-2 text-[#facc15]"/><strong className="text-2xl">{stats?.students ?? "—"}</strong><p className="text-xs text-zinc-400">Alunos ativos</p></article>}
         {can("alunos") && <article className="rounded-xl border border-white/10 bg-[#151515] p-3"><UserCheck className="mb-2 text-emerald-400"/><strong className="text-2xl">{stats?.ready ?? "—"}</strong><p className="text-xs text-zinc-400">Prontos para ativar</p></article>}
+        {can("alunos") && <article className="rounded-xl border border-white/10 bg-[#151515] p-3"><ClipboardList className="mb-2 text-amber-400"/><strong className="text-2xl">{Math.max(0, (stats?.students ?? 0) - (stats?.ready ?? 0))}</strong><p className="text-xs text-zinc-400">Completar cadastro</p></article>}
         {can("receber") && <article className="rounded-xl border border-white/10 bg-[#151515] p-3"><AlertTriangle className="mb-2 text-amber-400"/><strong className="text-2xl">{stats?.overdue ?? "—"}</strong><p className="text-xs text-zinc-400">Em atraso</p></article>}
         {can("receber") && <article className="rounded-xl border border-white/10 bg-[#151515] p-3"><ClipboardList className="mb-2 text-[#facc15]"/><strong className="text-2xl">{stats?.proofs ?? "—"}</strong><p className="text-xs text-zinc-400">Comprovantes</p></article>}
       </section>
