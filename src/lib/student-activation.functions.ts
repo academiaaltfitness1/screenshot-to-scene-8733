@@ -22,8 +22,10 @@ export const createStudentActivationCode = createServerFn({ method: "POST" })
     if (profile.data?.active === false || !canManageStudents) throw new Error("Sem permissão para gerar código de ativação.");
 
     const { data: student, error: studentError } = await supabaseAdmin.from("students")
-      .select("id").eq("id", data.studentId).maybeSingle();
+      .select("id,cpf,birth_date,status").eq("id", data.studentId).maybeSingle();
     if (studentError || !student) throw new Error("Aluno não encontrado.");
+    if (student.status !== "ativo") throw new Error("Somente alunos ativos podem ativar o aplicativo.");
+    if (String(student.cpf ?? "").replace(/[^0-9]/g, "").length !== 11 || !student.birth_date) throw new Error("Complete o CPF e a data de nascimento do aluno no cadastro antes de gerar o código.");
     const { data: existingAccount, error: accountError } = await supabaseAdmin.from("student_accounts")
       .select("user_id").eq("student_id", data.studentId).maybeSingle();
     if (accountError) throw new Error("Não foi possível verificar o acesso do aluno.");
