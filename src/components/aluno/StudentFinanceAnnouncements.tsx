@@ -68,6 +68,7 @@ export function StudentFinanceAnnouncements({ studentId, bills }: { studentId: s
       if (error) throw error;
       return data ?? [];
     },
+    refetchInterval: 30000,
   });
 
   async function uploadProof(bill: Bill, file?: File) {
