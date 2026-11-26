@@ -76,6 +76,8 @@ export type Database = {
           created_by: string | null
           ends_at: string | null
           id: string
+          media_path: string | null
+          media_type: string | null
           pinned: boolean
           starts_at: string
           title: string
@@ -86,6 +88,8 @@ export type Database = {
           created_by?: string | null
           ends_at?: string | null
           id?: string
+          media_path?: string | null
+          media_type?: string | null
           pinned?: boolean
           starts_at?: string
           title: string
@@ -96,6 +100,8 @@ export type Database = {
           created_by?: string | null
           ends_at?: string | null
           id?: string
+          media_path?: string | null
+          media_type?: string | null
           pinned?: boolean
           starts_at?: string
           title?: string
