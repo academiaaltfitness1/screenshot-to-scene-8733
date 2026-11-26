@@ -36,6 +36,7 @@ export function StudentGoalProgress({ studentId }: { studentId: string }) {
       if (error) throw error;
       return data ?? [];
     },
+    refetchInterval: 15000,
   });
   const pending = requests.some((request: any) => request.status === "pendente");
   async function requestReview() {
