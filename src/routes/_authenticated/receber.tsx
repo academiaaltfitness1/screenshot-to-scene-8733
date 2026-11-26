@@ -38,6 +38,7 @@ function ReceberPage() {
   const [filter, setFilter] = useState<Filter>("abertas");
   const [q, setQ] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [messageIndex, setMessageIndex] = useState(0);
   const [paying, setPaying] = useState<{ id: string; amount: number; desc: string; name: string } | null>(null);
   const [creating, setCreating] = useState(false);
   const today = todayISO();
@@ -79,10 +80,14 @@ function ReceberPage() {
     const phone = (r.students?.whatsapp ?? "").replace(/\\D/g, "");
     return `https://wa.me/${phone.length <= 11 ? "55" + phone : phone}?text=${encodeURIComponent(msg)}`;
   };
-  const openSelectedMessages = () => {
+  const openNextSelectedMessage = () => {
     if (!selectedRows.length) { toast.error("Selecione pelo menos um aluno com WhatsApp."); return; }
-    selectedRows.forEach((r) => window.open(messageFor(r), "_blank", "noopener,noreferrer"));
-    toast.success(`${selectedRows.length} conversa(s) preparada(s). Envie cada mensagem pelo WhatsApp.`);
+    if (messageIndex >= selectedRows.length) { toast.success("Todas as conversas selecionadas já foram abertas."); return; }
+    const row = selectedRows[messageIndex];
+    const opened = window.open(messageFor(row), "_blank", "noopener,noreferrer");
+    if (!opened) { toast.error("O navegador bloqueou a nova aba. Permita pop-ups para este sistema e tente novamente."); return; }
+    setMessageIndex((index) => index + 1);
+    toast.success(`Conversa ${messageIndex + 1} de ${selectedRows.length} aberta. Envie a mensagem no WhatsApp e depois avance para a próxima.`);
   };
   const totals = useMemo(() => {
     const open = rows.filter((r) => !r.paid_at);
@@ -124,9 +129,9 @@ function ReceberPage() {
           </SelectContent>
         </Select>
         <SearchBox value={q} onChange={setQ} placeholder="Aluno ou descrição" />
-        <Button size="sm" variant="outline" onClick={() => setSelectedIds(selectableRows.map((r) => r.id))}>Selecionar todos</Button>
-        <Button size="sm" variant="outline" onClick={() => setSelectedIds([])}>Limpar seleção</Button>
-        <Button size="sm" disabled={!selectedRows.length} onClick={openSelectedMessages}><Send/> Enviar para selecionados ({selectedRows.length})</Button>
+        <Button size="sm" variant="outline" onClick={() => { setSelectedIds(selectableRows.map((r) => r.id)); setMessageIndex(0); }}>Selecionar todos</Button>
+        <Button size="sm" variant="outline" onClick={() => { setSelectedIds([]); setMessageIndex(0); }}>Limpar seleção</Button>
+        <Button size="sm" disabled={!selectedRows.length || messageIndex >= selectedRows.length} onClick={openNextSelectedMessage}><Send/> Abrir próxima conversa ({Math.max(0, selectedRows.length - messageIndex)})</Button>
         <div className="ml-auto flex gap-2 text-sm">
           <Badge variant="warning">Em aberto: {brl(totals.open)}</Badge>
           <Badge variant="destructive">Vencido: {brl(totals.overdue)}</Badge>
@@ -152,7 +157,7 @@ function ReceberPage() {
             const soon = !r.paid_at && !overdue && r.due_date <= soonLimit;
             return (
               <tr key={r.id} className={`${grid.tr} ${overdue ? "bg-destructive/5" : ""}`}>
-                <td className={grid.td}>{!r.paid_at && r.students?.whatsapp ? <input aria-label={`Selecionar ${r.students?.name}`} type="checkbox" checked={selectedIds.includes(r.id)} onChange={() => toggleSelected(r.id)} /> : "—"}</td>
+                <td className={grid.td}>{!r.paid_at && r.students?.whatsapp ? <input aria-label={`Selecionar ${r.students?.name}`} type="checkbox" checked={selectedIds.includes(r.id)} onChange={() => { toggleSelected(r.id); setMessageIndex(0); }} /> : "—"}</td>
                 <td className={grid.td}>{fmtDate(r.due_date)}</td>
                 <td className={grid.td}>
                   <span className="mr-1 font-mono text-xs text-muted-foreground">{r.students?.matricula}</span>
