@@ -90,6 +90,12 @@ PASSO A PASSO (computador da recepcao, Windows)
 
 O computador precisa estar na mesma rede da catraca (${"192.168.0.229"} porta 3000).
 
+QR TEMPORARIO
+Esta versao do agente reconhece o QR temporario HMAC de 30 segundos e impede
+a reutilizacao do mesmo codigo na janela. O recurso fica DESATIVADO por padrao.
+So habilite na tela Catraca depois de instalar esta versao e testar a leitura.
+O QR fixo atual continua funcionando.
+
 SEM INTERNET
 O agente guarda uma copia dos alunos (alunos-cache.json). Se a internet cair,
 a catraca continua liberando e bloqueando normalmente; os registros ficam em
