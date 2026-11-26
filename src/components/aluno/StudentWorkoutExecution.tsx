@@ -55,14 +55,15 @@ export function StudentWorkoutExecution({ workouts }: { workouts: Workout[] }) {
     finally { setBusy(false); }
   }
 
-  async function logExercise(ex: Workout["workout_exercises"][number]) {
+  async function saveExerciseLogs(ex: Workout["workout_exercises"][number], status: "concluido" | "pulado", skipReason?: string) {
     if (!sessionId) return;
     const count = Math.max(1, Math.min(20, Number.parseInt(ex.sets, 10) || 1));
     const rows = Array.from({ length: count }, (_, index) => ({
       session_id: sessionId, exercise_id: ex.id, exercise_name: ex.exercise,
       sort_order: ex.sort_order, set_number: index + 1,
-      load: Number(loads[ex.id]) || null, reps: Number(reps[ex.id]) || null,
-      status: "concluido" as const,
+      load: status === "pulado" ? null : (Number(loads[ex.id]) || null),
+      reps: status === "pulado" ? null : (Number(reps[ex.id]) || null),
+      status, skip_reason: status === "pulado" ? skipReason : null,
     }));
     setBusy(true);
     try {
@@ -71,9 +72,22 @@ export function StudentWorkoutExecution({ workouts }: { workouts: Workout[] }) {
       if (deleteError) throw deleteError;
       const { error } = await supabase.from("workout_set_logs").insert(rows);
       if (error) throw error;
-      toast.success("Séries registradas.");
-    } catch (e) { toast.error(e instanceof Error ? e.message : "Não foi possível registrar as séries."); }
+      toast.success(status === "pulado" ? "Exercício marcado como pulado." : "Séries registradas.");
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Não foi possível registrar o exercício."); }
     finally { setBusy(false); }
+  }
+
+  async function logExercise(ex: Workout["workout_exercises"][number]) {
+    await saveExerciseLogs(ex, "concluido");
+  }
+
+  async function skipExercise(ex: Workout["workout_exercises"][number]) {
+    const reason = window.prompt("Por que você pulou este exercício? (ex.: aparelho ocupado, desconforto, orientação do professor)");
+    if (!reason?.trim()) {
+      toast.error("Informe o motivo para registrar o exercício como pulado.");
+      return;
+    }
+    await saveExerciseLogs(ex, "pulado", reason.trim().slice(0, 300));
   }
 
   return <section className="rounded-xl border border-white/10 bg-[#151515] p-4">
@@ -86,7 +100,10 @@ export function StudentWorkoutExecution({ workouts }: { workouts: Workout[] }) {
           <label className="text-xs text-zinc-400">Carga (kg)<input inputMode="decimal" value={loads[ex.id]??ex.load??""} onChange={e=>setLoads(v=>({...v,[ex.id]:e.target.value}))} className="mt-1 w-full rounded border border-white/15 bg-black p-2 text-white"/></label>
           <label className="text-xs text-zinc-400">Repetições<input inputMode="numeric" value={reps[ex.id]??ex.reps??""} onChange={e=>setReps(v=>({...v,[ex.id]:e.target.value}))} className="mt-1 w-full rounded border border-white/15 bg-black p-2 text-white"/></label>
         </div>
-        <button disabled={busy} onClick={()=>logExercise(ex)} className="mt-2 rounded bg-[#facc15] px-3 py-2 text-sm font-bold text-black">Salvar séries</button>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <button disabled={busy} onClick={()=>logExercise(ex)} className="rounded bg-[#facc15] px-3 py-2 text-sm font-bold text-black">Salvar séries</button>
+          <button disabled={busy} onClick={()=>skipExercise(ex)} className="rounded border border-white/20 px-3 py-2 text-sm font-semibold text-zinc-200">Pular com motivo</button>
+        </div>
       </div>)}</div>
       <button disabled={busy} onClick={finish} className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 p-3 font-bold text-white"><CheckCircle2 size={18}/> Concluir treino</button>
     </div> : <div className="space-y-2">{workouts.map(w=><div key={w.id} className="flex items-center justify-between gap-3 rounded-lg bg-black p-3">
