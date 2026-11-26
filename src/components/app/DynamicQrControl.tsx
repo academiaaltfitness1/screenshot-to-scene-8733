@@ -9,14 +9,14 @@ export function DynamicQrControl({ isAdmin }: { isAdmin: boolean }) {
   const { data: status = { enabled: false, agentVersion: null as string | null, lastSeen: null as string | null } } = useQuery({
     queryKey: ["dynamic-qr-enabled"],
     queryFn: async () => {
-      const { data, error } = await (supabase as any).from("settings").select("dynamic_qr_enabled,agent_version,agent_last_seen").eq("id", 1).single();
+      const { data, error } = await (supabase as any).from("settings").select("dynamic_qr_enabled,agent_version,agent_last_seen,allow_qrcode").eq("id", 1).single();
       if (error) throw error;
-      return { enabled: data?.dynamic_qr_enabled === true, agentVersion: data?.agent_version ?? null, lastSeen: data?.agent_last_seen ?? null };
+      return { enabled: data?.dynamic_qr_enabled === true, qrAllowed: data?.allow_qrcode === true, agentVersion: data?.agent_version ?? null, lastSeen: data?.agent_last_seen ?? null };
     },
     refetchInterval: 10000,
   });
   const enabled = status.enabled;
-  const agentCompatible = status.agentVersion === "alt-hmac-qr-1";
+  const agentCompatible = status.agentVersion === "alt-hmac-qr-1" && status.qrAllowed;
   const agentOnline = !!status.lastSeen && Date.now() - new Date(status.lastSeen).getTime() < 3 * 60_000;
   async function change(value: boolean) {
     if (!isAdmin || !agentCompatible || !agentOnline) return;
