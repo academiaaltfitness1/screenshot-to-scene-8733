@@ -117,7 +117,7 @@ function ReceberPage() {
       }
     >
       <ModuleBar>
-        <Select value={filter} onValueChange={(v) => setFilter(v as Filter)}>
+        <Select value={filter} onValueChange={(v) => { setFilter(v as Filter); setMessageIndex(0); }}>
           <SelectTrigger className="h-9 w-36 bg-card">
             <SelectValue />
           </SelectTrigger>
@@ -131,7 +131,7 @@ function ReceberPage() {
             <SelectItem value="todas">Todas</SelectItem>
           </SelectContent>
         </Select>
-        <SearchBox value={q} onChange={setQ} placeholder="Aluno ou descrição" />
+        <SearchBox value={q} onChange={(value) => { setQ(value); setMessageIndex(0); }} placeholder="Aluno ou descrição" />
         <Button size="sm" variant="outline" onClick={() => { setSelectedIds(selectableRows.map((r) => r.id)); setMessageIndex(0); }}>Selecionar todos</Button>
         <Button size="sm" variant="outline" onClick={() => { setSelectedIds([]); setMessageIndex(0); }}>Limpar seleção</Button>
         <Button size="sm" disabled={!selectedRows.length || messageIndex >= selectedRows.length} onClick={openNextSelectedMessage}><Send/> Abrir próxima conversa ({Math.max(0, selectedRows.length - messageIndex)})</Button>
