@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createHmac } from "node:crypto";
 import { z } from "zod";
 
 /** Generates a 30-second QR token; the per-student secret never leaves the server. */
@@ -7,6 +6,7 @@ export const createStudentQrToken = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ accessToken: z.string().min(20).max(10000) }).parse(input))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { createHmac } = await import("node:crypto");
     const { data: auth, error: authError } = await supabaseAdmin.auth.getUser(data.accessToken);
     if (authError || !auth.user || auth.user.app_metadata?.kind !== "student") {
       throw new Error("Entre novamente no ALT ALUNO para gerar sua carteirinha.");
