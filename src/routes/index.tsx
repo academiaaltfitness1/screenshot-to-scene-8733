@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ShieldCheck, Smartphone } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import logoAsset from "@/assets/alt-logo.webp.asset.json";
 import gymBg from "@/assets/gym-bg.webp";
 
@@ -26,7 +26,7 @@ function Index() {
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-accent">Academia</p>
           <h1 className="text-5xl font-extrabold leading-none md:text-6xl">ALT FITNESS</h1>
           <div className="mx-auto mt-3 h-1.5 w-24 rounded bg-accent md:mx-0" />
-          <p className="mt-5 text-lg opacity-85">Escolha como deseja entrar.</p>
+          <p className="mt-5 text-lg opacity-85">Acesso administrativo da academia.</p>
           <div className="mt-8 grid gap-3">
             <Link
               to="/auth"
@@ -36,16 +36,6 @@ function Index() {
               <span>
                 <span className="block text-lg font-bold">Área da Equipe</span>
                 <span className="text-sm opacity-80">Recepção, instrutores e administração</span>
-              </span>
-            </Link>
-            <Link
-              to="/aluno"
-              className="flex items-center gap-3 rounded-lg border border-chrome-foreground/25 bg-chrome-foreground/10 px-5 py-4 text-left transition hover:bg-chrome-foreground/15"
-            >
-              <Smartphone className="h-7 w-7 text-accent" />
-              <span>
-                <span className="block text-lg font-bold">App do Aluno</span>
-                <span className="text-sm opacity-80">Treino, avaliação, mensalidade e carteirinha</span>
               </span>
             </Link>
           </div>
