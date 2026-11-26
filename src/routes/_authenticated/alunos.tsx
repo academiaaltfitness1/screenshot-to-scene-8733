@@ -19,7 +19,6 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { settingsQuery } from "@/hooks/use-staff";
 import { fmtDate, errMsg } from "@/lib/format";
-import { createStudentActivationCode } from "@/lib/student-activation.functions";
 import { todayISO } from "@/lib/access";
 
 export const Route = createFileRoute("/_authenticated/alunos")({
@@ -171,9 +170,6 @@ function AlunosPage() {
 
 function StudentDialog({ student, onClose, onEnroll }: { student: Partial<Student> | Overview; onClose: () => void; onEnroll: (id: string) => void }) {
   const qc = useQueryClient();
-  const createActivationCode = useServerFn(createStudentActivationCode);
-  const [activationCode, setActivationCode] = useState<string | null>(null);
-  const [generatingCode, setGeneratingCode] = useState(false);
   const [f, setF] = useState<Partial<Student>>(student as Partial<Student>);
   const set = <K extends keyof Student>(k: K, v: Student[K] | null) => setF((p) => ({ ...p, [k]: v }));
   const isNew = !f.id;
@@ -219,19 +215,7 @@ function StudentDialog({ student, onClose, onEnroll }: { student: Partial<Studen
     },
   });
 
-  async function generateActivationCode() {
-    if (!f.id) { toast.error("Salve o cadastro do aluno antes de gerar o código."); return; }
-    setGeneratingCode(true);
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-      if (!token) throw new Error("Sessão expirada. Entre novamente.");
-      const result = await createActivationCode({ data: { studentId: f.id, accessToken: token } });
-      setActivationCode(result.code);
-      toast.success("Código de primeiro acesso gerado. Ele expira em 30 minutos.");
-    } catch (e) { toast.error(errMsg(e)); }
-    finally { setGeneratingCode(false); }
-  }
+
 
   async function uploadPhoto(file: File) {
     const path = `${crypto.randomUUID()}.${file.name.split(".").pop() ?? "jpg"}`;
@@ -316,11 +300,10 @@ function StudentDialog({ student, onClose, onEnroll }: { student: Partial<Studen
                 </Field>
                 {!isNew && <div className="sm:col-span-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
                   <p className="text-sm font-semibold">Primeiro acesso ao ALT ALUNO</p>
-                  <p className="mt-1 text-xs text-muted-foreground">Gere um código temporário e entregue ao aluno. Ele é válido por 30 minutos. A senha do aplicativo será criada pelo próprio aluno e é diferente da senha da catraca.</p>
-                  <p className="mt-2 text-xs">{f.status === "ativo" && String(f.cpf ?? "").replace(/\D/g, "").length === 11 && !!f.birth_date ? "Dados prontos para ativação." : "Para liberar o código, deixe o aluno ativo e preencha CPF e data de nascimento na aba de dados pessoais."}</p>
-                  <Button type="button" size="sm" className="mt-2" disabled={generatingCode || f.status !== "ativo" || String(f.cpf ?? "").replace(/\D/g, "").length !== 11 || !f.birth_date} onClick={generateActivationCode}>{generatingCode?"Gerando...":"Gerar código de ativação"}</Button>
-                  {activationCode && <div className="mt-2 flex items-center gap-2"><strong className="font-mono text-xl tracking-widest">{activationCode}</strong><Button type="button" size="sm" variant="outline" onClick={()=>{void navigator.clipboard.writeText(activationCode);toast.success("Código copiado.");}}>Copiar</Button></div>}
-                </div>}
+                  <p className="mt-1 text-xs text-muted-foreground">O aluno informa o código padrão, sua matrícula e cria a própria senha. Não é necessário gerar código individual, informar CPF, data de nascimento ou e-mail.</p>
+                  <p className="mt-2 font-mono text-xl font-bold tracking-widest">02226770</p>
+                  <p className="mt-1 text-xs text-muted-foreground">O código é fixo e não expira. A senha do aplicativo é pessoal e diferente da senha da catraca.</p>
+                </div>}/div>}
                 <Field label="Senha da catraca (não é a senha do app)">
                   <Input value={f.access_password ?? ""} onChange={(e) => set("access_password", e.target.value.replace(/\D/g, ""))} placeholder="Somente números, ex.: 4321" inputMode="numeric" />
                 </Field>
