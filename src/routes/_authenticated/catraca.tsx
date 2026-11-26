@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { FacialAccess } from "@/components/app/FacialAccess";
+import { DynamicQrControl } from "@/components/app/DynamicQrControl";
 import { settingsQuery, useStaff } from "@/hooks/use-staff";
 import { buildAgentZip } from "@/lib/agent-package";
 import { fmtDateTime, errMsg } from "@/lib/format";
@@ -242,6 +243,8 @@ function CatracaPage() {
             <Badge variant="destructive"><WifiOff className="mr-1 h-3.5 w-3.5" /> Sem sinal do agente</Badge>
           )}
         </section>
+
+        <DynamicQrControl isAdmin={!!staff?.isAdmin} />
 
         <section className="grid gap-3 rounded-lg border border-primary/30 bg-card p-4">
           <h3 className="text-base font-bold">Identificação pelo computador da recepção</h3>
