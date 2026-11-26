@@ -4,7 +4,7 @@ import { LogOut, Users, AlertTriangle, ClipboardList, ChevronRight } from "lucid
 import { supabase } from "@/integrations/supabase/client";
 import { useStaff } from "@/hooks/use-staff";
 import { MODULES } from "@/lib/modules";
-import type { ModuleKey } from "@/lib/modules";
+import type { ModuleDef } from "@/lib/modules";
 
 export const Route = createFileRoute("/_authenticated/admin-mobile")({
   head: () => ({ meta: [
@@ -29,7 +29,7 @@ function AdminMobile() {
       return { students: students.count ?? 0, overdue: overdue.count ?? 0, proofs: proofs.count ?? 0 };
     },
   });
-  const modules = (Object.values(MODULES) as { key: ModuleKey; label: string; title: string; path: string; icon: React.ComponentType<{ className?: string }> }[])
+  const modules = (Object.values(MODULES) as ModuleDef[])
     .filter(module => can(module.key));
 
   async function logout() {
@@ -52,7 +52,7 @@ function AdminMobile() {
       <section className="space-y-2">
         <h2 className="text-lg font-extrabold">Módulos disponíveis</h2>
         <div className="grid gap-2 sm:grid-cols-2">
-          {modules.map(module=>{const Icon=module.icon;return <button key={module.key} onClick={()=>navigate({to:module.path as never})} className="flex items-center gap-3 rounded-xl border border-white/10 bg-[#151515] p-4 text-left transition hover:border-[#facc15]/60">
+          {modules.map(module=>{const Icon=module.icon;return <button key={module.key} onClick={()=>navigate({to:module.path})} className="flex items-center gap-3 rounded-xl border border-white/10 bg-[#151515] p-4 text-left transition hover:border-[#facc15]/60">
             <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#facc15] text-black"><Icon/></span>
             <span className="min-w-0 flex-1"><strong className="block">{module.label}</strong><small className="text-zinc-400">{module.title}</small></span><ChevronRight className="text-zinc-500"/>
           </button>;})}
