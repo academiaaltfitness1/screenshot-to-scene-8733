@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { settingsQuery } from "@/hooks/use-staff";
 import { errMsg } from "@/lib/format";
+import { AnnouncementManager } from "@/components/aluno/AnnouncementManager";
 
 export const Route = createFileRoute("/_authenticated/sistema")({
   head: () => ({
@@ -141,6 +142,7 @@ function SistemaPage() {
           {text("pix_key", "Chave Pix", "Aparece no app do aluno para renovação.")}
           {text("bill_alert_days", "Avisar contas com quantos dias de antecedência")}
         </section>
+        <AnnouncementManager />
         <section className="grid gap-3 sm:grid-cols-2">
           <h3 className="text-lg font-bold sm:col-span-2">Bloqueio de acesso</h3>
           {text("tolerance_days", "Dias de tolerância após o vencimento", "Depois disso a catraca bloqueia automaticamente.")}

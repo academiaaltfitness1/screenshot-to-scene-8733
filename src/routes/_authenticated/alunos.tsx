@@ -1,9 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Plus, Trash2, Upload, Printer, MessageCircle, Mail } from "lucide-react";
+import { Plus, Upload, Printer, MessageCircle, Mail } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
@@ -16,8 +17,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useStaff, settingsQuery } from "@/hooks/use-staff";
+import { settingsQuery } from "@/hooks/use-staff";
 import { fmtDate, errMsg } from "@/lib/format";
+import { createStudentActivationCode } from "@/lib/student-activation.functions";
 
 export const Route = createFileRoute("/_authenticated/alunos")({
   validateSearch: z.object({ id: z.string().optional() }),
@@ -141,7 +143,9 @@ function AlunosPage() {
 
 function StudentDialog({ student, onClose, onEnroll }: { student: Partial<Student> | Overview; onClose: () => void; onEnroll: (id: string) => void }) {
   const qc = useQueryClient();
-  const { staff } = useStaff();
+  const createActivationCode = useServerFn(createStudentActivationCode);
+  const [activationCode, setActivationCode] = useState<string | null>(null);
+  const [generatingCode, setGeneratingCode] = useState(false);
   const [f, setF] = useState<Partial<Student>>(student as Partial<Student>);
   const set = <K extends keyof Student>(k: K, v: Student[K] | null) => setF((p) => ({ ...p, [k]: v }));
   const isNew = !f.id;
@@ -187,18 +191,19 @@ function StudentDialog({ student, onClose, onEnroll }: { student: Partial<Studen
     },
   });
 
-  const remove = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from("students").delete().eq("id", f.id!);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Aluno excluído");
-      qc.invalidateQueries({ queryKey: ["students-overview"] });
-      onClose();
-    },
-    onError: (e) => toast.error(errMsg(e)),
-  });
+  async function generateActivationCode() {
+    if (!f.id) { toast.error("Salve o cadastro do aluno antes de gerar o código."); return; }
+    setGeneratingCode(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error("Sessão expirada. Entre novamente.");
+      const result = await createActivationCode({ data: { studentId: f.id, accessToken: token } });
+      setActivationCode(result.code);
+      toast.success("Código de primeiro acesso gerado. Ele expira em 30 minutos.");
+    } catch (e) { toast.error(errMsg(e)); }
+    finally { setGeneratingCode(false); }
+  }
 
   async function uploadPhoto(file: File) {
     const path = `${crypto.randomUUID()}.${file.name.split(".").pop() ?? "jpg"}`;
@@ -281,7 +286,13 @@ function StudentDialog({ student, onClose, onEnroll }: { student: Partial<Studen
                 <Field label="Número de matrícula">
                   <Input value={f.matricula ?? "Gerado automaticamente ao salvar"} disabled />
                 </Field>
-                <Field label="Senha própria (teclado da catraca e app)">
+                {!isNew && <div className="sm:col-span-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
+                  <p className="text-sm font-semibold">Primeiro acesso ao ALT ALUNO</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Gere um código temporário e entregue ao aluno. Ele é válido por 30 minutos. A senha do aplicativo será criada pelo próprio aluno e é diferente da senha da catraca.</p>
+                  <Button type="button" size="sm" className="mt-2" disabled={generatingCode} onClick={generateActivationCode}>{generatingCode?"Gerando...":"Gerar código de ativação"}</Button>
+                  {activationCode && <div className="mt-2 flex items-center gap-2"><strong className="font-mono text-xl tracking-widest">{activationCode}</strong><Button type="button" size="sm" variant="outline" onClick={()=>{void navigator.clipboard.writeText(activationCode);toast.success("Código copiado.");}}>Copiar</Button></div>}
+                </div>}
+                <Field label="Senha da catraca (não é a senha do app)">
                   <Input value={f.access_password ?? ""} onChange={(e) => set("access_password", e.target.value.replace(/\D/g, ""))} placeholder="Somente números, ex.: 4321" inputMode="numeric" />
                 </Field>
                 <Field label="Cartão / biometria (código)">
@@ -313,14 +324,10 @@ function StudentDialog({ student, onClose, onEnroll }: { student: Partial<Studen
           </TabsContent>
         </Tabs>
         <DialogFooter className="gap-2">
-          {!isNew && staff?.isAdmin && (
-            <Button
-              variant="destructive"
-              className="mr-auto"
-              onClick={() => confirm("Excluir este aluno e todo o histórico?") && remove.mutate()}
-            >
-              <Trash2 /> Excluir
-            </Button>
+          {!isNew && (
+            <p className="mr-auto max-w-xs text-xs text-muted-foreground">
+              Para preservar matrícula, treinos e histórico, altere a situação do aluno para “Inativo” em vez de excluí-lo.
+            </p>
           )}
           {!isNew && f.whatsapp && (
             <Button variant="outline" onClick={() => {
