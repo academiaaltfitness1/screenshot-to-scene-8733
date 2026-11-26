@@ -289,7 +289,8 @@ function StudentDialog({ student, onClose, onEnroll }: { student: Partial<Studen
                 {!isNew && <div className="sm:col-span-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
                   <p className="text-sm font-semibold">Primeiro acesso ao ALT ALUNO</p>
                   <p className="mt-1 text-xs text-muted-foreground">Gere um código temporário e entregue ao aluno. Ele é válido por 30 minutos. A senha do aplicativo será criada pelo próprio aluno e é diferente da senha da catraca.</p>
-                  <Button type="button" size="sm" className="mt-2" disabled={generatingCode} onClick={generateActivationCode}>{generatingCode?"Gerando...":"Gerar código de ativação"}</Button>
+                  <p className="mt-2 text-xs">{f.status === "ativo" && String(f.cpf ?? "").replace(/\D/g, "").length === 11 && !!f.birth_date ? "Dados prontos para ativação." : "Para liberar o código, deixe o aluno ativo e preencha CPF e data de nascimento na aba de dados pessoais."}</p>
+                  <Button type="button" size="sm" className="mt-2" disabled={generatingCode || f.status !== "ativo" || String(f.cpf ?? "").replace(/\D/g, "").length !== 11 || !f.birth_date} onClick={generateActivationCode}>{generatingCode?"Gerando...":"Gerar código de ativação"}</Button>
                   {activationCode && <div className="mt-2 flex items-center gap-2"><strong className="font-mono text-xl tracking-widest">{activationCode}</strong><Button type="button" size="sm" variant="outline" onClick={()=>{void navigator.clipboard.writeText(activationCode);toast.success("Código copiado.");}}>Copiar</Button></div>}
                 </div>}
                 <Field label="Senha da catraca (não é a senha do app)">
