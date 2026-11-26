@@ -63,6 +63,7 @@ export function AppMenuBar() {
           <MenubarTrigger className="px-2.5 py-1">Utilitários</MenubarTrigger>
           <MenubarContent>
             {item("sistema")}
+            {item("comunicados")}
             {item("backup")}
             {item("catraca")}
           </MenubarContent>
@@ -73,6 +74,7 @@ export function AppMenuBar() {
             {item("avaliacao")}
             {item("treinos")}
             <MenubarSeparator />
+            <MenubarItem onSelect={() => navigate({ to: "/admin-mobile" })}>ALT ADMIN (celular)</MenubarItem>
             <MenubarItem onSelect={() => window.open("/aluno", "_blank")}>App do Aluno (celular)</MenubarItem>
           </MenubarContent>
         </MenubarMenu>
