@@ -12,7 +12,8 @@ export const Route = createFileRoute("/_authenticated")({
       supabase.from("user_roles").select("role").eq("user_id", data.user.id),
       supabase.from("profiles").select("active").eq("id", data.user.id).maybeSingle(),
     ]);
-    if (!roles?.length || profile?.active === false) throw redirect({ to: "/auth" });
+    // Fail closed: an absent, inactive, or unreadable profile must never enter the staff area.
+    if (!roles?.length || !profile || profile.active !== true) throw redirect({ to: "/auth" });
   },
   component: AppShell,
 });
