@@ -20,7 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { settingsQuery } from "@/hooks/use-staff";
 import { fmtDate, errMsg } from "@/lib/format";
 import { createStudentActivationCode } from "@/lib/student-activation.functions";
-import { checkAccess, todayISO } from "@/lib/access";
+import { todayISO } from "@/lib/access";
 
 export const Route = createFileRoute("/_authenticated/alunos")({
   validateSearch: z.object({ id: z.string().optional() }),
