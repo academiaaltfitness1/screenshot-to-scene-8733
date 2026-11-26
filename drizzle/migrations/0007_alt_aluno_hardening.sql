@@ -143,3 +143,26 @@ END;
 $$;
 REVOKE EXECUTE ON FUNCTION public.review_student_payment_proof(uuid, boolean, text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.review_student_payment_proof(uuid, boolean, text) TO authenticated;
+
+-- Mark app accounts verified only after Supabase Auth confirms the email OTP.
+CREATE OR REPLACE FUNCTION public.mark_student_email_verified()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF NEW.email_confirmed_at IS NOT NULL
+     AND (OLD.email_confirmed_at IS NULL OR OLD.email_confirmed_at IS DISTINCT FROM NEW.email_confirmed_at) THEN
+    UPDATE public.student_accounts
+      SET email_verified_at = COALESCE(email_verified_at, NEW.email_confirmed_at)
+      WHERE user_id = NEW.id;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+REVOKE EXECUTE ON FUNCTION public.mark_student_email_verified() FROM PUBLIC;
+DROP TRIGGER IF EXISTS on_student_email_confirmed ON auth.users;
+CREATE TRIGGER on_student_email_confirmed
+  AFTER UPDATE OF email_confirmed_at ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.mark_student_email_verified();
