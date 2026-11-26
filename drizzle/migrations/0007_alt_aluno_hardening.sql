@@ -15,8 +15,32 @@ DECLARE
   _w public.workouts%ROWTYPE;
   _id uuid;
   _expected text;
+  _student_status text;
+  _valid_until date;
+  _overdue_since date;
+  _tolerance integer;
 BEGIN
   IF _sid IS NULL THEN RAISE EXCEPTION 'Acesso negado'; END IF;
+
+  -- Financial/access restriction: keep the portal and all history readable,
+  -- but do not allow a new workout after the configured grace period.
+  SELECT s.status,
+    (SELECT max(e.end_date) FROM public.enrollments e WHERE e.student_id = s.id AND e.status = 'ativa'),
+    (SELECT min(r.due_date) FROM public.receivables r WHERE r.student_id = s.id AND r.paid_at IS NULL),
+    COALESCE((SELECT st.tolerance_days FROM public.settings st WHERE st.id = 1), 5)
+  INTO _student_status, _valid_until, _overdue_since, _tolerance
+  FROM public.students s WHERE s.id = _sid;
+
+  IF _student_status IS DISTINCT FROM 'ativo' THEN
+    RAISE EXCEPTION 'Acesso aos treinos indisponível. Procure a recepção.';
+  END IF;
+  IF _valid_until IS NULL OR current_date > (_valid_until + _tolerance) THEN
+    RAISE EXCEPTION 'Mensalidade ou matrícula vencida. Regularize na recepção para iniciar treinos.';
+  END IF;
+  IF _overdue_since IS NOT NULL AND current_date > (_overdue_since + _tolerance) THEN
+    RAISE EXCEPTION 'Existe mensalidade em atraso. Regularize na recepção para iniciar treinos.';
+  END IF;
+
   SELECT * INTO _w FROM public.workouts
     WHERE id = _workout_id AND student_id = _sid AND active
     FOR SHARE;
