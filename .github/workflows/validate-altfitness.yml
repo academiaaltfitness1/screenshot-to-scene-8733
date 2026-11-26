@@ -1,7 +1,8 @@
 name: Validate ALT FITNESS app
 on:
   pull_request:
-    branches: [main]
+  push:
+    branches: ["altfitness/**"]
 jobs:
   build:
     runs-on: ubuntu-latest
