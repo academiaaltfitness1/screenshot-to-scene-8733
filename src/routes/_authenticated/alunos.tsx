@@ -20,6 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { settingsQuery } from "@/hooks/use-staff";
 import { fmtDate, errMsg } from "@/lib/format";
 import { createStudentActivationCode } from "@/lib/student-activation.functions";
+import { checkAccess, todayISO } from "@/lib/access";
 
 export const Route = createFileRoute("/_authenticated/alunos")({
   validateSearch: z.object({ id: z.string().optional() }),
@@ -65,10 +66,30 @@ function AlunosPage() {
     }
   }, [search.id, rows, navigate]);
 
+  const classifiedRows = useMemo(() => rows.map((r) => ({
+    ...r,
+    accessSituation: checkAccess(
+      { status: r.status ?? "ativo", valid_until: r.valid_until, overdue_since: r.overdue_since },
+      todayISO(),
+      tolerance,
+    ).code,
+  })), [rows, tolerance]);
+
+  const situationCounts = useMemo(() => ({
+    todos: classifiedRows.length,
+    regular: classifiedRows.filter((r) => r.accessSituation === "liberado").length,
+    inadimplente: classifiedRows.filter((r) => r.accessSituation === "inadimplente" || r.accessSituation === "vencido").length,
+    bloqueado: classifiedRows.filter((r) => r.accessSituation === "bloqueado").length,
+    inativo: classifiedRows.filter((r) => r.accessSituation === "inativo").length,
+    sem_matricula: classifiedRows.filter((r) => r.accessSituation === "sem_matricula").length,
+  }), [classifiedRows]);
+
   const filtered = useMemo(() => {
     const t = q.trim().toLowerCase();
-    return rows.filter((r) => {
-      if (statusFilter !== "todos" && r.status !== statusFilter) return false;
+    return classifiedRows.filter((r) => {
+      if (statusFilter === "regular" && r.accessSituation !== "liberado") return false;
+      if (statusFilter === "inadimplente" && !["inadimplente", "vencido"].includes(r.accessSituation)) return false;
+      if (statusFilter !== "todos" && statusFilter !== "regular" && statusFilter !== "inadimplente" && r.accessSituation !== statusFilter) return false;
       if (!t) return true;
       return (
         r.name?.toLowerCase().includes(t) ||
@@ -77,7 +98,7 @@ function AlunosPage() {
         (r.whatsapp ?? "").includes(t)
       );
     });
-  }, [rows, q, statusFilter]);
+  }, [classifiedRows, q, statusFilter]);
 
   return (
     <ModuleWindow
@@ -95,10 +116,12 @@ function AlunosPage() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="todos">Todos</SelectItem>
-            <SelectItem value="ativo">Ativos</SelectItem>
-            <SelectItem value="inativo">Inativos</SelectItem>
-            <SelectItem value="bloqueado">Bloqueados</SelectItem>
+            <SelectItem value="todos">Todos ({situationCounts.todos})</SelectItem>
+            <SelectItem value="regular">Regulares ({situationCounts.regular})</SelectItem>
+            <SelectItem value="inadimplente">Inadimplentes ({situationCounts.inadimplente})</SelectItem>
+            <SelectItem value="bloqueado">Bloqueados ({situationCounts.bloqueado})</SelectItem>
+            <SelectItem value="inativo">Inativos ({situationCounts.inativo})</SelectItem>
+            <SelectItem value="sem_matricula">Sem matrícula ({situationCounts.sem_matricula})</SelectItem>
           </SelectContent>
         </Select>
         <span className="ml-auto text-xs text-muted-foreground">{filtered.length} aluno(s)</span>
