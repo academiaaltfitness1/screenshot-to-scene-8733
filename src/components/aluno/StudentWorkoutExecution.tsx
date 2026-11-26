@@ -74,7 +74,8 @@ export function StudentWorkoutExecution({ workouts }: { workouts: Workout[] }) {
     const count = Math.max(1, Math.min(20, Number.parseInt(ex.sets, 10) || 1));
     const rows = Array.from({ length: count }, (_, index) => {
       const key = ex.id + ":" + (index + 1);
-      const load = Number(loads[key]);
+      const loadValue = (loads[key] ?? ex.load ?? "").replace(",", ".");
+      const load = loadValue.trim() ? Number(loadValue) : Number.NaN;
       const repCount = Number.parseInt(reps[key] ?? "", 10);
       const duration = Number.parseInt(durations[key] ?? "", 10);
       return {
@@ -120,8 +121,8 @@ export function StudentWorkoutExecution({ workouts }: { workouts: Workout[] }) {
         <div className="mt-3 space-y-2">
           {Array.from({length: Math.max(1, Math.min(20, Number.parseInt(ex.sets, 10) || 1))}, (_, index) => {
             const key = ex.id + ":" + (index + 1);
-            return <div key={key} className="grid grid-cols-[auto_1fr_1fr_1fr] items-end gap-2 rounded-md bg-black/70 p-2">
-              <span className="pb-2 text-xs font-bold text-[#facc15]">Série {index + 1}</span>
+            return <div key={key} className="grid grid-cols-3 items-end gap-2 rounded-md bg-black/70 p-2">
+              <span className="col-span-3 text-xs font-bold text-[#facc15]">Série {index + 1}</span>
               <label className="text-[11px] text-zinc-400">Carga kg<input inputMode="decimal" value={loads[key] ?? ex.load ?? ""} onChange={e=>setLoads(v=>({...v,[key]:e.target.value}))} className="mt-1 w-full rounded border border-white/15 bg-black p-2 text-sm text-white"/></label>
               <label className="text-[11px] text-zinc-400">Reps<input inputMode="numeric" value={reps[key] ?? ex.reps ?? ""} onChange={e=>setReps(v=>({...v,[key]:e.target.value}))} className="mt-1 w-full rounded border border-white/15 bg-black p-2 text-sm text-white"/></label>
               <label className="text-[11px] text-zinc-400">Tempo seg.<input inputMode="numeric" value={durations[key] ?? ""} onChange={e=>setDurations(v=>({...v,[key]:e.target.value}))} className="mt-1 w-full rounded border border-white/15 bg-black p-2 text-sm text-white" placeholder="Opcional"/></label>
