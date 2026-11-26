@@ -76,94 +76,85 @@ export const studentSignIn = createServerFn({ method: "POST" })
   });
 
 
-/** Creates a student Auth identity only after matching the gym-issued one-time code and birth date. */
+/** Activates student access with the shared gym code and enrollment number. */
 export const beginStudentActivation = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({
     matricula: z.string().trim().min(1).max(20),
-    cpf: z.string().trim().min(11).max(14),
-    birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-    code: z.string().regex(/^\d{8}$/),
-    email: z.string().trim().email().max(254),
+    code: z.string().regex(/^\\d{8}$/),
     password: z.string().min(8).max(200),
   }).parse(input))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { createHash } = await import("node:crypto");
     const matriculaDigits = data.matricula.replace(/[^0-9]/g, "");
-    const cpfDigits = data.cpf.replace(/[^0-9]/g, "");
-    if (!matriculaDigits || cpfDigits.length !== 11) return { ok: false as const, error: "Dados de ativação inválidos. Confira com a recepção." };
-
-    const key = createHash("sha256").update(matriculaDigits + ":" + cpfDigits).digest("hex");
+    if (!matriculaDigits || !/^\\d+$/.test(matriculaDigits)) {
+      return { ok: false as const, error: "Confira o número da matrícula." };
+    }
+    const key = createHash("sha256").update("activation:" + matriculaDigits).digest("hex");
     const since = new Date(Date.now() - 30 * 60 * 1000).toISOString();
-    const { data: attempts } = await supabaseAdmin.from("student_auth_attempts")
+    const { data: attempts, error: attemptsError } = await supabaseAdmin.from("student_auth_attempts")
       .select("id").eq("key", key).eq("kind", "activation").gte("created_at", since).limit(5);
+    if (attemptsError) return { ok: false as const, error: "Não foi possível validar agora. Tente novamente." };
     if ((attempts?.length ?? 0) >= 5) {
       return { ok: false as const, error: "Muitas tentativas. Aguarde 30 minutos ou procure a recepção." };
     }
-
-    const { data: student } = await supabaseAdmin.from("students")
-      .select("id,birth_date,status,cpf").eq("matricula", Number(matriculaDigits)).maybeSingle();
-    const storedCpf = String(student?.cpf ?? "").replace(/[^0-9]/g, "");
-    const validStudent = !!student && student.status === "ativo" &&
-      storedCpf === cpfDigits && String(student.birth_date ?? "").slice(0, 10) === data.birthDate;
-
-    let activation: { id: string } | null = null;
-    if (validStudent) {
-      const hash = createHash("sha256").update(data.code).digest("hex");
-      const { data: codeRow } = await supabaseAdmin.from("student_activation_codes")
-        .select("id").eq("student_id", student!.id).eq("code_hash", hash)
-        .is("used_at", null).gt("expires_at", new Date().toISOString())
-        .order("created_at", { ascending: false }).limit(1).maybeSingle();
-      activation = codeRow;
-    }
-
+    const validCode = data.code === "02226770";
+    const { data: student, error: studentError } = validCode
+      ? await supabaseAdmin.from("students").select("id,status").eq("matricula", Number(matriculaDigits)).maybeSingle()
+      : { data: null, error: null };
+    if (studentError) return { ok: false as const, error: "Não foi possível localizar a matrícula. Tente novamente." };
+    const validStudent = !!student && student.status === "ativo";
     const { error: attemptError } = await supabaseAdmin.from("student_auth_attempts").insert({
-      key, kind: "activation", success: !!activation,
+      key, kind: "activation", success: validCode && validStudent,
     });
-    if (attemptError) throw new Error("Não foi possível validar a ativação. Tente novamente.");
-
-    if (!validStudent || !activation) {
-      return { ok: false as const, error: "Dados ou código inválidos/expirados. Confira com a recepção." };
+    if (attemptError) return { ok: false as const, error: "Não foi possível registrar a tentativa. Tente novamente." };
+    if (!validCode || !validStudent || !student) {
+      return { ok: false as const, error: "Código ou matrícula inválidos. Confira os dados com a recepção." };
     }
 
-    const { data: existing } = await supabaseAdmin.from("student_accounts")
-      .select("user_id").eq("student_id", student!.id).maybeSingle();
+    const { data: existing, error: existingError } = await supabaseAdmin.from("student_accounts")
+      .select("user_id").eq("student_id", student.id).maybeSingle();
+    if (existingError) return { ok: false as const, error: "Não foi possível verificar o acesso. Tente novamente." };
     if (existing?.user_id) {
-      return { ok: false as const, error: "Este acesso já foi ativado. Use recuperar senha ou procure a recepção." };
+      return { ok: false as const, error: "Esta matrícula já possui acesso. Procure a recepção para redefinir a senha." };
     }
 
-    const email = data.email.toLowerCase();
+    const internalEmail = student.id + "@students.altfitness.invalid";
     const { data: created, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email, password: data.password, email_confirm: false,
+      email: internalEmail,
+      password: data.password,
+      email_confirm: true,
       app_metadata: { kind: "student" },
-      user_metadata: { student_id: student!.id },
+      user_metadata: { student_id: student.id },
     });
     if (createError || !created.user) {
-      return { ok: false as const, error: "Não foi possível criar o acesso. Confira o e-mail ou procure a recepção." };
+      return { ok: false as const, error: "Não foi possível criar o acesso. Procure a recepção." };
     }
 
     const { error: accountError } = await supabaseAdmin.from("student_accounts").insert({
-      user_id: created.user.id, student_id: student!.id,
+      user_id: created.user.id,
+      student_id: student.id,
+      email_verified_at: new Date().toISOString(),
     });
     if (accountError) {
       await supabaseAdmin.auth.admin.deleteUser(created.user.id);
-      return { ok: false as const, error: "Este aluno já possui acesso ou não foi possível concluir o cadastro." };
+      return { ok: false as const, error: "Esta matrícula já possui acesso ou não foi possível concluir o cadastro." };
     }
 
-    const { data: consumed, error: consumeError } = await supabaseAdmin.from("student_activation_codes")
-      .update({ used_at: new Date().toISOString() }).eq("id", activation.id).is("used_at", null)
-      .select("id").maybeSingle();
-    if (consumeError || !consumed) {
-      await supabaseAdmin.from("student_accounts").delete().eq("user_id", created.user.id);
-      await supabaseAdmin.auth.admin.deleteUser(created.user.id);
-      return { ok: false as const, error: "O código já foi utilizado. Solicite outro à recepção." };
+    const { data: session, error: signInError } = await publicClient().auth.signInWithPassword({
+      email: internalEmail,
+      password: data.password,
+    });
+    if (signInError || !session.session) {
+      return { ok: true as const, activated: true as const, message: "Acesso criado. Entre com sua matrícula e a senha cadastrada." };
     }
-
-    const { error: otpError } = await publicClient().auth.resend({ type: "signup", email });
-    if (otpError) {
-      return { ok: true as const, emailVerificationPending: true, message: "Acesso criado. Use reenviar código para receber o e-mail de confirmação." };
-    }
-    return { ok: true as const, emailVerificationPending: true, message: "Enviamos um código de confirmação para seu e-mail." };
+    return {
+      ok: true as const,
+      activated: true as const,
+      access_token: session.session.access_token,
+      refresh_token: session.session.refresh_token,
+      message: "Primeiro acesso concluído!",
+    };
   });
 
 /** Resends the confirmation OTP without disclosing whether a student account exists. */
