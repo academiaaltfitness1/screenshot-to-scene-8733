@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, MailCheck, KeyRound, UserRoundPlus } from "lucide-react";
+import { ArrowLeft, Loader2, MailCheck, UserRoundPlus } from "lucide-react";
 import sharkAsset from "@/assets/alt-mascote.webp.asset.json";
 const shark = sharkAsset.url;
 import { supabase } from "@/integrations/supabase/client";
