@@ -166,9 +166,14 @@ export const resendStudentActivationOtp = createServerFn({ method: "POST" })
 
 /** Password reset is sent only to the verified email already linked to the student's account. */
 export const requestStudentPasswordReset = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => z.object({ identifier: z.string().trim().min(1).max(32) }).parse(input))
+  .inputValidator((input: unknown) => z.object({ identifier: z.string().trim().min(1).max(32), redirectTo: z.string().url() }).parse(input))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const redirectUrl = new URL(data.redirectTo);
+    const configuredOrigin = process.env["APP_URL"] ? new URL(process.env["APP_URL"]).origin : null;
+    const allowedRedirect = redirectUrl.protocol === "https:" && (redirectUrl.hostname.endsWith(".lovable.app") || redirectUrl.origin === configuredOrigin);
+    if (!allowedRedirect) throw new Error("Endereço de recuperação inválido.");
+    const redirectTo = `${redirectUrl.origin}/reset-password`;
     const digits = data.identifier.replace(/[^0-9]/g, "");
     const { data: student } = digits.length === 11
       ? await supabaseAdmin.from("students").select("id").eq("cpf", digits).maybeSingle()
@@ -180,7 +185,7 @@ export const requestStudentPasswordReset = createServerFn({ method: "POST" })
         const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(account.user_id);
         if (authUser.user?.email) {
           await publicClient().auth.resetPasswordForEmail(authUser.user.email, {
-            redirectTo: process.env["STUDENT_PASSWORD_RESET_REDIRECT"] || undefined,
+            redirectTo,
           });
         }
       }
