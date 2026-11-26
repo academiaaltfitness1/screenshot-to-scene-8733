@@ -17,6 +17,7 @@ export function StudentWorkoutExecution({ workouts }: { workouts: Workout[] }) {
   const [selectedWorkout, setSelectedWorkout] = useState<string | null>(null);
   const [loads, setLoads] = useState<Record<string, string>>({});
   const [reps, setReps] = useState<Record<string, string>>({});
+  const [durations, setDurations] = useState<Record<string, string>>({});
   const activeWorkout = useMemo(() => workouts.find(w => w.id === selectedWorkout), [workouts, selectedWorkout]);
   const { data: sessions = [] } = useQuery({
     queryKey: ["student-workout-history"],
@@ -71,13 +72,20 @@ export function StudentWorkoutExecution({ workouts }: { workouts: Workout[] }) {
   async function saveExerciseLogs(ex: Workout["workout_exercises"][number], status: "concluido" | "pulado", skipReason?: string) {
     if (!sessionId) return;
     const count = Math.max(1, Math.min(20, Number.parseInt(ex.sets, 10) || 1));
-    const rows = Array.from({ length: count }, (_, index) => ({
-      session_id: sessionId, exercise_id: ex.id, exercise_name: ex.exercise,
-      sort_order: ex.sort_order, set_number: index + 1,
-      load: status === "pulado" ? null : (Number(loads[ex.id]) || null),
-      reps: status === "pulado" ? null : (Number(reps[ex.id]) || null),
-      status, skip_reason: status === "pulado" ? skipReason : null,
-    }));
+    const rows = Array.from({ length: count }, (_, index) => {
+      const key = ex.id + ":" + (index + 1);
+      const load = Number(loads[key]);
+      const repCount = Number.parseInt(reps[key] ?? "", 10);
+      const duration = Number.parseInt(durations[key] ?? "", 10);
+      return {
+        session_id: sessionId, exercise_id: ex.id, exercise_name: ex.exercise,
+        sort_order: ex.sort_order, set_number: index + 1,
+        load: status === "pulado" || !Number.isFinite(load) ? null : load,
+        reps: status === "pulado" || !Number.isFinite(repCount) ? null : repCount,
+        duration_seconds: status === "pulado" || !Number.isFinite(duration) ? null : duration,
+        status, skip_reason: status === "pulado" ? skipReason : null,
+      };
+    });
     setBusy(true);
     try {
       const { error: deleteError } = await supabase.from("workout_set_logs")
@@ -109,9 +117,16 @@ export function StudentWorkoutExecution({ workouts }: { workouts: Workout[] }) {
       <p className="font-bold text-[#facc15]">Em andamento · Treino {activeWorkout.letter} — {activeWorkout.name}</p>
       <div className="mt-3 space-y-3">{[...activeWorkout.workout_exercises].sort((a,b)=>a.sort_order-b.sort_order).map(ex=><div key={ex.id} className="rounded-lg border border-white/10 p-3">
         <p className="font-semibold">{ex.exercise}</p><p className="text-xs text-zinc-400">{ex.sets} séries · {ex.reps} repetições · descanso {ex.rest}</p>
-        <div className="mt-2 grid grid-cols-2 gap-2">
-          <label className="text-xs text-zinc-400">Carga (kg)<input inputMode="decimal" value={loads[ex.id]??ex.load??""} onChange={e=>setLoads(v=>({...v,[ex.id]:e.target.value}))} className="mt-1 w-full rounded border border-white/15 bg-black p-2 text-white"/></label>
-          <label className="text-xs text-zinc-400">Repetições<input inputMode="numeric" value={reps[ex.id]??ex.reps??""} onChange={e=>setReps(v=>({...v,[ex.id]:e.target.value}))} className="mt-1 w-full rounded border border-white/15 bg-black p-2 text-white"/></label>
+        <div className="mt-3 space-y-2">
+          {Array.from({length: Math.max(1, Math.min(20, Number.parseInt(ex.sets, 10) || 1))}, (_, index) => {
+            const key = ex.id + ":" + (index + 1);
+            return <div key={key} className="grid grid-cols-[auto_1fr_1fr_1fr] items-end gap-2 rounded-md bg-black/70 p-2">
+              <span className="pb-2 text-xs font-bold text-[#facc15]">Série {index + 1}</span>
+              <label className="text-[11px] text-zinc-400">Carga kg<input inputMode="decimal" value={loads[key] ?? ex.load ?? ""} onChange={e=>setLoads(v=>({...v,[key]:e.target.value}))} className="mt-1 w-full rounded border border-white/15 bg-black p-2 text-sm text-white"/></label>
+              <label className="text-[11px] text-zinc-400">Reps<input inputMode="numeric" value={reps[key] ?? ex.reps ?? ""} onChange={e=>setReps(v=>({...v,[key]:e.target.value}))} className="mt-1 w-full rounded border border-white/15 bg-black p-2 text-sm text-white"/></label>
+              <label className="text-[11px] text-zinc-400">Tempo seg.<input inputMode="numeric" value={durations[key] ?? ""} onChange={e=>setDurations(v=>({...v,[key]:e.target.value}))} className="mt-1 w-full rounded border border-white/15 bg-black p-2 text-sm text-white" placeholder="Opcional"/></label>
+            </div>;
+          })}
         </div>
         <div className="mt-2 flex flex-wrap gap-2">
           <button disabled={busy} onClick={()=>logExercise(ex)} className="rounded bg-[#facc15] px-3 py-2 text-sm font-bold text-black">Salvar séries</button>
