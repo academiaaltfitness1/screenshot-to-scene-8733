@@ -13,6 +13,7 @@ export function DynamicQrControl({ isAdmin }: { isAdmin: boolean }) {
       if (error) throw error;
       return { enabled: data?.dynamic_qr_enabled === true, agentVersion: data?.agent_version ?? null, lastSeen: data?.agent_last_seen ?? null };
     },
+    refetchInterval: 10000,
   });
   const enabled = status.enabled;
   const agentCompatible = status.agentVersion === "alt-hmac-qr-1";
