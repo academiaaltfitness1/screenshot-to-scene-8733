@@ -33,6 +33,7 @@ export const createStudentQrToken = createServerFn({ method: "POST" })
     const code = makeTemporaryQrCode(secret.secret, student.matricula, window);
     return {
       token: String(student.matricula) + code,
+      fallbackToken: student.qr_code ? String(student.qr_code) : null,
       mode: "dynamic" as const,
       expiresAt: (window + 1) * 30000,
       refreshInMs: Math.max(1000, ((window + 1) * 30000) - Date.now()),
