@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Plus, Trash2, Upload, Printer, MessageCircle, Mail } from "lucide-react";
+import { Plus, Upload, Printer, MessageCircle, Mail } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
@@ -187,19 +187,6 @@ function StudentDialog({ student, onClose, onEnroll }: { student: Partial<Studen
     },
   });
 
-  const remove = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from("students").delete().eq("id", f.id!);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Aluno excluído");
-      qc.invalidateQueries({ queryKey: ["students-overview"] });
-      onClose();
-    },
-    onError: (e) => toast.error(errMsg(e)),
-  });
-
   async function uploadPhoto(file: File) {
     const path = `${crypto.randomUUID()}.${file.name.split(".").pop() ?? "jpg"}`;
     const { error } = await supabase.storage.from("fotos").upload(path, file, { upsert: true });
@@ -313,14 +300,10 @@ function StudentDialog({ student, onClose, onEnroll }: { student: Partial<Studen
           </TabsContent>
         </Tabs>
         <DialogFooter className="gap-2">
-          {!isNew && staff?.isAdmin && (
-            <Button
-              variant="destructive"
-              className="mr-auto"
-              onClick={() => confirm("Excluir este aluno e todo o histórico?") && remove.mutate()}
-            >
-              <Trash2 /> Excluir
-            </Button>
+          {!isNew && (
+            <p className="mr-auto max-w-xs text-xs text-muted-foreground">
+              Para preservar o histórico, encerre o vínculo alterando a situação do aluno para “Inativo”.
+            </p>
           )}
           {!isNew && f.whatsapp && (
             <Button variant="outline" onClick={() => {
