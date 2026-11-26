@@ -9,6 +9,8 @@ import { StudentFinanceAnnouncements } from "@/components/aluno/StudentFinanceAn
 import { StudentGoalProgress } from "@/components/aluno/StudentGoalProgress";
 import { StudentAttendanceHistory } from "@/components/aluno/StudentAttendanceHistory";
 import { StudentMembershipQr } from "@/components/aluno/StudentMembershipQr";
+import sharkAsset from "@/assets/alt-mascote.webp.asset.json";
+const shark = sharkAsset.url;
 
 export const Route = createFileRoute("/aluno")({
   ssr: false,
@@ -77,7 +79,7 @@ function StudentPortal() {
     <main className="min-h-screen bg-[#080808] px-4 py-6 text-white">
       <div className="mx-auto max-w-3xl space-y-5">
         <header className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#151515] p-4">
-          <div><p className="text-xs font-bold tracking-[.25em] text-[#facc15]">ALT FITNESS</p><h1 className="text-2xl font-black">Olá, {profile?.name?.split(" ")[0] ?? "aluno"}!</h1><p className="text-xs text-zinc-400">Sua área do aluno</p></div>
+          <div className="flex items-center gap-3"><img src={shark} alt="Mascote ALT FITNESS" className="h-16 w-16 object-contain"/><div><p className="text-xs font-bold tracking-[.25em] text-[#facc15]">ALT FITNESS</p><h1 className="text-2xl font-black">Olá, {profile?.name?.split(" ")[0] ?? "aluno"}!</h1><p className="text-xs text-zinc-400">Sua área do aluno</p></div></div>
           <button onClick={logout} className="rounded-lg border border-white/15 p-2 text-zinc-300" aria-label="Sair"><LogOut size={19}/></button>
         </header>
         <section className="grid gap-3 sm:grid-cols-2">
