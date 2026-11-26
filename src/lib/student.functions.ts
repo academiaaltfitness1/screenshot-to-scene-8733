@@ -25,7 +25,7 @@ export const studentSignIn = createServerFn({ method: "POST" })
   }).parse(input))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const digits = data.identifier.replace(/\\D/g, "");
+    const digits = data.identifier.replace(/[^0-9]/g, "");
     if (!digits) return { ok: false as const, error: "Matrícula ou CPF e senha inválidos." };
 
     let student: { id: string } | null = null;
@@ -33,7 +33,7 @@ export const studentSignIn = createServerFn({ method: "POST" })
       const { data: row } = await supabaseAdmin.from("students").select("id").eq("cpf", digits).maybeSingle();
       student = row;
     }
-    if (!student && /^\\d+$/.test(digits)) {
+    if (!student && /^[0-9]+$/.test(digits)) {
       const { data: row } = await supabaseAdmin.from("students").select("id").eq("matricula", Number(digits)).maybeSingle();
       student = row;
     }
