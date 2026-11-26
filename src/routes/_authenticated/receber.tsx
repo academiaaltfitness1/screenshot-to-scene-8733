@@ -122,18 +122,19 @@ function ReceberPage() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="abertas">Em aberto</SelectItem>
+            <SelectItem value="abertas">A receber (todos em aberto)</SelectItem>
             <SelectItem value="hoje">Vence hoje</SelectItem>
             <SelectItem value="a_vencer">A vencer</SelectItem>
             <SelectItem value="pendentes">Pendentes</SelectItem>
-            <SelectItem value="vencidas">Vencidas</SelectItem>
+            <SelectItem value="vencidas">Vencidos</SelectItem>
             <SelectItem value="pagas">Pagas</SelectItem>
             <SelectItem value="todas">Todas</SelectItem>
           </SelectContent>
         </Select>
         <SearchBox value={q} onChange={(value) => { setQ(value); setMessageIndex(0); }} placeholder="Aluno ou descrição" />
-        <Button size="sm" variant="outline" onClick={() => { setSelectedIds(selectableRows.map((r) => r.id)); setMessageIndex(0); }}>Selecionar todos</Button>
-        <Button size="sm" variant="outline" onClick={() => { setSelectedIds([]); setMessageIndex(0); }}>Limpar seleção</Button>
+        <Button size="sm" variant="outline" disabled={!selectableRows.length} onClick={() => { setSelectedIds(selectableRows.map((r) => r.id)); setMessageIndex(0); }}>Marcar todos ({selectableRows.length})</Button>
+        <Button size="sm" variant="outline" disabled={!selectedIds.length} onClick={() => { setSelectedIds([]); setMessageIndex(0); }}>Limpar seleção</Button>
+        <Badge variant="secondary">Selecionados: {selectedRows.length}</Badge>
         <Button size="sm" disabled={!selectedRows.length || messageIndex >= selectedRows.length} onClick={openNextSelectedMessage}><Send/> Abrir próxima conversa ({Math.max(0, selectedRows.length - messageIndex)})</Button>
         <div className="ml-auto flex gap-2 text-sm">
           <Badge variant="warning">Em aberto: {brl(totals.open)}</Badge>
@@ -143,7 +144,7 @@ function ReceberPage() {
       <table className={grid.table}>
         <thead className={grid.thead}>
           <tr>
-            <th className={grid.th}>Enviar</th>
+            <th className={grid.th}>Selecionar para WhatsApp</th>
             <th className={grid.th}>Vencimento</th>
             <th className={grid.th}>Aluno</th>
             <th className={grid.th}>Descrição</th>
