@@ -44,7 +44,7 @@ async function assertAdmin(context: { supabase: ReturnType<typeof publicClient>;
 
 const MODULE_KEYS = [
   "alunos", "matriculas", "frequencia", "turmas", "funcionarios", "produtos", "vendas", "receber",
-  "pagar", "caixa", "avaliacao", "treinos", "sistema", "backup", "catraca", "relatorios",
+  "pagar", "caixa", "avaliacao", "treinos", "sistema", "backup", "catraca", "relatorios", "comunicados",
 ] as const;
 
 export const createEmployee = createServerFn({ method: "POST" })
@@ -69,7 +69,8 @@ export const createEmployee = createServerFn({ method: "POST" })
       email,
       password: data.password,
       email_confirm: true,
-      user_metadata: { full_name: data.full_name },
+      app_metadata: { kind: "staff" },
+      user_metadata: { full_name: data.full_name, cargo: data.cargo },
     });
     if (error || !created.user) throw new Error(error?.message.includes("already") ? "Este e-mail já está cadastrado." : error?.message ?? "Erro ao criar");
     const id = created.user.id;
