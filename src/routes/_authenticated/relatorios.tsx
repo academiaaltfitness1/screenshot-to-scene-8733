@@ -61,7 +61,7 @@ function VencimentosReport() {
     return true;
   }), [rows, startDate, endDate, status, today, soonLimit]);
 
-  const phoneDigits = (phone: string | null | undefined) => (phone ?? "").replace(/\\D/g, "");
+  const phoneDigits = (phone: string | null | undefined) => (phone ?? "").replace(/\D/g, "");
   const selectableRows = filtered.filter((row) => !row.paid_at && phoneDigits(row.students?.whatsapp).length >= 10);
   const selectedRows = selectableRows.filter((row) => selectedIds.includes(row.id));
   const allSelectableSelected = selectableRows.length > 0 && selectableRows.every((row) => selectedIds.includes(row.id));
