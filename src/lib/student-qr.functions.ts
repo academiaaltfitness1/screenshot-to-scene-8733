@@ -16,17 +16,18 @@ export const createStudentQrToken = createServerFn({ method: "POST" })
     if (accountError || !account?.student_id || !account.email_verified_at) {
       throw new Error("Conta do aluno não confirmada.");
     }
-    const [{ data: student, error: studentError }, { data: secret, error: secretError }, { data: setting, error: settingError }] = await Promise.all([
+    const [{ data: student, error: studentError }, { data: secret, error: secretError }, { data: setting, error: settingError }, { data: qrAllowedSetting, error: qrAllowedError }] = await Promise.all([
       supabaseAdmin.from("students").select("matricula,qr_code").eq("id", account.student_id).maybeSingle(),
       supabaseAdmin.from("student_qr_secrets").select("secret").eq("student_id", account.student_id).maybeSingle(),
-      (supabaseAdmin as any).from("settings").select("dynamic_qr_enabled,agent_version,allow_qrcode").eq("id", 1).maybeSingle(),
+      (supabaseAdmin as any).from("settings").select("dynamic_qr_enabled,agent_version").eq("id", 1).maybeSingle(),
+      supabaseAdmin.from("settings").select("allow_qrcode").eq("id", 1).maybeSingle(),
     ]);
     if (studentError || !student) throw new Error("Não foi possível carregar sua carteirinha.");
+    if (qrAllowedError || qrAllowedSetting?.allow_qrcode !== true) throw new Error("A leitura de QR está desativada pela academia. Procure a recepção.");
     if (settingError || !setting?.dynamic_qr_enabled || setting.agent_version !== "alt-hmac-qr-1") {
       if (!student.qr_code) throw new Error("A carteirinha fixa não está cadastrada. Procure a recepção.");
       return { token: String(student.qr_code), mode: "fixed" as const, expiresAt: Date.now() + 60000, refreshInMs: 60000 };
     }
-    if (setting.allow_qrcode !== true) throw new Error("A leitura de QR está desativada pela academia. Procure a recepção.");
     if (secretError || !secret?.secret) throw new Error("Carteirinha temporária ainda não configurada. Procure a recepção.");
     const window = Math.floor(Date.now() / 30000);
     const code = makeTemporaryQrCode(secret.secret, student.matricula, window);
