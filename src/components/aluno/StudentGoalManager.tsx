@@ -12,6 +12,16 @@ export function StudentGoalManager({ studentId }: { studentId: string }) {
   const [weight, setWeight] = useState("");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
+  const { data: events = [] } = useQuery({
+    queryKey: ["student-goal-events-admin", studentId],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).from("student_goal_events")
+        .select("week_start,target_sessions,completed_sessions,reached_at")
+        .eq("student_id", studentId).order("reached_at", { ascending: false }).limit(5);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
   const { data: goal } = useQuery({
     queryKey: ["student-goal-admin", studentId],
     queryFn: async () => {
@@ -56,5 +66,6 @@ export function StudentGoalManager({ studentId }: { studentId: string }) {
       </label>
     </div>
     <Button className="mt-3" size="sm" onClick={save} disabled={busy || Number(sessions)<1 || Number(sessions)>14}><Save/> Salvar meta</Button>
+    {events.length > 0 && <div className="mt-3 rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3 text-sm"><strong className="text-emerald-600">Metas alcançadas recentemente</strong><ul className="mt-1 space-y-1">{events.map((event:any)=><li key={event.week_start}>{new Date(event.week_start+"T12:00:00").toLocaleDateString("pt-BR")}: {event.completed_sessions}/{event.target_sessions} treinos na semana</li>)}</ul></div>}
   </section>;
 }
