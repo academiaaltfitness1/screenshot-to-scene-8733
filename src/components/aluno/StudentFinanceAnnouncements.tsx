@@ -51,9 +51,9 @@ export function StudentFinanceAnnouncements({ studentId, bills }: { studentId: s
     },
   });
   async function markRead(announcementId: string) {
-    const { error } = await supabase.from("announcement_reads").upsert({
+    const { error } = await supabase.from("announcement_reads").insert({
       announcement_id: announcementId, student_id: studentId,
-    }, { onConflict: "announcement_id,student_id" });
+    });
     if (error) { toast.error("Não foi possível marcar como lido."); return; }
     await qc.invalidateQueries({ queryKey: ["student-announcement-reads"] });
   }
