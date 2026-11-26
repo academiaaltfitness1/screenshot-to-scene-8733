@@ -27,15 +27,16 @@ function AdminMobile() {
     queryKey: ["admin-mobile-stats", today, can("alunos"), can("receber"), can("treinos")],
     enabled: !!staff,
     queryFn: async () => {
-      const [students, ready, overdue, proofs, goals, reviews] = await Promise.all([
+      const [students, ready, overdue, proofs, proofRows, goals, reviews] = await Promise.all([
         can("alunos") ? supabase.from("students").select("id", { count: "exact", head: true }).eq("status", "ativo") : Promise.resolve({ count: null }),
         can("alunos") ? supabase.from("students").select("id", { count: "exact", head: true }).eq("status", "ativo").not("cpf", "is", null).neq("cpf", "").not("birth_date", "is", null) : Promise.resolve({ count: null }),
         can("receber") ? supabase.from("receivables").select("id", { count: "exact", head: true }).is("paid_at", null).lt("due_date", today) : Promise.resolve({ count: null }),
         can("receber") ? supabase.from("payment_proofs").select("id", { count: "exact", head: true }).eq("status", "pendente") : Promise.resolve({ count: null }),
+        can("receber") ? (supabase as any).from("payment_proofs").select("id,file_path,note,created_at,students(name,matricula),receivables(description,amount,due_date)").eq("status", "pendente").order("created_at", { ascending: true }).limit(20) : Promise.resolve({ data: [] }),
         can("treinos") ? (supabase as any).from("student_goal_events").select("id,student_id,week_start,target_sessions,completed_sessions,reached_at,students(name,matricula)").order("reached_at", { ascending: false }).limit(5) : Promise.resolve({ data: [] }),
         can("treinos") ? (supabase as any).from("student_workout_review_requests").select("id,student_id,note,created_at,students(name,matricula)").eq("status", "pendente").order("created_at", { ascending: false }).limit(10) : Promise.resolve({ data: [] }),
       ]);
-      return { students: students.count ?? 0, ready: ready.count ?? 0, overdue: overdue.count ?? 0, proofs: proofs.count ?? 0, goals: goals.data ?? [], reviews: reviews.data ?? [] };
+      return { students: students.count ?? 0, ready: ready.count ?? 0, overdue: overdue.count ?? 0, proofs: proofs.count ?? 0, proofRows: proofRows.data ?? [], goals: goals.data ?? [], reviews: reviews.data ?? [] };
     },
     refetchInterval: 15000,
   });
@@ -61,6 +62,20 @@ function AdminMobile() {
         {can("receber") && <article className="rounded-xl border border-white/10 bg-[#151515] p-3"><AlertTriangle className="mb-2 text-amber-400"/><strong className="text-2xl">{stats?.overdue ?? "—"}</strong><p className="text-xs text-zinc-400">Em atraso</p></article>}
         {can("receber") && <article className="rounded-xl border border-white/10 bg-[#151515] p-3"><ClipboardList className="mb-2 text-[#facc15]"/><strong className="text-2xl">{stats?.proofs ?? "—"}</strong><p className="text-xs text-zinc-400">Comprovantes</p></article>}
       </section>
+      {can("receber") && <section className="rounded-xl border border-white/10 bg-[#151515] p-4">
+        <h2 className="mb-2 text-lg font-extrabold text-[#facc15]">Comprovantes Pix para conferir</h2>
+        {stats?.proofRows?.length ? <ul className="space-y-3">{stats.proofRows.map((proof: any)=><li key={proof.id} className="rounded-lg bg-black p-3 text-sm">
+          <strong>{proof.students?.name ?? "Aluno"} · {proof.students?.matricula ?? "—"}</strong>
+          <p className="mt-1 text-zinc-300">{proof.receivables?.description ?? "Mensalidade"} · R$ {Number(proof.receivables?.amount ?? 0).toFixed(2).replace(".", ",")}</p>
+          <p className="text-xs text-zinc-500">Vencimento: {proof.receivables?.due_date ? new Date(proof.receivables.due_date+"T12:00:00").toLocaleDateString("pt-BR") : "—"} · Enviado: {new Date(proof.created_at).toLocaleString("pt-BR")}</p>
+          {proof.note && <p className="mt-1 text-zinc-300">Observação: {proof.note}</p>}
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button onClick={async()=>{const {data,error}=await supabase.storage.from("comprovantes").createSignedUrl(proof.file_path,300);if(error||!data?.signedUrl){toast.error("Não foi possível abrir o comprovante.");return;}window.open(data.signedUrl,"_blank","noopener,noreferrer");}} className="rounded border border-white/20 px-3 py-2 text-xs font-bold text-white">Ver comprovante</button>
+            <button onClick={async()=>{const {error}=await (supabase as any).rpc("review_student_payment_proof",{_proof_id:proof.id,_approved:true,_note:"Pagamento Pix confirmado pela administração."});if(error){toast.error(error.message??"Não foi possível aprovar.");return;}toast.success("Pagamento confirmado e mensalidade baixada.");await queryClient.invalidateQueries({queryKey:["admin-mobile-stats"]});}} className="rounded bg-[#facc15] px-3 py-2 text-xs font-bold text-black">Confirmar pagamento</button>
+            <button onClick={async()=>{const reason=window.prompt("Motivo da recusa do comprovante:");if(!reason?.trim())return;const {error}=await (supabase as any).rpc("review_student_payment_proof",{_proof_id:proof.id,_approved:false,_note:reason.trim().slice(0,300)});if(error){toast.error(error.message??"Não foi possível recusar.");return;}toast.success("Comprovante recusado.");await queryClient.invalidateQueries({queryKey:["admin-mobile-stats"]});}} className="rounded border border-red-500/40 px-3 py-2 text-xs font-bold text-red-300">Recusar</button>
+          </div>
+        </li>)}</ul> : <p className="text-sm text-zinc-400">Nenhum comprovante pendente.</p>}
+      </section>}
       {can("treinos") && <section className="rounded-xl border border-white/10 bg-[#151515] p-4">
         <h2 className="mb-2 text-lg font-extrabold text-[#facc15]">Pedidos de revisão de treino</h2>
         {stats?.reviews?.length ? <ul className="space-y-2">{stats.reviews.map((request: any)=><li key={request.id} className="rounded-lg bg-black p-3 text-sm">
