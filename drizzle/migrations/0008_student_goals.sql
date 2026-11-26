@@ -45,13 +45,13 @@ BEGIN
   FROM public.student_goals WHERE student_id = NEW.student_id;
   IF _target IS NULL OR _target < 1 THEN RETURN NEW; END IF;
 
-  _week_start := date_trunc('week', NEW.finished_at)::date;
+  _week_start := date_trunc('week', NEW.finished_at AT TIME ZONE 'America/Sao_Paulo')::date;
   SELECT count(*)::integer INTO _completed
   FROM public.workout_sessions
   WHERE student_id = NEW.student_id
     AND status = 'concluido'
-    AND finished_at >= _week_start
-    AND finished_at < (_week_start + 7);
+    AND finished_at >= (_week_start::timestamp AT TIME ZONE 'America/Sao_Paulo')
+    AND finished_at < ((_week_start + 7)::timestamp AT TIME ZONE 'America/Sao_Paulo');
 
   IF _completed >= _target THEN
     INSERT INTO public.student_goal_events (student_id, week_start, target_sessions, completed_sessions)
