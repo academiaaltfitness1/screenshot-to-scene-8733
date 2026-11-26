@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Plus, CheckCircle2, Trash2, MessageCircle } from "lucide-react";
+import { Plus, CheckCircle2, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ModuleWindow } from "@/components/shell/ModuleWindow";
 import { Field, ModuleBar, SearchBox, EmptyRow, grid } from "@/components/app/common";
@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useStaff, settingsQuery } from "@/hooks/use-staff";
+import { settingsQuery } from "@/hooks/use-staff";
 import { brl, fmtDate, addDaysISO, errMsg } from "@/lib/format";
 import { todayISO } from "@/lib/access";
 import { PAYMENT_METHODS, recordCash } from "@/lib/cash";
@@ -33,7 +33,6 @@ type Filter = "abertas" | "vencidas" | "pagas" | "todas";
 
 function ReceberPage() {
   const qc = useQueryClient();
-  const { staff } = useStaff();
   const { data: settings } = useQuery(settingsQuery);
   const [filter, setFilter] = useState<Filter>("abertas");
   const [q, setQ] = useState("");
@@ -72,13 +71,6 @@ function ReceberPage() {
       overdue: open.filter((r) => r.due_date < today).reduce((a, r) => a + Number(r.amount), 0),
     };
   }, [rows, today]);
-
-  const remove = async (id: string) => {
-    if (!confirm("Excluir este lançamento?")) return;
-    const { error } = await supabase.from("receivables").delete().eq("id", id);
-    if (error) { toast.error(error.message); return; }
-    qc.invalidateQueries({ queryKey: ["receivables"] });
-  };
 
   const whatsapp = (phone: string | null | undefined, name: string, amount: number, due: string) => {
     if (!phone) { toast.error("Aluno sem WhatsApp cadastrado."); return; }
@@ -165,11 +157,6 @@ function ReceberPage() {
                         <CheckCircle2 /> Receber
                       </Button>
                     </>
-                  )}
-                  {staff?.isAdmin && (
-                    <Button size="icon" variant="ghost" onClick={() => remove(r.id)}>
-                      <Trash2 className="text-destructive" />
-                    </Button>
                   )}
                 </td>
               </tr>
