@@ -21,8 +21,8 @@ export const createStudentQrToken = createServerFn({ method: "POST" })
       supabaseAdmin.from("student_qr_secrets").select("secret").eq("student_id", account.student_id).maybeSingle(),
       (supabaseAdmin as any).from("settings").select("dynamic_qr_enabled,agent_version").eq("id", 1).maybeSingle(),
     ]);
-    if (studentError || !student || settingError) throw new Error("Não foi possível carregar sua carteirinha.");
-    if (!setting?.dynamic_qr_enabled || setting.agent_version !== "alt-hmac-qr-1") {
+    if (studentError || !student) throw new Error("Não foi possível carregar sua carteirinha.");
+    if (settingError || !setting?.dynamic_qr_enabled || setting.agent_version !== "alt-hmac-qr-1") {
       if (!student.qr_code) throw new Error("A carteirinha fixa não está cadastrada. Procure a recepção.");
       return { token: String(student.qr_code), mode: "fixed" as const, expiresAt: Date.now() + 60000, refreshInMs: 60000 };
     }
