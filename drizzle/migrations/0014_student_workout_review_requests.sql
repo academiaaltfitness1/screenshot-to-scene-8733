@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS public.student_workout_review_requests (
   reviewed_at timestamptz
 );
 CREATE INDEX IF NOT EXISTS student_workout_review_requests_pending_idx ON public.student_workout_review_requests(status,created_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS student_workout_review_requests_one_pending_per_student ON public.student_workout_review_requests(student_id) WHERE status = 'pendente';
 GRANT SELECT,INSERT,UPDATE ON public.student_workout_review_requests TO authenticated;
 GRANT ALL ON public.student_workout_review_requests TO service_role;
 ALTER TABLE public.student_workout_review_requests ENABLE ROW LEVEL SECURITY;
