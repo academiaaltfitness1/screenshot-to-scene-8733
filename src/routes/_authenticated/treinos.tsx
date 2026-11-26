@@ -32,7 +32,7 @@ interface Ex {
   reps: string;
   load: string;
   rest: string;
-  video_url: string;
+  video_url?: string;
 }
 interface Workout {
   id?: string;
@@ -197,7 +197,7 @@ function TreinosPage() {
 
   async function save() {
     if (!student) return;
-    const invalidVideo = plan.flatMap((w) => w.exercises).find((e) => e.video_url.trim() && !isAllowedYoutubeUrl(e.video_url.trim()));
+    const invalidVideo = plan.flatMap((w) => w.exercises).find((e) => (e.video_url ?? "").trim() && !isAllowedYoutubeUrl((e.video_url ?? "").trim()));
     if (invalidVideo) { toast.error("Use um link válido do YouTube (youtube.com ou youtu.be)."); return; }
     setSaving(true);
     const createdIds: string[] = [];
@@ -230,7 +230,7 @@ function TreinosPage() {
             reps: e.reps,
             load: e.load,
             rest: e.rest,
-            video_url: e.video_url.trim() || null,
+            video_url: (e.video_url ?? "").trim() || null,
             workout_id: nw.id,
             sort_order: k,
           }));
