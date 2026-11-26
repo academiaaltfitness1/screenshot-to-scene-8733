@@ -118,7 +118,7 @@ function findStudent(credential) {
 function api(method, route, body) {
   return fetch(CONFIG.system_url.replace(/\/+$/, "") + route, {
     method: method,
-    headers: { "content-type": "application/json", "x-agent-token": CONFIG.token },
+    headers: { "content-type": "application/json", "x-agent-token": CONFIG.token, "x-agent-version": "alt-hmac-qr-1" },
     body: body ? JSON.stringify(body) : undefined,
   }).then(function (r) {
     if (!r.ok) throw new Error("HTTP " + r.status);
