@@ -1,5 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { ShieldCheck } from "lucide-react";
 import {
   Menubar,
   MenubarContent,
