@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useStaff } from "@/hooks/use-staff";
 import { MODULES } from "@/lib/modules";
 import type { ModuleDef } from "@/lib/modules";
+import sharkAsset from "@/assets/alt-mascote.webp.asset.json";
+const shark = sharkAsset.url;
 import { todayISO } from "@/lib/access";
 
 export const Route = createFileRoute("/_authenticated/admin-mobile")({
@@ -44,7 +46,7 @@ function AdminMobile() {
   return <main className="min-h-screen bg-[#080808] px-4 py-5 text-white">
     <div className="mx-auto max-w-3xl space-y-5">
       <header className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#151515] p-4">
-        <div><p className="text-xs font-bold tracking-[.25em] text-[#facc15]">ACADEMIA</p><h1 className="text-2xl font-black">ALT ADMIN</h1><p className="text-xs text-zinc-400">{staff?.name} · {staff?.cargo || "Equipe"}</p></div>
+        <div className="flex items-center gap-3"><img src={shark} alt="Mascote ALT FITNESS" className="h-16 w-16 object-contain"/><div><p className="text-xs font-bold tracking-[.25em] text-[#facc15]">ACADEMIA</p><h1 className="text-2xl font-black">ALT ADMIN</h1><p className="text-xs text-zinc-400">{staff?.name} · {staff?.cargo || "Equipe"}</p></div></div>
         <button onClick={logout} className="rounded-lg border border-white/15 p-3 text-zinc-300" aria-label="Sair"><LogOut size={20}/></button>
       </header>
       <section className="grid grid-cols-3 gap-2">
