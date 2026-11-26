@@ -14,6 +14,8 @@ export function StudentLogin({ onSignedIn }: { onSignedIn: () => void }) {
   const reset = useServerFn(requestStudentPasswordReset);
   const [mode, setMode] = useState<Mode>("login");
   const [identifier, setIdentifier] = useState("");
+  const [matricula, setMatricula] = useState("");
+  const [cpf, setCpf] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [code, setCode] = useState("");
   const [email, setEmail] = useState("");
@@ -43,7 +45,7 @@ export function StudentLogin({ onSignedIn }: { onSignedIn: () => void }) {
   function begin(e: React.FormEvent) {
     e.preventDefault();
     void run(async () => {
-      const result = await activate({ data: { identifier, birthDate, code, email, password } });
+      const result = await activate({ data: { matricula, cpf, birthDate, code, email, password } });
       if (!result.ok) throw new Error(result.error);
       toast.success(result.message);
       setMode("verify");
@@ -106,7 +108,8 @@ export function StudentLogin({ onSignedIn }: { onSignedIn: () => void }) {
     </form>}
 
     {mode === "activate" && <form onSubmit={begin} className="space-y-3 p-6">
-      <label className="block text-sm font-semibold">Matrícula ou CPF<input required inputMode="numeric" value={identifier} onChange={e=>setIdentifier(e.target.value)} className={field}/></label>
+      <label className="block text-sm font-semibold">Matrícula<input required inputMode="numeric" value={matricula} onChange={e=>setMatricula(e.target.value.replace(/[^0-9]/g,""))} className={field}/></label>
+      <label className="block text-sm font-semibold">CPF<input required inputMode="numeric" maxLength={14} value={cpf} onChange={e=>setCpf(e.target.value.replace(/[^0-9]/g,"").slice(0,11))} className={field}/></label>
       <label className="block text-sm font-semibold">Data de nascimento<input required type="date" value={birthDate} onChange={e=>setBirthDate(e.target.value)} className={field}/></label>
       <label className="block text-sm font-semibold">Código de 8 dígitos da recepção<input required inputMode="numeric" pattern="[0-9]{8}" maxLength={8} value={code} onChange={e=>setCode(e.target.value.replace(/[^0-9]/g,"").slice(0,8))} className={field}/></label>
       <label className="block text-sm font-semibold">Seu e-mail<input required type="email" autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)} className={field}/></label>
