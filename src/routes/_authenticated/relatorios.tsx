@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Send } from "lucide-react";
@@ -64,6 +64,16 @@ function VencimentosReport() {
   const phoneDigits = (phone: string | null | undefined) => (phone ?? "").replace(/\\D/g, "");
   const selectableRows = filtered.filter((row) => !row.paid_at && phoneDigits(row.students?.whatsapp).length >= 10);
   const selectedRows = selectableRows.filter((row) => selectedIds.includes(row.id));
+  const allSelectableSelected = selectableRows.length > 0 && selectableRows.every((row) => selectedIds.includes(row.id));
+  const someSelectableSelected = selectableRows.some((row) => selectedIds.includes(row.id));
+  const selectAllRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (selectAllRef.current) selectAllRef.current.indeterminate = someSelectableSelected && !allSelectableSelected;
+  }, [someSelectableSelected, allSelectableSelected]);
+  const toggleAllSelectable = () => {
+    setSelectedIds(allSelectableSelected ? [] : selectableRows.map((row) => row.id));
+    setMessageIndex(0);
+  };
   const messageFor = (row: (typeof rows)[number]) => {
     const name = row.students?.name ?? "aluno";
     const dueVerb = row.due_date < today ? "venceu em" : "vence em";
@@ -95,10 +105,10 @@ function VencimentosReport() {
         </div>
         <ModuleBar>
           <Field label="Data inicial">
-            <Input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} />
+            <Input type="date" value={startDate} onChange={(event) => { setStartDate(event.target.value); setSelectedIds([]); setMessageIndex(0); }} />
           </Field>
           <Field label="Data final">
-            <Input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} />
+            <Input type="date" value={endDate} onChange={(event) => { setEndDate(event.target.value); setSelectedIds([]); setMessageIndex(0); }} />
           </Field>
           <Field label="Situação">
             <Select value={status} onValueChange={(value) => { setStatus(value as StatusFilter); setSelectedIds([]); setMessageIndex(0); }}>
@@ -114,7 +124,6 @@ function VencimentosReport() {
               </SelectContent>
             </Select>
           </Field>
-          <Button size="sm" variant="outline" disabled={!selectableRows.length} onClick={() => { setSelectedIds(selectableRows.map((row) => row.id)); setMessageIndex(0); }}>Marcar todos ({selectableRows.length})</Button>
           <Button size="sm" variant="outline" disabled={!selectedIds.length} onClick={() => { setSelectedIds([]); setMessageIndex(0); }}>Limpar seleção</Button>
           <Badge variant="secondary">Selecionados: {selectedRows.length}</Badge>
           <Button size="sm" disabled={!selectedRows.length || messageIndex >= selectedRows.length} onClick={openNextSelectedMessage}><Send /> Abrir próxima conversa ({Math.max(0, selectedRows.length - messageIndex)})</Button>
@@ -137,7 +146,12 @@ function VencimentosReport() {
           <table className={grid.table}>
             <thead className={grid.thead}>
               <tr>
-                <th className={grid.th}>Selecionar</th>
+                <th className={grid.th}>
+                  <label className="inline-flex items-center gap-2 whitespace-nowrap">
+                    <input ref={selectAllRef} type="checkbox" aria-label="Marcar ou desmarcar todos os alunos elegíveis" checked={allSelectableSelected} disabled={!selectableRows.length} onChange={toggleAllSelectable} />
+                    <span>Selecionar todos</span>
+                  </label>
+                </th>
                 <th className={grid.th}>Vencimento</th>
                 <th className={grid.th}>Matrícula</th>
                 <th className={grid.th}>Aluno</th>
