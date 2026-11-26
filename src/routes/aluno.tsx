@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { studentSignIn } from "@/lib/student.functions";
 import { StudentWorkoutExecution } from "@/components/aluno/StudentWorkoutExecution";
+import { StudentFinanceAnnouncements } from "@/components/aluno/StudentFinanceAnnouncements";
 
 export const Route = createFileRoute("/aluno")({
   ssr: false,
@@ -133,6 +134,7 @@ function StudentPortal() {
           <h2 className="mb-3 flex items-center gap-2 text-lg font-extrabold"><Wallet className="text-[#facc15]"/> Minhas mensalidades</h2>
           {bills.length ? <div className="space-y-2">{bills.map(b=><div key={b.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-black p-3 text-sm"><span>{b.description}<small className="block text-zinc-500">Vencimento: {new Date(b.due_date+"T12:00:00").toLocaleDateString("pt-BR")}</small></span><span className="text-right font-bold">R$ {Number(b.amount).toFixed(2).replace(".",",")}<small className={"block "+(b.paid_at?"text-emerald-400":"text-amber-300")}>{b.paid_at?"Pago":"Em aberto"}</small></span></div>)}</div> : <p className="text-sm text-zinc-400">Nenhum lançamento financeiro disponível.</p>}
         </section>
+        {profile?.id && <StudentFinanceAnnouncements studentId={profile.id} bills={bills as any} />}
         <p className="flex items-center justify-center gap-2 text-center text-xs text-zinc-500"><ShieldCheck size={14}/> Seus dados são privados e visíveis apenas na sua conta.</p>
       </div>
     </main>
