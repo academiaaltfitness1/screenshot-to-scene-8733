@@ -77,7 +77,7 @@ function ReceberPage() {
   const messageFor = (r: (typeof rows)[number]) => {
     const name = r.students?.name ?? "aluno";
     const msg = `Olá ${name.split(" ")[0]}! Aqui é da ${settings?.gym_name ?? "Academia ALT FITNESS"}. Sua mensalidade de ${brl(Number(r.amount))} vence em ${fmtDate(r.due_date)}.${settings?.pix_key ? ` Chave Pix: ${settings.pix_key}` : ""}`;
-    const phone = (r.students?.whatsapp ?? "").replace(/\\D/g, "");
+    const phone = (r.students?.whatsapp ?? "").replace(/\D/g, "");
     return `https://wa.me/${phone.length <= 11 ? "55" + phone : phone}?text=${encodeURIComponent(msg)}`;
   };
   const openNextSelectedMessage = () => {
