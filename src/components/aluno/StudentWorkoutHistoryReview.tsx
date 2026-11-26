@@ -13,6 +13,7 @@ export function StudentWorkoutHistoryReview({ studentId }: { studentId: string }
       if (error) throw error;
       return data ?? [];
     },
+    refetchInterval: 30000,
   });
   return <section className="mt-3 rounded-lg border border-border bg-card p-3">
     <h3 className="mb-3 flex items-center gap-2 font-bold"><History className="text-primary"/> Histórico de execução do aluno</h3>
