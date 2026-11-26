@@ -34,8 +34,8 @@ function Index() {
             >
               <ShieldCheck className="h-7 w-7" />
               <span>
-                <span className="block text-lg font-bold">Área da Equipe</span>
-                <span className="text-sm opacity-80">Recepção, instrutores e administração</span>
+                <span className="block text-lg font-bold">ALT DESKTOP</span>
+                <span className="text-sm opacity-80">Sistema principal da academia no computador</span>
               </span>
             </Link>
             <Link
