@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
 export const createStudentActivationCode = createServerFn({ method: "POST" })
@@ -20,7 +19,7 @@ export const createStudentActivationCode = createServerFn({ method: "POST" })
     ]);
     const isAdmin = (roles.data ?? []).some(r => r.role === "admin");
     const canManageStudents = isAdmin || (profile.data?.active !== false && (permissions.data ?? []).some(p => p.module === "alunos"));
-    if (!canManageStudents) throw new Error("Sem permissão para gerar código de ativação.");
+    if (profile.data?.active === false || !canManageStudents) throw new Error("Sem permissão para gerar código de ativação.");
 
     const { data: student, error: studentError } = await supabaseAdmin.from("students")
       .select("id").eq("id", data.studentId).maybeSingle();
