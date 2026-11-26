@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
+    links: [{ rel: "manifest", href: "/manifest-admin.webmanifest" }],
     meta: [
       { title: "Entrar — ALT FITNESS" },
       { name: "description", content: "Entrada da equipe da Academia ALT FITNESS." },
