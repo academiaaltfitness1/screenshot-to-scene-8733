@@ -31,35 +31,41 @@ export const studentSignIn = createServerFn({ method: "POST" })
 
     const attemptKey = createHash("sha256").update(digits).digest("hex");
     const since = new Date(Date.now() - 15 * 60 * 1000).toISOString();
-    const { data: recentAttempts } = await supabaseAdmin.from("student_auth_attempts")
+    const { data: recentAttempts, error: attemptsError } = await supabaseAdmin.from("student_auth_attempts")
       .select("id").eq("key", attemptKey).eq("kind", "login").gte("created_at", since).limit(10);
+    if (attemptsError) return { ok: false as const, error: "Não foi possível validar as tentativas de acesso. Tente novamente." };
     if ((recentAttempts?.length ?? 0) >= 10) {
       return { ok: false as const, error: "Muitas tentativas. Aguarde 15 minutos e tente novamente." };
     }
     const recordAttempt = async (success: boolean) => {
-      await supabaseAdmin.from("student_auth_attempts").insert({ key: attemptKey, kind: "login", success });
+      const { error } = await supabaseAdmin.from("student_auth_attempts").insert({ key: attemptKey, kind: "login", success });
+      if (error) throw new Error("Não foi possível registrar a tentativa de acesso. Tente novamente.");
     };
 
     let student: { id: string } | null = null;
     if (digits.length === 11) {
       const formattedCpf = digits.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
-      const { data: row } = await supabaseAdmin.from("students").select("id")
+      const { data: row, error: lookupError } = await supabaseAdmin.from("students").select("id")
         .or("cpf.eq." + digits + ",cpf.eq." + formattedCpf).maybeSingle();
+      if (lookupError) return { ok: false as const, error: "Não foi possível validar o acesso. Tente novamente." };
       student = row;
     }
     if (!student && /^[0-9]+$/.test(digits)) {
-      const { data: row } = await supabaseAdmin.from("students").select("id").eq("matricula", Number(digits)).maybeSingle();
+      const { data: row, error: lookupError } = await supabaseAdmin.from("students").select("id").eq("matricula", Number(digits)).maybeSingle();
+      if (lookupError) return { ok: false as const, error: "Não foi possível validar o acesso. Tente novamente." };
       student = row;
     }
     if (!student) { await recordAttempt(false); return { ok: false as const, error: "Matrícula/CPF ou senha inválidos." }; }
 
-    const { data: account } = await supabaseAdmin.from("student_accounts")
+    const { data: account, error: accountError } = await supabaseAdmin.from("student_accounts")
       .select("user_id,email_verified_at").eq("student_id", student.id).maybeSingle();
+    if (accountError) return { ok: false as const, error: "Não foi possível validar o cadastro. Tente novamente." };
     if (!account?.user_id || !account.email_verified_at) {
       await recordAttempt(false);
       return { ok: false as const, error: "Acesso ainda não ativado. Procure a recepção para ativar seu app." };
     }
-    const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(account.user_id);
+    const { data: authUser, error: authUserError } = await supabaseAdmin.auth.admin.getUserById(account.user_id);
+    if (authUserError) return { ok: false as const, error: "Não foi possível validar o cadastro. Tente novamente." };
     const email = authUser.user?.email;
     if (!email) { await recordAttempt(false); return { ok: false as const, error: "Acesso ainda não ativado. Procure a recepção." }; }
 
