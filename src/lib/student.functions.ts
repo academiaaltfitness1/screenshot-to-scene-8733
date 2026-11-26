@@ -25,8 +25,20 @@ export const studentSignIn = createServerFn({ method: "POST" })
   }).parse(input))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { createHash } = await import("node:crypto");
     const digits = data.identifier.replace(/[^0-9]/g, "");
     if (!digits) return { ok: false as const, error: "Matrícula ou CPF e senha inválidos." };
+
+    const attemptKey = createHash("sha256").update(digits).digest("hex");
+    const since = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+    const { data: recentAttempts } = await supabaseAdmin.from("student_auth_attempts")
+      .select("id").eq("key", attemptKey).eq("kind", "login").gte("created_at", since).limit(10);
+    if ((recentAttempts?.length ?? 0) >= 10) {
+      return { ok: false as const, error: "Muitas tentativas. Aguarde 15 minutos e tente novamente." };
+    }
+    const recordAttempt = async (success: boolean) => {
+      await supabaseAdmin.from("student_auth_attempts").insert({ key: attemptKey, kind: "login", success });
+    };
 
     let student: { id: string } | null = null;
     if (digits.length === 11) {
@@ -37,18 +49,20 @@ export const studentSignIn = createServerFn({ method: "POST" })
       const { data: row } = await supabaseAdmin.from("students").select("id").eq("matricula", Number(digits)).maybeSingle();
       student = row;
     }
-    if (!student) return { ok: false as const, error: "Matrícula/CPF ou senha inválidos." };
+    if (!student) { await recordAttempt(false); return { ok: false as const, error: "Matrícula/CPF ou senha inválidos." }; }
 
     const { data: account } = await supabaseAdmin.from("student_accounts")
       .select("user_id,email_verified_at").eq("student_id", student.id).maybeSingle();
     if (!account?.user_id || !account.email_verified_at) {
+      await recordAttempt(false);
       return { ok: false as const, error: "Acesso ainda não ativado. Procure a recepção para ativar seu app." };
     }
     const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(account.user_id);
     const email = authUser.user?.email;
-    if (!email) return { ok: false as const, error: "Acesso ainda não ativado. Procure a recepção." };
+    if (!email) { await recordAttempt(false); return { ok: false as const, error: "Acesso ainda não ativado. Procure a recepção." }; }
 
     const { data: session, error } = await publicClient().auth.signInWithPassword({ email, password: data.password });
+    await recordAttempt(!error && !!session.session);
     if (error || !session.session) return { ok: false as const, error: "Matrícula/CPF ou senha inválidos." };
     return { ok: true as const, access_token: session.session.access_token, refresh_token: session.session.refresh_token };
   });
