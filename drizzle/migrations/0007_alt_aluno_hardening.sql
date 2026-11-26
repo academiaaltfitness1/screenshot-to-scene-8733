@@ -22,6 +22,7 @@ DECLARE
   _today date := (now() AT TIME ZONE 'America/Sao_Paulo')::date;
 BEGIN
   IF _sid IS NULL THEN RAISE EXCEPTION 'Acesso negado'; END IF;
+  PERFORM pg_advisory_xact_lock(hashtext(_sid::text));
 
   -- Financial/access restriction: keep the portal and all history readable,
   -- but do not allow a new workout after the configured grace period.
