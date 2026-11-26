@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Plus, CheckCircle2, MessageCircle } from "lucide-react";
+import { Plus, CheckCircle2, MessageCircle, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ModuleWindow } from "@/components/shell/ModuleWindow";
 import { Field, ModuleBar, SearchBox, EmptyRow, grid } from "@/components/app/common";
@@ -30,13 +30,14 @@ export const Route = createFileRoute("/_authenticated/receber")({
   component: ReceberPage,
 });
 
-type Filter = "abertas" | "vencidas" | "pagas" | "todas";
+type Filter = "abertas" | "hoje" | "a_vencer" | "pendentes" | "vencidas" | "pagas" | "todas";
 
 function ReceberPage() {
   const qc = useQueryClient();
   const { data: settings } = useQuery(settingsQuery);
   const [filter, setFilter] = useState<Filter>("abertas");
   const [q, setQ] = useState("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [paying, setPaying] = useState<{ id: string; amount: number; desc: string; name: string } | null>(null);
   const [creating, setCreating] = useState(false);
   const today = todayISO();
@@ -58,13 +59,31 @@ function ReceberPage() {
   const filtered = useMemo(() => {
     const t = q.toLowerCase();
     return rows.filter((r) => {
+      const daysUntilDue = Math.round((new Date(r.due_date + "T00:00:00").getTime() - new Date(today + "T00:00:00").getTime()) / 86400000);
       if (filter === "abertas" && r.paid_at) return false;
-      if (filter === "vencidas" && (r.paid_at || r.due_date >= today)) return false;
+      if (filter === "vencidas" && (r.paid_at || daysUntilDue >= 0)) return false;
+      if (filter === "hoje" && (r.paid_at || daysUntilDue !== 0)) return false;
+      if (filter === "a_vencer" && (r.paid_at || daysUntilDue < 0 || daysUntilDue > (settings?.bill_alert_days ?? 3))) return false;
+      if (filter === "pendentes" && (r.paid_at || daysUntilDue <= (settings?.bill_alert_days ?? 3))) return false;
       if (filter === "pagas" && !r.paid_at) return false;
       return !t || r.students?.name.toLowerCase().includes(t) || r.description.toLowerCase().includes(t);
     });
-  }, [rows, filter, q, today]);
+  }, [rows, filter, q, today, settings?.bill_alert_days]);
 
+  const selectableRows = filtered.filter((r) => !r.paid_at && r.students?.whatsapp);
+  const toggleSelected = (id: string) => setSelectedIds((current) => current.includes(id) ? current.filter((x) => x !== id) : [...current, id]);
+  const selectedRows = selectableRows.filter((r) => selectedIds.includes(r.id));
+  const messageFor = (r: (typeof rows)[number]) => {
+    const name = r.students?.name ?? "aluno";
+    const msg = `Olá ${name.split(" ")[0]}! Aqui é da ${settings?.gym_name ?? "Academia ALT FITNESS"}. Sua mensalidade de ${brl(Number(r.amount))} vence em ${fmtDate(r.due_date)}.${settings?.pix_key ? ` Chave Pix: ${settings.pix_key}` : ""}`;
+    const phone = (r.students?.whatsapp ?? "").replace(/\\D/g, "");
+    return `https://wa.me/${phone.length <= 11 ? "55" + phone : phone}?text=${encodeURIComponent(msg)}`;
+  };
+  const openSelectedMessages = () => {
+    if (!selectedRows.length) { toast.error("Selecione pelo menos um aluno com WhatsApp."); return; }
+    selectedRows.forEach((r) => window.open(messageFor(r), "_blank", "noopener,noreferrer"));
+    toast.success(`${selectedRows.length} conversa(s) preparada(s). Envie cada mensagem pelo WhatsApp.`);
+  };
   const totals = useMemo(() => {
     const open = rows.filter((r) => !r.paid_at);
     return {
@@ -96,12 +115,18 @@ function ReceberPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="abertas">Em aberto</SelectItem>
+            <SelectItem value="hoje">Vence hoje</SelectItem>
+            <SelectItem value="a_vencer">A vencer</SelectItem>
+            <SelectItem value="pendentes">Pendentes</SelectItem>
             <SelectItem value="vencidas">Vencidas</SelectItem>
             <SelectItem value="pagas">Pagas</SelectItem>
             <SelectItem value="todas">Todas</SelectItem>
           </SelectContent>
         </Select>
         <SearchBox value={q} onChange={setQ} placeholder="Aluno ou descrição" />
+        <Button size="sm" variant="outline" onClick={() => setSelectedIds(selectableRows.map((r) => r.id))}>Selecionar todos</Button>
+        <Button size="sm" variant="outline" onClick={() => setSelectedIds([])}>Limpar seleção</Button>
+        <Button size="sm" disabled={!selectedRows.length} onClick={openSelectedMessages}><Send/> Enviar para selecionados ({selectedRows.length})</Button>
         <div className="ml-auto flex gap-2 text-sm">
           <Badge variant="warning">Em aberto: {brl(totals.open)}</Badge>
           <Badge variant="destructive">Vencido: {brl(totals.overdue)}</Badge>
@@ -110,6 +135,7 @@ function ReceberPage() {
       <table className={grid.table}>
         <thead className={grid.thead}>
           <tr>
+            <th className={grid.th}>Enviar</th>
             <th className={grid.th}>Vencimento</th>
             <th className={grid.th}>Aluno</th>
             <th className={grid.th}>Descrição</th>
@@ -119,13 +145,14 @@ function ReceberPage() {
           </tr>
         </thead>
         <tbody>
-          {isLoading && <EmptyRow cols={6} text="Carregando…" />}
-          {!isLoading && filtered.length === 0 && <EmptyRow cols={6} text="Nenhum lançamento." />}
+          {isLoading && <EmptyRow cols={7} text="Carregando…" />}
+          {!isLoading && filtered.length === 0 && <EmptyRow cols={7} text="Nenhum lançamento." />}
           {filtered.map((r) => {
             const overdue = !r.paid_at && r.due_date < today;
             const soon = !r.paid_at && !overdue && r.due_date <= soonLimit;
             return (
               <tr key={r.id} className={`${grid.tr} ${overdue ? "bg-destructive/5" : ""}`}>
+                <td className={grid.td}>{!r.paid_at && r.students?.whatsapp ? <input aria-label={`Selecionar ${r.students?.name}`} type="checkbox" checked={selectedIds.includes(r.id)} onChange={() => toggleSelected(r.id)} /> : "—"}</td>
                 <td className={grid.td}>{fmtDate(r.due_date)}</td>
                 <td className={grid.td}>
                   <span className="mr-1 font-mono text-xs text-muted-foreground">{r.students?.matricula}</span>
@@ -150,7 +177,7 @@ function ReceberPage() {
                   {!r.paid_at && (
                     <>
                       {overdue && (
-                        <Button size="icon" variant="ghost" title="Cobrar no WhatsApp" onClick={() => whatsapp(r.students?.whatsapp, r.students?.name ?? "", Number(r.amount), r.due_date)}>
+                        <Button size="icon" variant="ghost" title="Cobrar no WhatsApp" onClick={() => window.open(messageFor(r), "_blank", "noopener,noreferrer")}>
                           <MessageCircle className="text-success" />
                         </Button>
                       )}
