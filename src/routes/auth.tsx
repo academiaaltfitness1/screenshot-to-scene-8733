@@ -57,7 +57,7 @@ function AuthPage() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user?.app_metadata?.kind === "student") navigate({ to: "/aluno", replace: true });
-      else if (data.user) navigate({ to: "/painel", replace: true });
+      else if (data.user) navigate({ to: window.matchMedia("(display-mode: standalone)").matches ? "/admin-mobile" : "/painel", replace: true });
     });
   }, [navigate]);
 
@@ -87,7 +87,7 @@ function AuthPage() {
         return;
       }
       toast.success("Administrador criado! Bem-vindo.");
-      navigate({ to: "/painel", replace: true });
+      navigate({ to: window.matchMedia("(display-mode: standalone)").matches ? "/admin-mobile" : "/painel", replace: true });
     });
   };
 
