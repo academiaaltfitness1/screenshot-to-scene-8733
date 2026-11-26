@@ -66,14 +66,19 @@ function AlunosPage() {
     }
   }, [search.id, rows, navigate]);
 
-  const classifiedRows = useMemo(() => rows.map((r) => ({
-    ...r,
-    accessSituation: checkAccess(
-      { status: r.status ?? "ativo", valid_until: r.valid_until, overdue_since: r.overdue_since },
-      todayISO(),
-      tolerance,
-    ).code,
-  })), [rows, tolerance]);
+  const classifiedRows = useMemo(() => {
+    const today = todayISO();
+    return rows.map((r) => {
+      let accessSituation: string;
+      if (r.status === "bloqueado") accessSituation = "bloqueado";
+      else if (r.status === "inativo") accessSituation = "inativo";
+      else if (r.overdue_since && r.overdue_since < today) accessSituation = "inadimplente";
+      else if (!r.valid_until) accessSituation = "sem_matricula";
+      else if (r.valid_until < today) accessSituation = "vencido";
+      else accessSituation = "liberado";
+      return { ...r, accessSituation };
+    });
+  }, [rows]);
 
   const situationCounts = useMemo(() => ({
     todos: classifiedRows.length,
