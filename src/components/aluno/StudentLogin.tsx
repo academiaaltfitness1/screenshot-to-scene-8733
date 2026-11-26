@@ -89,8 +89,8 @@ export function StudentLogin({ onSignedIn }: { onSignedIn: () => void }) {
         <input value={password} onChange={e=>setPassword(e.target.value)} type="password" autoComplete="current-password" required className={field} placeholder="Sua senha do app"/>
       </label>
       <button disabled={busy} className={button}>{busy && <Loader2 className="animate-spin" size={18}/>} Entrar</button>
-      <div className="flex flex-wrap justify-between gap-3 text-sm">
-        <button type="button" onClick={()=>{setIdentifier("");setPassword("");setCode("");setMode("code");}} className="text-[#facc15]">Primeiro acesso</button>
+      <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+        <button type="button" onClick={()=>{setIdentifier("");setPassword("");setCode("");setMode("code");}} className="flex min-h-11 items-center justify-center rounded-lg border border-[#facc15]/70 bg-[#facc15]/10 px-4 font-bold text-[#facc15]">Primeiro acesso · criar senha</button>
         <button type="button" onClick={()=>toast.info("Para redefinir sua senha, procure a recepção da ALT FITNESS.")} className="text-zinc-300">Esqueci a senha</button>
       </div>
       <p className="text-center text-xs text-zinc-500">A senha do aplicativo é pessoal e diferente da senha da catraca. A equipe não consegue visualizar sua senha.</p>
