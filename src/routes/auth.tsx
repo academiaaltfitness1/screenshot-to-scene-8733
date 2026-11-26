@@ -99,7 +99,7 @@ function AuthPage() {
       if (!r.ok) throw new Error(r.error);
       const { error } = await supabase.auth.setSession({ access_token: r.access_token, refresh_token: r.refresh_token });
       if (error) throw error;
-      navigate({ to: "/painel", replace: true });
+      navigate({ to: window.matchMedia("(display-mode: standalone)").matches ? "/admin-mobile" : "/painel", replace: true });
     });
   };
 
@@ -115,7 +115,7 @@ function AuthPage() {
       }
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      navigate({ to: "/painel", replace: true });
+      navigate({ to: window.matchMedia("(display-mode: standalone)").matches ? "/admin-mobile" : "/painel", replace: true });
     });
   };
 
