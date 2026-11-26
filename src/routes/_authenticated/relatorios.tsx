@@ -24,14 +24,14 @@ export const Route = createFileRoute("/_authenticated/relatorios")({
   component: VencimentosReport,
 });
 
-type StatusFilter = "todos" | "recebidos" | "a_receber" | "hoje" | "a_vencer" | "pendentes" | "vencidos";
+type StatusFilter = "todos" | "recebidos" | "hoje" | "a_vencer" | "vencidos";
 
 function VencimentosReport() {
   const today = todayISO();
   const { data: settings } = useQuery(settingsQuery);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [status, setStatus] = useState<StatusFilter>("a_receber");
+  const [status, setStatus] = useState<StatusFilter>("a_vencer");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [messageIndex, setMessageIndex] = useState(0);
   const soonLimit = addDaysISO(today, settings?.bill_alert_days ?? 3);
@@ -114,11 +114,9 @@ function VencimentosReport() {
             <Select value={status} onValueChange={(value) => { setStatus(value as StatusFilter); setSelectedIds([]); setMessageIndex(0); }}>
               <SelectTrigger className="w-40 bg-card"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="a_receber">A receber</SelectItem>
                 <SelectItem value="a_vencer">A vencer</SelectItem>
                 <SelectItem value="hoje">Vence hoje</SelectItem>
                 <SelectItem value="vencidos">Vencidos</SelectItem>
-                <SelectItem value="pendentes">Pendentes</SelectItem>
                 <SelectItem value="recebidos">Recebidos</SelectItem>
                 <SelectItem value="todos">Todos</SelectItem>
               </SelectContent>
