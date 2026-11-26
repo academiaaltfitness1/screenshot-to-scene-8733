@@ -12,7 +12,7 @@ import { StudentMembershipQr } from "@/components/aluno/StudentMembershipQr";
 
 export const Route = createFileRoute("/aluno")({
   ssr: false,
-  head: () => ({ meta: [
+  head: () => ({ links: [{ rel: "manifest", href: "/manifest-aluno.webmanifest" }], meta: [
     { title: "ALT ALUNO — Academia ALT FITNESS" },
     { name: "description", content: "Treinos, mensalidades e informações do aluno ALT FITNESS." },
   ] }),
