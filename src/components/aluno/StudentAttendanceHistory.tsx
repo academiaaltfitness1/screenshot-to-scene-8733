@@ -12,6 +12,7 @@ export function StudentAttendanceHistory() {
       if (error) throw error;
       return data ?? [];
     },
+    refetchInterval: 60000,
   });
   return <section className="rounded-xl border border-white/10 bg-[#151515] p-4">
     <h2 className="mb-3 flex items-center gap-2 text-lg font-extrabold"><CalendarCheck className="text-[#facc15]"/> Minha frequência</h2>
