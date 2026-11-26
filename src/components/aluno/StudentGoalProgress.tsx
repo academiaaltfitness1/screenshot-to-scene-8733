@@ -27,6 +27,7 @@ export function StudentGoalProgress({ studentId }: { studentId: string }) {
       if (eventError) throw eventError;
       return { goal, count: count ?? 0, reached: !!event };
     },
+    refetchInterval: 60000,
   });
   const { data: requests = [] } = useQuery({
     queryKey: ["student-workout-review-requests"],
