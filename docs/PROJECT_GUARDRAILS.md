@@ -47,3 +47,15 @@ Este documento é a referência operacional obrigatória para toda alteração f
 
 ## Regra de continuidade
 Em caso de dúvida, não adivinhar, não criar outro caminho e não sobrescrever. Consultar o histórico, este documento e os estados reais dos serviços; preservar o trabalho e explicar o bloqueio antes de qualquer ação arriscada.
+
+
+## Atualização operacional — 2026-11-26 (mídia, cobranças e validação)
+- A branch conectada permanece `altfitness/implementacao-prd-2026-11-24`; o projeto Lovable reconheceu o commit `0a91d6b6ce6cae8abacf95fd3493dd75a9a12e4c`.
+- O banco consultado por meio do projeto Lovable é o banco conectado à aplicação: nele existem `public.announcements`, `public.announcement_reads`, `storage.objects`, as funções `can_access(text)` e `current_student_id()`. O projeto Supabase visível separadamente na conexão de gerenciamento não foi usado para esta alteração.
+- A migração `0018_announcement_media` foi aplicada ao banco do projeto Lovable: colunas opcionais `media_path` e `media_type`, bucket privado `comunicados` e políticas de armazenamento para equipe e alunos com comunicados vigentes.
+- A migração versionada foi tornada idempotente para evitar falha caso o journal seja aplicado depois da execução direta no banco.
+- A lista de alunos agora separa regulares, inadimplentes, bloqueados, inativos e sem matrícula; inadimplentes incluem mensalidade vencida.
+- Contas a receber agora tem filtros por vencimento e seleção em lote para WhatsApp, com abertura manual de uma conversa por vez. Não usa API de disparo automático.
+- GitHub Actions no commit `0a91d6b6ce6cae8abacf95fd3493dd75a9a12e4c`: instalação, verificação do agente, testes Vitest e build Vite concluíram com sucesso.
+- A branch continua divergente de `main` (298 commits à frente e 17 atrás na comparação consultada). Não mesclar PR #2 isoladamente nem alterar `main` sem plano de consolidação.
+- Testes físicos/visuais ainda necessários: anexar e reproduzir imagem/vídeo em contas reais de equipe/aluno, validar fila WhatsApp no celular e confirmar as contagens com cadastros de teste representativos.
