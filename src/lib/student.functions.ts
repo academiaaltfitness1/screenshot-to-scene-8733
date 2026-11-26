@@ -213,8 +213,9 @@ export const requestStudentPasswordReset = createServerFn({ method: "POST" })
     const allowedRedirect = redirectUrl.protocol === "https:" && (allowedPreviewHost || (!!configuredOrigin && redirectUrl.origin === configuredOrigin));
     if (!allowedRedirect) throw new Error("Endereço de recuperação inválido.");
     const redirectTo = `${redirectUrl.origin}/reset-password`;
+    const formattedCpf = digits.length === 11 ? digits.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4") : "";
     const { data: student } = digits.length === 11
-      ? await supabaseAdmin.from("students").select("id").eq("cpf", digits).maybeSingle()
+      ? await supabaseAdmin.from("students").select("id").or("cpf.eq." + digits + ",cpf.eq." + formattedCpf).maybeSingle()
       : await supabaseAdmin.from("students").select("id").eq("matricula", Number(digits)).maybeSingle();
     if (student) {
       const { data: account } = await supabaseAdmin.from("student_accounts").select("user_id,email_verified_at")
