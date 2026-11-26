@@ -34,11 +34,16 @@ Este documento é a referência operacional obrigatória para toda alteração f
 
 ## Estado conhecido em 2026-11-26
 - Comparação entre `main` e `altfitness/implementacao-prd-2026-11-24`: divergente.
-- Na comparação consultada, a branch do Lovable estava 270 commits à frente e 17 atrás da `main`.
-- O Lovable informava o SHA `c709861889306bf95da8707ae9d67d091bb75214`.
+- Na comparação consultada, a branch do Lovable estava 271 commits à frente e 17 atrás da `main`.
+- O Lovable confirmou o SHA `fb6a2f1ab9ebcecf323eaa9daf8ef8a71e462e6c`, igual ao commit atual da branch conectada no momento da consulta.
 - A `main` apontava para `07d145a8b71a079d4bda3a5606ada732f5a4adee`.
 - Existem branches de backup `backup/pre-consolidacao-lovable-2026-11-26` e `backup/pre-consolidacao-main-2026-11-26`.
-- Não considerar essa divergência resolvida até que a consolidação seja feita e o mesmo SHA esteja confirmado no GitHub e no Lovable.
+- Em 2026-11-26, o Lovable passou a confirmar o mesmo SHA `fb6a2f1ab9ebcecf323eaa9daf8ef8a71e462e6c` da branch conectada. Isso confirma sincronização dessa branch, mas NÃO consolidação com `main`.
+- A comparação encontrou 72 arquivos diferentes entre as pontas das branches; a branch conectada contém a implementação do ALT Aluno, painel móvel administrativo, integrações Henry/QR e migrações adicionais. Não descartar esses arquivos.
+- A branch conectada ainda tem `supabase/config.toml` apontando para `btcltrckmbmnbkbwmzid`, enquanto o projeto Supabase disponível na conta conectada é `xyyuvwyyneadvkfwbvfb`. Não executar migrações até resolver o destino.
+- O histórico de migrações consultado no Supabase ativo contém 10 entradas; o journal do código da branch conectada contém 18 entradas (0000 a 0017). É necessária reconciliação migração por migração, sem reaplicar operações cegamente.
+- PR #2 permanece aberta de `altfitness/implementacao-prd-2026-11-24` para `main` e trata da catraca Henry; não mesclar essa PR isoladamente porque a `main` não contém ainda toda a base de funcionalidades da branch conectada.
+- A sincronização Lovable ↔ branch conectada está confirmada neste SHA; a integração entre branch conectada e `main` continua pendente.
 
 ## Regra de continuidade
 Em caso de dúvida, não adivinhar, não criar outro caminho e não sobrescrever. Consultar o histórico, este documento e os estados reais dos serviços; preservar o trabalho e explicar o bloqueio antes de qualquer ação arriscada.
