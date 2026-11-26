@@ -33,11 +33,18 @@ export function StudentFinanceAnnouncements({ studentId, bills }: { studentId: s
   const { data: announcements = [] } = useQuery({
     queryKey: ["student-announcements"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("announcements")
+      let { data, error } = await supabase.from("announcements")
         .select("id,title,body,pinned,starts_at,ends_at,media_path,media_type")
         .lte("starts_at", new Date().toISOString())
         .order("pinned", { ascending: false }).order("starts_at", { ascending: false });
-      if (error) throw error;
+      if (error) {
+        const fallback = await supabase.from("announcements")
+          .select("id,title,body,pinned,starts_at,ends_at")
+          .lte("starts_at", new Date().toISOString())
+          .order("pinned", { ascending: false }).order("starts_at", { ascending: false });
+        if (fallback.error) throw fallback.error;
+        data = (fallback.data ?? []).map((item) => ({ ...item, media_path: null, media_type: null }));
+      }
       return Promise.all((data ?? []).map(async (item) => {
         if (!item.media_path) return { ...item, media_url: null };
         const { data: signed, error: signedError } = await supabase.storage.from("comunicados").createSignedUrl(item.media_path, 3600);
