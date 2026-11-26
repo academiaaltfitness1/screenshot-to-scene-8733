@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { errMsg } from "@/lib/format";
 import { StudentGoalManager } from "@/components/aluno/StudentGoalManager";
+import { StudentWorkoutHistoryReview } from "@/components/aluno/StudentWorkoutHistoryReview";
 
 export const Route = createFileRoute("/_authenticated/treinos")({
   head: () => ({
@@ -259,7 +260,7 @@ function TreinosPage() {
           </>
         )}
       </ModuleBar>
-      {student && <div className="px-3 pt-3"><StudentGoalManager studentId={student} /></div>}
+      {student && <div className="px-3 pt-3"><StudentGoalManager studentId={student} /><StudentWorkoutHistoryReview studentId={student} /></div>}
       <datalist id="ex-suggest">
         {SUGGESTIONS.map((s) => (
           <option key={s} value={s} />
