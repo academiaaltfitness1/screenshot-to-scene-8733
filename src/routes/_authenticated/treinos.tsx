@@ -49,6 +49,42 @@ const SUGGESTIONS = [
 
 const newEx = (): Ex => ({ exercise: "", sets: "3", reps: "12", load: "", rest: "60s" });
 
+type CatalogExercise = { id: string; name_en: string; name_es?: string; body_part?: string; equipment?: string; difficulty?: string };
+const PT_EXERCISE_NAMES: Record<string, string> = {
+  "barbell bench press": "Supino reto com barra", "bench press": "Supino reto",
+  "incline barbell bench press": "Supino inclinado com barra", "incline dumbbell bench press": "Supino inclinado com halteres",
+  "dumbbell bench press": "Supino reto com halteres", "chest press": "Supino na máquina", "push up": "Flexão de braços",
+  "barbell squat": "Agachamento livre com barra", "barbell back squat": "Agachamento livre com barra",
+  "dumbbell squat": "Agachamento com halteres", "goblet squat": "Agachamento goblet com halter", "front squat": "Agachamento frontal com barra",
+  "leg press": "Leg press", "45 degree leg press": "Leg press 45 graus", "lat pulldown": "Puxada frontal",
+  "seated cable row": "Remada baixa no cabo", "bent over barbell row": "Remada curvada com barra", "one arm dumbbell row": "Remada unilateral com halter",
+  "dumbbell lateral raise": "Elevação lateral com halteres", "lateral raise": "Elevação lateral",
+  "overhead press": "Desenvolvimento com barra", "seated dumbbell shoulder press": "Desenvolvimento com halteres",
+  "barbell curl": "Rosca direta com barra", "dumbbell curl": "Rosca direta com halteres", "alternating dumbbell curl": "Rosca alternada com halteres",
+  "triceps pushdown": "Tríceps pulley", "cable triceps pushdown": "Tríceps pulley com corda", "romanian deadlift": "Levantamento terra romeno (stiff)",
+  "leg extension": "Cadeira extensora", "lying leg curl": "Mesa flexora", "standing calf raise": "Panturrilha em pé", "crunch": "Abdominal supra", "plank": "Prancha",
+};
+function catalogLabel(item: CatalogExercise) { const key = item.name_en.toLowerCase().replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim(); return PT_EXERCISE_NAMES[key] ?? item.name_es ?? item.name_en; }
+function ExerciseLibraryPicker({ onSelect }: { onSelect: (name: string) => void }) {
+  const [opened, setOpened] = useState(false); const [query, setQuery] = useState("");
+  const { data: exercises = [], isLoading, isError } = useQuery<CatalogExercise[]>({
+    queryKey: ["repdb-exercise-catalog"],
+    queryFn: async () => { const response = await fetch("https://exercise-dataset.com/exercises.json"); if (!response.ok) throw new Error("Falha ao carregar biblioteca"); const payload = await response.json(); return Array.isArray(payload.exercises) ? payload.exercises : []; },
+    staleTime: 1000 * 60 * 60 * 24, retry: 1,
+  });
+  const normalizedQuery = query.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  const results = exercises.filter(item => { const label = catalogLabel(item); const haystack = [label, item.name_en, item.name_es, item.body_part, item.equipment].filter(Boolean).join(" ").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); return !normalizedQuery || haystack.includes(normalizedQuery); }).slice(0, 12);
+  return <div className="mt-1">
+    <button type="button" onClick={() => setOpened(v => !v)} className="text-[11px] font-semibold text-primary underline underline-offset-2">{opened ? "Fechar biblioteca" : "Escolher na biblioteca (708 exercícios)"}</button>
+    {opened && <div className="mt-2 rounded-md border border-border bg-background p-2">
+      <Input value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar: supino, agachamento, remada..." className="h-9 text-xs" />
+      <p className="my-1 text-[10px] text-muted-foreground">{isLoading ? "Carregando exercícios..." : isError ? "Biblioteca indisponível no momento." : `${results.length} resultado(s) exibidos de ${exercises.length} exercícios.`}</p>
+      <div className="max-h-48 space-y-1 overflow-y-auto">{results.map(item => <button type="button" key={item.id} onClick={() => { onSelect(catalogLabel(item)); setOpened(false); setQuery(""); }} className="flex w-full flex-col rounded px-2 py-1.5 text-left hover:bg-accent"><span className="text-xs font-semibold">{catalogLabel(item)}</span><span className="text-[10px] text-muted-foreground">{item.body_part ?? "Geral"} · {item.equipment ?? "Peso corporal"}</span></button>)}
+      {!isLoading && !isError && !results.length && <p className="p-2 text-xs text-muted-foreground">Nenhum resultado. Você também pode digitar o exercício manualmente no campo acima.</p>}</div>
+    </div>}
+  </div>;
+}
+
 const WORKOUT_TEMPLATES: Record<string, Workout[]> = {
   adaptacao: [{ letter: "A", name: "Adaptação — Corpo todo", notes: "Priorizar técnica, amplitude confortável e cargas leves.", exercises: [
     { exercise: "Leg press 45°", sets: "2", reps: "15", load: "Leve", rest: "60s" },
@@ -300,7 +336,8 @@ function TreinosPage() {
                   {w.exercises.map((e, k) => (
                     <tr key={k} className="border-b border-border">
                       <td className="px-2 py-1">
-                        <Input list="ex-suggest" aria-label="Nome completo do exercício" className="h-10 min-w-[250px] w-full text-sm" value={e.exercise} onChange={(ev) => updEx(i, k, { exercise: ev.target.value })} />
+                        <Input list="ex-suggest" aria-label="Nome completo do exercício" className="h-10 min-w-[250px] w-full text-sm" value={e.exercise} onChange={(ev) => updEx(i, k, { exercise: ev.target.value })} placeholder="Digite ou escolha na biblioteca" />
+                        <ExerciseLibraryPicker onSelect={(name) => updEx(i, k, { exercise: name })} />
                       </td>
                       {(["sets", "reps", "load", "rest"] as const).map((f) => (
                         <td key={f} className="px-0.5 py-0.5">
