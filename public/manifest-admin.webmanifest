@@ -1,0 +1,27 @@
+{
+  "id": "/auth",
+  "name": "ALT ADMIN | Academia ALT FITNESS",
+  "short_name": "ALT ADMIN",
+  "description": "Gestão da equipe, alunos, treinos, financeiro e catraca da Academia ALT FITNESS.",
+  "start_url": "/auth",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#080808",
+  "theme_color": "#080808",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
