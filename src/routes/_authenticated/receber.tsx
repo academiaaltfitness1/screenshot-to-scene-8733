@@ -71,7 +71,7 @@ function ReceberPage() {
     });
   }, [rows, filter, q, today, settings?.bill_alert_days]);
 
-  const phoneDigits = (phone: string | null | undefined) => (phone ?? "").replace(/\\D/g, "");
+  const phoneDigits = (phone: string | null | undefined) => (phone ?? "").replace(/\D/g, "");
   const selectableRows = filtered.filter((r) => !r.paid_at && phoneDigits(r.students?.whatsapp).length >= 10);
   const toggleSelected = (id: string) => setSelectedIds((current) => current.includes(id) ? current.filter((x) => x !== id) : [...current, id]);
   const selectedRows = selectableRows.filter((r) => selectedIds.includes(r.id));
