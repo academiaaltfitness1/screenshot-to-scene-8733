@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useStaff, settingsQuery } from "@/hooks/use-staff";
+import { settingsQuery } from "@/hooks/use-staff";
 import { fmtDate, errMsg } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/alunos")({
@@ -141,7 +141,6 @@ function AlunosPage() {
 
 function StudentDialog({ student, onClose, onEnroll }: { student: Partial<Student> | Overview; onClose: () => void; onEnroll: (id: string) => void }) {
   const qc = useQueryClient();
-  const { staff } = useStaff();
   const [f, setF] = useState<Partial<Student>>(student as Partial<Student>);
   const set = <K extends keyof Student>(k: K, v: Student[K] | null) => setF((p) => ({ ...p, [k]: v }));
   const isNew = !f.id;
