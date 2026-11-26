@@ -71,7 +71,8 @@ export const studentSignIn = createServerFn({ method: "POST" })
 /** Creates a student Auth identity only after matching the gym-issued one-time code and birth date. */
 export const beginStudentActivation = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({
-    identifier: z.string().trim().min(1).max(32),
+    matricula: z.string().trim().min(1).max(20),
+    cpf: z.string().trim().min(11).max(14),
     birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
     code: z.string().regex(/^\d{8}$/),
     email: z.string().trim().email().max(254),
@@ -80,10 +81,11 @@ export const beginStudentActivation = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { createHash } = await import("node:crypto");
-    const digits = data.identifier.replace(/[^0-9]/g, "");
-    if (!digits) return { ok: false as const, error: "Dados de ativação inválidos. Confira com a recepção." };
+    const matriculaDigits = data.matricula.replace(/[^0-9]/g, "");
+    const cpfDigits = data.cpf.replace(/[^0-9]/g, "");
+    if (!matriculaDigits || cpfDigits.length !== 11) return { ok: false as const, error: "Dados de ativação inválidos. Confira com a recepção." };
 
-    const key = createHash("sha256").update(digits).digest("hex");
+    const key = createHash("sha256").update(matriculaDigits + ":" + cpfDigits).digest("hex");
     const since = new Date(Date.now() - 30 * 60 * 1000).toISOString();
     const { data: attempts } = await supabaseAdmin.from("student_auth_attempts")
       .select("id").eq("key", key).eq("kind", "activation").gte("created_at", since).limit(5);
@@ -91,11 +93,11 @@ export const beginStudentActivation = createServerFn({ method: "POST" })
       return { ok: false as const, error: "Muitas tentativas. Aguarde 30 minutos ou procure a recepção." };
     }
 
-    const { data: student } = digits.length === 11
-      ? await supabaseAdmin.from("students").select("id,birth_date,status").eq("cpf", digits).maybeSingle()
-      : await supabaseAdmin.from("students").select("id,birth_date,status").eq("matricula", Number(digits)).maybeSingle();
+    const { data: student } = await supabaseAdmin.from("students")
+      .select("id,birth_date,status,cpf").eq("matricula", Number(matriculaDigits)).maybeSingle();
+    const storedCpf = String(student?.cpf ?? "").replace(/[^0-9]/g, "");
     const validStudent = !!student && student.status === "ativo" &&
-      String(student.birth_date ?? "").slice(0, 10) === data.birthDate;
+      storedCpf === cpfDigits && String(student.birth_date ?? "").slice(0, 10) === data.birthDate;
 
     let activation: { id: string } | null = null;
     if (validStudent) {
