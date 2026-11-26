@@ -161,7 +161,16 @@ export const resendStudentActivationOtp = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ identifier: z.string().trim().min(1).max(32) }).parse(input))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { createHash } = await import("node:crypto");
     const digits = data.identifier.replace(/[^0-9]/g, "");
+    const key = createHash("sha256").update(digits).digest("hex");
+    const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { data: attempts } = await supabaseAdmin.from("student_auth_attempts")
+      .select("id").eq("key", key).eq("kind", "otp_resend").gte("created_at", since).limit(3);
+    if ((attempts?.length ?? 0) >= 3) {
+      return { ok: true as const, message: "Se houver uma ativação pendente, enviaremos um novo código ao e-mail cadastrado." };
+    }
+    await supabaseAdmin.from("student_auth_attempts").insert({ key, kind: "otp_resend", success: true });
     const { data: student } = digits.length === 11
       ? await supabaseAdmin.from("students").select("id").eq("cpf", digits).maybeSingle()
       : await supabaseAdmin.from("students").select("id").eq("matricula", Number(digits)).maybeSingle();
@@ -183,12 +192,21 @@ export const requestStudentPasswordReset = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ identifier: z.string().trim().min(1).max(32), redirectTo: z.string().url() }).parse(input))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { createHash } = await import("node:crypto");
+    const digits = data.identifier.replace(/[^0-9]/g, "");
+    const key = createHash("sha256").update(digits).digest("hex");
+    const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { data: attempts } = await supabaseAdmin.from("student_auth_attempts")
+      .select("id").eq("key", key).eq("kind", "password_reset").gte("created_at", since).limit(3);
+    if ((attempts?.length ?? 0) >= 3) {
+      return { ok: true as const, message: "Se o cadastro estiver ativo, enviaremos instruções para o e-mail confirmado." };
+    }
+    await supabaseAdmin.from("student_auth_attempts").insert({ key, kind: "password_reset", success: true });
     const redirectUrl = new URL(data.redirectTo);
     const configuredOrigin = process.env["APP_URL"] ? new URL(process.env["APP_URL"]).origin : null;
     const allowedRedirect = redirectUrl.protocol === "https:" && (redirectUrl.hostname.endsWith(".lovable.app") || redirectUrl.origin === configuredOrigin);
     if (!allowedRedirect) throw new Error("Endereço de recuperação inválido.");
     const redirectTo = `${redirectUrl.origin}/reset-password`;
-    const digits = data.identifier.replace(/[^0-9]/g, "");
     const { data: student } = digits.length === 11
       ? await supabaseAdmin.from("students").select("id").eq("cpf", digits).maybeSingle()
       : await supabaseAdmin.from("students").select("id").eq("matricula", Number(digits)).maybeSingle();
