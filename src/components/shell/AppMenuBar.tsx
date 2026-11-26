@@ -72,8 +72,6 @@ export function AppMenuBar() {
           <MenubarContent>
             {item("avaliacao")}
             {item("treinos")}
-            <MenubarSeparator />
-            <MenubarItem onSelect={() => window.open("/aluno", "_blank")}>App do Aluno (celular)</MenubarItem>
           </MenubarContent>
         </MenubarMenu>
         <MenubarMenu>
@@ -99,7 +97,7 @@ export function AppMenuBar() {
             <img src={shark} alt="" className="h-24 w-24 object-contain" />
             <DialogTitle className="text-2xl">ACADEMIA ALT FITNESS</DialogTitle>
             <DialogDescription>
-              Sistema de Gestão · catraca Henry Primme Acesso SF · App do Aluno. Sem custo de licença por usuário.
+              Sistema de Gestão · catraca Henry Primme Acesso SF. Sem custo de licença por usuário.
             </DialogDescription>
           </DialogHeader>
         </DialogContent>
