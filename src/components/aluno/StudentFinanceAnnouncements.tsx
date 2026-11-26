@@ -7,6 +7,17 @@ import { supabase } from "@/integrations/supabase/client";
 
 type Bill = { id: string; description: string; amount: number; due_date: string; paid_at: string | null };
 
+function dueReminder(date: string) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const due = new Date(date + "T00:00:00");
+  const days = Math.round((due.getTime() - today.getTime()) / 86400000);
+  if (days < 0) return "Atrasada há " + Math.abs(days) + " dia(s)";
+  if (days === 0) return "Vence hoje";
+  if (days === 1) return "Vence amanhã";
+  if (days === 2) return "Vence em 2 dias";
+  return "Vence em " + days + " dias";
+}
+
 export function StudentFinanceAnnouncements({ studentId, bills }: { studentId: string; bills: Bill[] }) {
   const qc = useQueryClient();
   const [uploading, setUploading] = useState<string | null>(null);
@@ -79,7 +90,7 @@ export function StudentFinanceAnnouncements({ studentId, bills }: { studentId: s
         </div>
       </div> : <p className="text-sm text-zinc-400">A chave Pix ainda não foi configurada pela academia.</p>}
       <div className="mt-4 space-y-3">{bills.filter(b=>!b.paid_at).map(b=><div key={b.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-white/10 bg-black p-3">
-        <div><p className="font-semibold">{b.description}</p><p className="text-xs text-zinc-400">Vencimento {new Date(b.due_date+"T12:00:00").toLocaleDateString("pt-BR")} · R$ {Number(b.amount).toFixed(2).replace(".",",")}</p></div>
+        <div><p className="font-semibold">{b.description}</p><p className="text-xs text-zinc-400">Vencimento {new Date(b.due_date+"T12:00:00").toLocaleDateString("pt-BR")} · R$ {Number(b.amount).toFixed(2).replace(".",",")}</p><p className={dueReminder(b.due_date).startsWith("Atrasada")?"mt-1 text-xs font-bold text-red-400":"mt-1 text-xs font-bold text-amber-300"}>{dueReminder(b.due_date)}</p></div>
         <label className="inline-flex cursor-pointer items-center gap-2 rounded bg-[#facc15] px-3 py-2 text-sm font-bold text-black">
           <Upload size={15}/>{uploading===b.id?"Enviando...":"Enviar comprovante"}
           <input type="file" accept="image/jpeg,image/png,application/pdf" className="hidden" disabled={!!uploading} onChange={e=>{void uploadProof(b,e.target.files?.[0]);e.currentTarget.value="";}}/>
