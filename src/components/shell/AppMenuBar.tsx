@@ -24,7 +24,7 @@ const MENUS: { label: string; items: (ModuleKey | "-")[] }[] = [
 
 export function AppMenuBar() {
   const navigate = useNavigate();
-  const { can } = useStaff();
+  const { can, staff } = useStaff();
   const signOut = useSignOut();
   const [search, setSearch] = useState(false);
   const [about, setAbout] = useState(false);
@@ -72,6 +72,15 @@ export function AppMenuBar() {
           <MenubarContent>
             {item("avaliacao")}
             {item("treinos")}
+            {staff?.isAdmin && (
+              <>
+                <MenubarSeparator />
+                <MenubarItem onSelect={() => navigate({ to: "/painel" })}>
+                  <ShieldCheck className="mr-2 h-4 w-4 text-primary" />
+                  ALT Admin — Painel de gestão
+                </MenubarItem>
+              </>
+            )}
           </MenubarContent>
         </MenubarMenu>
         <MenubarMenu>
