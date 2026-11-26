@@ -154,7 +154,7 @@ function TreinosPage() {
         letter: w.letter,
         name: w.name,
         notes: w.notes ?? "",
-        exercises: [...w.workout_exercises].sort((a, b) => a.sort_order - b.sort_order).map((e) => ({ exercise: e.exercise, sets: e.sets, reps: e.reps, load: e.load, rest: e.rest, video_url: e.video_url ?? "", video_url: e.video_url ?? "" })),
+        exercises: [...w.workout_exercises].sort((a, b) => a.sort_order - b.sort_order).map((e) => ({ exercise: e.exercise, sets: e.sets, reps: e.reps, load: e.load, rest: e.rest, video_url: e.video_url ?? "" })),
       })),
     );
   }, [data]);
@@ -186,7 +186,7 @@ function TreinosPage() {
       setPlan(source.map((w) => ({
         letter: w.letter, name: w.name, notes: w.notes ?? "",
         exercises: [...w.workout_exercises].sort((a, b) => a.sort_order - b.sort_order).map((e) => ({
-          exercise: e.exercise, sets: e.sets, reps: e.reps, load: e.load, rest: e.rest,
+          exercise: e.exercise, sets: e.sets, reps: e.reps, load: e.load, rest: e.rest, video_url: e.video_url ?? "",
         })),
       })));
       toast.success("Ficha copiada para edição. O aluno de origem não será alterado.");
