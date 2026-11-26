@@ -57,6 +57,13 @@
       "when": 1795653000000,
       "tag": "0007_alt_aluno_hardening",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1795653300000,
+      "tag": "0008_student_goals",
+      "breakpoints": true
     }
   ]
 }
