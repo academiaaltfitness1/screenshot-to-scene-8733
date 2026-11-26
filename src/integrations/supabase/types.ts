@@ -1557,6 +1557,7 @@ export type Database = {
         }[]
       }
       aluno_start_session: { Args: { _workout_id: string }; Returns: string }
+      review_student_payment_proof: { Args: { _proof_id: string; _approved: boolean; _note?: string | null }; Returns: undefined }
       can_access: { Args: { _module: string }; Returns: boolean }
       current_student_id: { Args: never; Returns: string }
       has_role: {
