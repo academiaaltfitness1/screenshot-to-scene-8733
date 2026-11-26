@@ -204,7 +204,8 @@ export const requestStudentPasswordReset = createServerFn({ method: "POST" })
     await supabaseAdmin.from("student_auth_attempts").insert({ key, kind: "password_reset", success: true });
     const redirectUrl = new URL(data.redirectTo);
     const configuredOrigin = process.env["APP_URL"] ? new URL(process.env["APP_URL"]).origin : null;
-    const allowedRedirect = redirectUrl.protocol === "https:" && (redirectUrl.hostname.endsWith(".lovable.app") || redirectUrl.origin === configuredOrigin);
+    const allowedPreviewHost = redirectUrl.hostname === "id-preview--6058a297-1ce8-4b91-915f-3c03d4798d03.lovable.app";
+    const allowedRedirect = redirectUrl.protocol === "https:" && (allowedPreviewHost || (!!configuredOrigin && redirectUrl.origin === configuredOrigin));
     if (!allowedRedirect) throw new Error("Endereço de recuperação inválido.");
     const redirectTo = `${redirectUrl.origin}/reset-password`;
     const { data: student } = digits.length === 11
