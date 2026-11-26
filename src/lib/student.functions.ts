@@ -72,14 +72,14 @@ export const studentSignIn = createServerFn({ method: "POST" })
 export const beginStudentActivation = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({
     matricula: z.string().trim().min(1).max(20),
-    code: z.string().regex(/^\\d{8}$/),
+    code: z.string().regex(/^\d{8}$/),
     password: z.string().min(8).max(200),
   }).parse(input))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { createHash } = await import("node:crypto");
     const matriculaDigits = data.matricula.replace(/[^0-9]/g, "");
-    if (!matriculaDigits || !/^\\d+$/.test(matriculaDigits)) {
+    if (!matriculaDigits || !/^\d+$/.test(matriculaDigits)) {
       return { ok: false as const, error: "Confira o número da matrícula." };
     }
     const key = createHash("sha256").update("activation:" + matriculaDigits).digest("hex");
@@ -138,7 +138,7 @@ export const beginStudentActivation = createServerFn({ method: "POST" })
       password: data.password,
     });
     if (signInError || !session.session) {
-      return { ok: true as const, activated: true as const, message: "Acesso criado. Entre com sua matrícula e a senha cadastrada." };
+      return { ok: true as const, activated: true as const, access_token: null, refresh_token: null, message: "Acesso criado. Entre com sua matrícula e a senha cadastrada." };
     }
     return {
       ok: true as const,
