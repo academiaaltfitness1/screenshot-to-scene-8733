@@ -6,6 +6,7 @@ import { Dumbbell, Wallet, LogOut, Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { studentSignIn } from "@/lib/student.functions";
+import { StudentWorkoutExecution } from "@/components/aluno/StudentWorkoutExecution";
 
 export const Route = createFileRoute("/aluno")({
   ssr: false,
@@ -127,6 +128,7 @@ function StudentPortal() {
           <h2 className="mb-3 flex items-center gap-2 text-lg font-extrabold"><Dumbbell className="text-[#facc15]"/> Meus treinos</h2>
           {workouts.length ? <div className="space-y-3">{workouts.map(w=><article key={w.id} className="rounded-lg border border-white/10 bg-black p-3"><div className="flex items-center gap-2"><span className="rounded bg-[#facc15] px-2 py-1 font-black text-black">{w.letter}</span><h3 className="font-bold">{w.name}</h3></div>{w.notes && <p className="mt-2 text-sm text-zinc-400">{w.notes}</p>}<ul className="mt-3 space-y-2">{[...(w.workout_exercises??[])].sort((a,b)=>a.sort_order-b.sort_order).map(ex=><li key={ex.id} className="flex justify-between gap-3 border-b border-white/5 pb-2 text-sm"><span>{ex.exercise}</span><span className="shrink-0 text-zinc-400">{ex.sets} × {ex.reps}</span></li>)}</ul></article>)}</div> : <p className="text-sm text-zinc-400">Nenhuma ficha ativa cadastrada ainda.</p>}
         </section>
+        <StudentWorkoutExecution workouts={workouts as any} />
         <section className="rounded-xl border border-white/10 bg-[#151515] p-4">
           <h2 className="mb-3 flex items-center gap-2 text-lg font-extrabold"><Wallet className="text-[#facc15]"/> Minhas mensalidades</h2>
           {bills.length ? <div className="space-y-2">{bills.map(b=><div key={b.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-black p-3 text-sm"><span>{b.description}<small className="block text-zinc-500">Vencimento: {new Date(b.due_date+"T12:00:00").toLocaleDateString("pt-BR")}</small></span><span className="text-right font-bold">R$ {Number(b.amount).toFixed(2).replace(".",",")}<small className={"block "+(b.paid_at?"text-emerald-400":"text-amber-300")}>{b.paid_at?"Pago":"Em aberto"}</small></span></div>)}</div> : <p className="text-sm text-zinc-400">Nenhum lançamento financeiro disponível.</p>}
