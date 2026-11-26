@@ -64,6 +64,13 @@
       "when": 1795653300000,
       "tag": "0008_student_goals",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1795653600000,
+      "tag": "0009_student_attendance_read",
+      "breakpoints": true
     }
   ]
 }
