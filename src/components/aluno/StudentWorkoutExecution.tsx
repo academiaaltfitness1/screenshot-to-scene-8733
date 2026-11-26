@@ -72,7 +72,12 @@ export function ExerciseIllustration({ exercise, videoUrl }: { exercise: string;
   const mainPath = match?.images?.flat?.main;
 
   if (!match) {
-    return <p className="mt-2 text-xs text-zinc-500">{isLoading ? "Carregando demonstração…" : "Ilustração ainda não disponível para este exercício."}</p>;
+    return <div className="mt-2">
+      <p className="text-xs text-zinc-500">{isLoading ? "Carregando demonstração…" : "Ilustração ainda não disponível para este exercício."}</p>
+      <a href={safeVideoUrl ?? `https://www.youtube.com/results?search_query=${encodeURIComponent(exercise + " execução correta")}`} target="_blank" rel="noopener noreferrer" className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-[#facc15] px-3 py-2.5 text-sm font-extrabold text-black">
+        <Youtube size={18} /> {safeVideoUrl ? "Assistir vídeo indicado pelo professor" : "Buscar demonstração no YouTube"}
+      </a>
+    </div>;
   }
 
   return (
