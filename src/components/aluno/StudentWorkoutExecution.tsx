@@ -20,6 +20,17 @@ export function StudentWorkoutExecution({ workouts }: { workouts: Workout[] }) {
   const [durations, setDurations] = useState<Record<string, string>>({});
   const [restTimers, setRestTimers] = useState<Record<string, number>>({});
   const [clock, setClock] = useState(Date.now());
+  const { data: sessions = [] } = useQuery({
+    queryKey: ["student-workout-history"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("workout_sessions")
+        .select("id,workout_id,letter,workout_name,status,started_at,finished_at")
+        .order("started_at", { ascending: false }).limit(12);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const activeSession = sessions.find((session) => session.status === "em_andamento" && session.workout_id);
   const { data: activeSessionWorkout } = useQuery({
     queryKey: ["student-active-session-workout", activeSession?.workout_id],
@@ -31,16 +42,6 @@ export function StudentWorkoutExecution({ workouts }: { workouts: Workout[] }) {
     },
   });
   const activeWorkout = useMemo(() => workouts.find(w => w.id === selectedWorkout) ?? (activeSessionWorkout as Workout | undefined), [workouts, selectedWorkout, activeSessionWorkout]);
-  const { data: sessions = [] } = useQuery({
-    queryKey: ["student-workout-history"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("workout_sessions")
-        .select("id,workout_id,letter,workout_name,status,started_at,finished_at")
-        .order("started_at", { ascending: false }).limit(12);
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
 
   useEffect(() => {
     const timer = window.setInterval(() => setClock(Date.now()), 1000);
