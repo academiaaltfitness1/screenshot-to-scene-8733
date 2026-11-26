@@ -100,3 +100,46 @@ END;
 $$;
 REVOKE EXECUTE ON FUNCTION public.aluno_finish_session(uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.aluno_finish_session(uuid) TO authenticated;
+
+-- Atomic staff review: approval and receivable settlement happen in one transaction.
+CREATE OR REPLACE FUNCTION public.review_student_payment_proof(
+  _proof_id uuid,
+  _approved boolean,
+  _note text DEFAULT NULL
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  _proof public.payment_proofs%ROWTYPE;
+  _amount numeric;
+BEGIN
+  IF auth.uid() IS NULL OR NOT public.can_access('receber') THEN
+    RAISE EXCEPTION 'Sem permissão para revisar comprovantes.';
+  END IF;
+  SELECT * INTO _proof FROM public.payment_proofs
+    WHERE id = _proof_id AND status = 'pendente'
+    FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Comprovante não encontrado ou já revisado.'; END IF;
+
+  IF _approved THEN
+    SELECT amount INTO _amount FROM public.receivables
+      WHERE id = _proof.receivable_id AND student_id = _proof.student_id AND paid_at IS NULL
+      FOR UPDATE;
+    IF _amount IS NULL THEN RAISE EXCEPTION 'Lançamento já pago ou não encontrado.'; END IF;
+    UPDATE public.receivables
+      SET paid_at = now(), paid_amount = _amount, payment_method = 'Pix (comprovante)'
+      WHERE id = _proof.receivable_id;
+  END IF;
+
+  UPDATE public.payment_proofs
+    SET status = CASE WHEN _approved THEN 'aprovado' ELSE 'recusado' END,
+        note = NULLIF(trim(COALESCE(_note, '')), ''),
+        reviewed_by = auth.uid(), reviewed_at = now()
+    WHERE id = _proof_id;
+END;
+$$;
+REVOKE EXECUTE ON FUNCTION public.review_student_payment_proof(uuid, boolean, text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.review_student_payment_proof(uuid, boolean, text) TO authenticated;
