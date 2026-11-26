@@ -3,7 +3,7 @@ import { Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { checkAccess, ACCESS_LABEL, todayISO, type AccessInput } from "@/lib/access";
+import { ACCESS_LABEL, todayISO, type AccessInput } from "@/lib/access";
 import { cn } from "@/lib/utils";
 
 export function Field({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
@@ -33,10 +33,18 @@ export function SearchBox({ value, onChange, placeholder }: { value: string; onC
 }
 
 export function SituationBadge({ s, tolerance }: { s: AccessInput; tolerance: number }) {
-  const r = checkAccess(s, todayISO(), tolerance);
-  const variant =
-    r.code === "liberado" ? "success" : r.code === "inativo" || r.code === "sem_matricula" ? "secondary" : r.code === "vencido" ? "warning" : "destructive";
-  return <Badge variant={variant}>{ACCESS_LABEL[r.code]}</Badge>;
+  void tolerance;
+  const today = todayISO();
+  const code = s.status === "bloqueado" ? "bloqueado"
+    : s.status === "inativo" ? "inativo"
+    : s.overdue_since && s.overdue_since < today ? "inadimplente"
+    : !s.valid_until ? "sem_matricula"
+    : s.valid_until < today ? "vencido"
+    : "liberado";
+  const variant = code === "liberado" ? "success"
+    : code === "inativo" || code === "sem_matricula" ? "secondary"
+    : code === "vencido" ? "warning" : "destructive";
+  return <Badge variant={variant}>{ACCESS_LABEL[code]}</Badge>;
 }
 
 export function EmptyRow({ cols, text }: { cols: number; text: string }) {
