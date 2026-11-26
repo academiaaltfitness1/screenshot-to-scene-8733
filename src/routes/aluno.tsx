@@ -1,11 +1,9 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Dumbbell, Wallet, LogOut, Loader2, ShieldCheck } from "lucide-react";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { studentSignIn } from "@/lib/student.functions";
+import { StudentLogin } from "@/components/aluno/StudentLogin";
 import { StudentWorkoutExecution } from "@/components/aluno/StudentWorkoutExecution";
 import { StudentFinanceAnnouncements } from "@/components/aluno/StudentFinanceAnnouncements";
 
@@ -20,10 +18,6 @@ export const Route = createFileRoute("/aluno")({
 
 function StudentPortal() {
   const navigate = useNavigate();
-  const signIn = useServerFn(studentSignIn);
-  const [identifier, setIdentifier] = useState("");
-  const [password, setPassword] = useState("");
-  const [busy, setBusy] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
   const { data: profile, refetch } = useQuery({
     queryKey: ["student-portal-profile"],
@@ -62,25 +56,6 @@ function StudentPortal() {
     });
   }, []);
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    setBusy(true);
-    try {
-      const result = await signIn({ data: { identifier, password } });
-      if (!result.ok) throw new Error(result.error);
-      const { error } = await supabase.auth.setSession({
-        access_token: result.access_token, refresh_token: result.refresh_token,
-      });
-      if (error) throw error;
-      setSignedIn(true);
-      toast.success("Bem-vindo ao ALT ALUNO!");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Não foi possível entrar.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function logout() {
     await supabase.auth.signOut();
     setSignedIn(false);
@@ -90,27 +65,7 @@ function StudentPortal() {
 
   if (!signedIn) return (
     <main className="min-h-screen bg-[#080808] px-4 py-10 text-white">
-      <div className="mx-auto w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-[#151515] shadow-2xl">
-        <div className="border-b border-white/10 bg-black px-6 py-8 text-center">
-          <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#facc15] text-black"><Dumbbell size={32}/></div>
-          <p className="text-xs font-bold tracking-[.3em] text-[#facc15]">ACADEMIA</p>
-          <h1 className="mt-1 text-3xl font-black">ALT FITNESS</h1>
-          <p className="mt-2 text-sm text-zinc-400">ALT ALUNO · Seu treino na palma da mão</p>
-        </div>
-        <form onSubmit={submit} className="space-y-4 p-6">
-          <label className="block text-sm font-semibold">Matrícula ou CPF
-            <input value={identifier} onChange={e=>setIdentifier(e.target.value)} autoComplete="username" inputMode="numeric" required className="mt-2 h-12 w-full rounded-lg border border-white/15 bg-black px-3 text-white outline-none focus:border-[#facc15]" placeholder="Digite sua matrícula ou CPF"/>
-          </label>
-          <label className="block text-sm font-semibold">Senha
-            <input value={password} onChange={e=>setPassword(e.target.value)} type="password" autoComplete="current-password" required className="mt-2 h-12 w-full rounded-lg border border-white/15 bg-black px-3 text-white outline-none focus:border-[#facc15]" placeholder="Sua senha do app"/>
-          </label>
-          <button disabled={busy} className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-[#facc15] font-extrabold text-black disabled:opacity-60">
-            {busy && <Loader2 className="animate-spin" size={18}/>} Entrar
-          </button>
-          <p className="text-center text-xs text-zinc-500">Primeiro acesso ou não consegue entrar? Procure a recepção para ativar ou recuperar seu acesso.</p>
-          <Link to="/" className="block text-center text-sm text-[#facc15]">Voltar ao início</Link>
-        </form>
-      </div>
+      <StudentLogin onSignedIn={() => setSignedIn(true)} />
     </main>
   );
 
