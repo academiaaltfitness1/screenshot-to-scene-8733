@@ -42,7 +42,7 @@ export const studentSignIn = createServerFn({ method: "POST" })
 
     let student: { id: string } | null = null;
     if (digits.length === 11) {
-      const formattedCpf = digits.replace(/^(\\d{3})(\\d{3})(\\d{3})(\\d{2})$/, "$1.$2.$3-$4");
+      const formattedCpf = digits.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
       const { data: row } = await supabaseAdmin.from("students").select("id")
         .or("cpf.eq." + digits + ",cpf.eq." + formattedCpf).maybeSingle();
       student = row;
@@ -175,7 +175,7 @@ export const resendStudentActivationOtp = createServerFn({ method: "POST" })
       return { ok: true as const, message: "Se houver uma ativação pendente, enviaremos um novo código ao e-mail cadastrado." };
     }
     await supabaseAdmin.from("student_auth_attempts").insert({ key, kind: "otp_resend", success: true });
-    const formattedCpf = digits.length === 11 ? digits.replace(/^(\\d{3})(\\d{3})(\\d{3})(\\d{2})$/, "$1.$2.$3-$4") : "";
+    const formattedCpf = digits.length === 11 ? digits.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4") : "";
     const { data: student } = digits.length === 11
       ? await supabaseAdmin.from("students").select("id").or("cpf.eq." + digits + ",cpf.eq." + formattedCpf).maybeSingle()
       : await supabaseAdmin.from("students").select("id").eq("matricula", Number(digits)).maybeSingle();
