@@ -65,7 +65,7 @@ export function StudentLogin({ onSignedIn }: { onSignedIn: () => void }) {
 
   function resendCode() {
     void run(async () => {
-      const result = await resend({ data: { identifier } });
+      const result = await resend({ data: { identifier: mode === "verify" ? matricula : identifier } });
       toast.success(result.message);
     });
   }
