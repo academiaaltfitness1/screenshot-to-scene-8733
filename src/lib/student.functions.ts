@@ -42,20 +42,12 @@ export const studentSignIn = createServerFn({ method: "POST" })
       if (error) throw new Error("Não foi possível registrar a tentativa de acesso. Tente novamente.");
     };
 
-    let student: { id: string } | null = null;
-    if (digits.length === 11) {
-      const formattedCpf = digits.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
-      const { data: row, error: lookupError } = await supabaseAdmin.from("students").select("id")
-        .or("cpf.eq." + digits + ",cpf.eq." + formattedCpf).maybeSingle();
-      if (lookupError) return { ok: false as const, error: "Não foi possível validar o acesso. Tente novamente." };
-      student = row;
-    }
-    if (!student && /^[0-9]+$/.test(digits)) {
-      const { data: row, error: lookupError } = await supabaseAdmin.from("students").select("id").eq("matricula", Number(digits)).maybeSingle();
-      if (lookupError) return { ok: false as const, error: "Não foi possível validar o acesso. Tente novamente." };
-      student = row;
-    }
-    if (!student) { await recordAttempt(false); return { ok: false as const, error: "Matrícula/CPF ou senha inválidos." }; }
+    const matricula = Number(digits);
+    if (!Number.isSafeInteger(matricula)) return { ok: false as const, error: "Matrícula ou senha inválidos." };
+    const { data: student, error: lookupError } = await supabaseAdmin.from("students")
+      .select("id").eq("matricula", matricula).maybeSingle();
+    if (lookupError) return { ok: false as const, error: "Não foi possível validar o acesso. Tente novamente." };
+    if (!student) { await recordAttempt(false); return { ok: false as const, error: "Matrícula ou senha inválidos." }; }
 
     const { data: account, error: accountError } = await supabaseAdmin.from("student_accounts")
       .select("user_id,email_verified_at").eq("student_id", student.id).maybeSingle();
