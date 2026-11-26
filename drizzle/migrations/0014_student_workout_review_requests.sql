@@ -14,7 +14,7 @@ GRANT ALL ON public.student_workout_review_requests TO service_role;
 ALTER TABLE public.student_workout_review_requests ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "aluno cria pedido de revisao" ON public.student_workout_review_requests;
 CREATE POLICY "aluno cria pedido de revisao" ON public.student_workout_review_requests FOR INSERT TO authenticated
-  WITH CHECK (student_id=public.current_student_id() AND status='pendente');
+  WITH CHECK (student_id=public.current_student_id() AND status='pendente' AND reviewed_by IS NULL AND reviewed_at IS NULL AND char_length(COALESCE(note,''))<=300);
 DROP POLICY IF EXISTS "aluno le proprios pedidos de revisao" ON public.student_workout_review_requests;
 CREATE POLICY "aluno le proprios pedidos de revisao" ON public.student_workout_review_requests FOR SELECT TO authenticated
   USING (student_id=public.current_student_id());
