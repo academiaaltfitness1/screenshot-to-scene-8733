@@ -70,23 +70,29 @@ const PT_EXERCISE_NAMES: Record<string, string> = {
 };
 function catalogLabel(item: CatalogExercise) { const key = item.name_en.toLowerCase().replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim(); return PT_EXERCISE_NAMES[key] ?? item.name_es ?? item.name_en; }
 function ExerciseLibraryPicker({ onSelect }: { onSelect: (name: string) => void }) {
-  const [opened, setOpened] = useState(false); const [query, setQuery] = useState("");
+  const [query, setQuery] = useState("");
   const { data: exercises = [], isLoading, isError } = useQuery<CatalogExercise[]>({
     queryKey: ["repdb-exercise-catalog"],
     queryFn: async () => { const response = await fetch("https://exercise-dataset.com/exercises.json"); if (!response.ok) throw new Error("Falha ao carregar biblioteca"); const payload = await response.json(); return Array.isArray(payload.exercises) ? payload.exercises : []; },
     staleTime: 1000 * 60 * 60 * 24, retry: 1,
   });
-  const normalizedQuery = query.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-  const results = exercises.filter(item => { const label = catalogLabel(item); const haystack = [label, item.name_en, item.name_es, item.body_part, item.equipment].filter(Boolean).join(" ").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); return !normalizedQuery || haystack.includes(normalizedQuery); }).slice(0, 12);
-  return <div className="mt-1">
-    <button type="button" onClick={() => setOpened(v => !v)} className="text-[11px] font-semibold text-primary underline underline-offset-2">{opened ? "Fechar biblioteca" : "Escolher na biblioteca (708 exercícios)"}</button>
-    {opened && <div className="mt-2 rounded-md border border-border bg-background p-2">
-      <Input value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar: supino, agachamento, remada..." className="h-9 text-xs" />
-      <p className="my-1 text-[10px] text-muted-foreground">{isLoading ? "Carregando exercícios..." : isError ? "Biblioteca indisponível no momento." : `${results.length} resultado(s) exibidos de ${exercises.length} exercícios.`}</p>
-      <div className="max-h-48 space-y-1 overflow-y-auto">{results.map(item => <button type="button" key={item.id} onClick={() => { onSelect(catalogLabel(item)); setOpened(false); setQuery(""); }} className="flex w-full flex-col rounded px-2 py-1.5 text-left hover:bg-accent"><span className="text-xs font-semibold">{catalogLabel(item)}</span><span className="text-[10px] text-muted-foreground">{item.body_part ?? "Geral"} · {item.equipment ?? "Peso corporal"}</span></button>)}
-      {!isLoading && !isError && !results.length && <p className="p-2 text-xs text-muted-foreground">Nenhum resultado. Você também pode digitar o exercício manualmente no campo acima.</p>}</div>
-    </div>}
-  </div>;
+  const normalizedQuery = query.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase().trim();
+  const results = exercises.filter(item => { const label = catalogLabel(item); const haystack = [label, item.name_en, item.name_es, item.body_part, item.equipment].filter(Boolean).join(" ").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase(); return !normalizedQuery || haystack.includes(normalizedQuery); }).slice(0, 20);
+  return <section className="mt-4 rounded-lg border border-border bg-muted/20 p-3">
+    <div className="mb-2">
+      <h3 className="text-sm font-bold text-foreground">Biblioteca de exercícios</h3>
+      <p className="text-xs text-muted-foreground">Pesquise e escolha um exercício para acrescentá-lo ao treino. Os nomes aparecem completos.</p>
+    </div>
+    <Input value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar exercício: supino, agachamento, remada..." className="h-10 text-sm" />
+    <p className="my-2 text-xs text-muted-foreground">{isLoading ? "Carregando exercícios..." : isError ? "Biblioteca indisponível no momento." : `${results.length} resultado(s) exibidos de ${exercises.length} exercícios.`}</p>
+    <div className="max-h-64 space-y-1 overflow-y-auto">
+      {results.map(item => <button type="button" key={item.id} onClick={() => onSelect(catalogLabel(item))} className="flex w-full flex-col rounded-md border border-transparent px-3 py-2 text-left hover:border-border hover:bg-accent">
+        <span className="whitespace-normal break-words text-sm font-semibold leading-snug">{catalogLabel(item)}</span>
+        <span className="mt-0.5 text-xs text-muted-foreground">{item.body_part ?? "Geral"} · {item.equipment ?? "Peso corporal"}</span>
+      </button>)}
+      {!isLoading && !isError && !results.length && <p className="p-3 text-sm text-muted-foreground">Nenhum resultado. Tente outro nome.</p>}
+    </div>
+  </section>;
 }
 
 const WORKOUT_TEMPLATES: Record<string, Workout[]> = {
@@ -328,10 +334,10 @@ function TreinosPage() {
                 </button>
               </div>
               <div className="w-full overflow-x-auto">
-              <table className="w-full min-w-[720px] table-fixed text-sm">
+              <table className="w-full min-w-[820px] table-fixed text-sm">
                 <thead className="bg-secondary text-xs uppercase text-secondary-foreground">
                   <tr>
-                    <th className="w-[280px] px-2 py-2 text-left">Exercício (nome completo)</th>
+                    <th className="w-[360px] px-2 py-2 text-left">Exercício (nome completo)</th>
                     <th className="w-14 px-1 py-1">Séries</th>
                     <th className="w-16 px-1 py-1">Reps</th>
                     <th className="w-16 px-1 py-1">Carga</th>
@@ -343,8 +349,7 @@ function TreinosPage() {
                   {w.exercises.map((e, k) => (
                     <tr key={k} className="border-b border-border">
                       <td className="px-2 py-1">
-                        <Input list="ex-suggest" aria-label="Nome completo do exercício" className="h-10 min-w-[250px] w-full text-sm" value={e.exercise} onChange={(ev) => updEx(i, k, { exercise: ev.target.value })} placeholder="Digite ou escolha na biblioteca" />
-                        <ExerciseLibraryPicker onSelect={(name) => updEx(i, k, { exercise: name })} />
+                        <Input aria-label="Nome completo do exercício" title={e.exercise} className="h-11 min-w-[330px] w-full text-base" value={e.exercise} onChange={(ev) => updEx(i, k, { exercise: ev.target.value })} placeholder="Digite o nome completo do exercício" />
                       </td>
                       {(["sets", "reps", "load", "rest"] as const).map((f) => (
                         <td key={f} className="px-0.5 py-0.5">
@@ -377,6 +382,7 @@ function TreinosPage() {
                 </tbody>
               </table>
               </div>
+              <ExerciseLibraryPicker onSelect={(name) => upd(i, { exercises: [...w.exercises, { ...newEx(), exercise: name }] })} />
               <div className="flex items-center gap-2 p-2">
                 <Button size="sm" variant="ghost" onClick={() => upd(i, { exercises: [...w.exercises, newEx()] })}>
                   <Plus /> Exercício
