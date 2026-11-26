@@ -62,6 +62,8 @@ export function AppShell() {
     return () => window.removeEventListener("keydown", onKey);
   }, [can, navigate]);
 
+  if (pathname === "/admin-mobile") return <div className="min-h-screen bg-[#080808]"><Outlet /></div>;
+
   const agentOnline =
     settings?.agent_last_seen && Date.now() - new Date(settings.agent_last_seen).getTime() < 3 * 60_000;
 
