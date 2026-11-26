@@ -38,5 +38,5 @@
 
 ## Critérios para publicação
 - Configurar domínio de produção e URLs de redirecionamento do Auth; validar entrega do OTP e configurar SMTP próprio se o serviço padrão limitar os envios.\n- Não publicar em produção antes de validar OTP por e-mail, Pix/comprovante, permissões por perfil e leitura real da catraca.
-- Não apagar nem substituir cadastros, cobranças, fichas ou histórico existentes.
+- Testar uma sessão iniciada antes de o professor publicar uma nova versão da ficha; o aluno deve conseguir concluir a versão antiga.\n- Não apagar nem substituir cadastros, cobranças, fichas ou histórico existentes.
 - Confirmar que o sistema desktop SCA Fit continua operando normalmente.
