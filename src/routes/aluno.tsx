@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Dumbbell, Wallet, LogOut, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { StudentLogin } from "@/components/aluno/StudentLogin";
-import { StudentWorkoutExecution } from "@/components/aluno/StudentWorkoutExecution";
+import { ExerciseIllustration, StudentWorkoutExecution } from "@/components/aluno/StudentWorkoutExecution";
 import { StudentFinanceAnnouncements } from "@/components/aluno/StudentFinanceAnnouncements";
 import { StudentGoalProgress } from "@/components/aluno/StudentGoalProgress";
 import { StudentAttendanceHistory } from "@/components/aluno/StudentAttendanceHistory";
@@ -90,7 +90,10 @@ function StudentPortal() {
         </section>
         <section className="rounded-xl border border-white/10 bg-[#151515] p-4">
           <h2 className="mb-3 flex items-center gap-2 text-lg font-extrabold"><Dumbbell className="text-[#facc15]"/> Meus treinos</h2>
-          {workouts.length ? <div className="space-y-3">{workouts.map(w=><article key={w.id} className="rounded-lg border border-white/10 bg-black p-3"><div className="flex items-center gap-2"><span className="rounded bg-[#facc15] px-2 py-1 font-black text-black">{w.letter}</span><h3 className="font-bold">{w.name}</h3></div>{w.notes && <p className="mt-2 text-sm text-zinc-400">{w.notes}</p>}<ul className="mt-3 space-y-2">{[...(w.workout_exercises??[])].sort((a,b)=>a.sort_order-b.sort_order).map(ex=><li key={ex.id} className="flex justify-between gap-3 border-b border-white/5 pb-2 text-sm"><span className="min-w-0 flex-1 whitespace-normal break-words">{ex.exercise}</span><span className="shrink-0 text-zinc-400">{ex.sets} × {ex.reps}</span></li>)}</ul></article>)}</div> : <p className="text-sm text-zinc-400">Nenhuma ficha ativa cadastrada ainda.</p>}
+          {workouts.length ? <div className="space-y-3">{workouts.map(w=><article key={w.id} className="rounded-lg border border-white/10 bg-black p-3"><div className="flex items-center gap-2"><span className="rounded bg-[#facc15] px-2 py-1 font-black text-black">{w.letter}</span><h3 className="font-bold">{w.name}</h3></div>{w.notes && <p className="mt-2 text-sm text-zinc-400">{w.notes}</p>}<ul className="mt-3 space-y-2">{[...(w.workout_exercises??[])].sort((a,b)=>a.sort_order-b.sort_order).map(ex=><li key={ex.id} className="border-b border-white/5 pb-3 text-sm">
+  <div className="flex justify-between gap-3"><span className="min-w-0 flex-1 whitespace-normal break-words font-semibold">{ex.exercise}</span><span className="shrink-0 text-zinc-400">{ex.sets} × {ex.reps}</span></div>
+  <ExerciseIllustration exercise={ex.exercise} />
+</li>)}</ul></article>)}</div> : <p className="text-sm text-zinc-400">Nenhuma ficha ativa cadastrada ainda.</p>}
         </section>
         <StudentMembershipQr />
         <StudentWorkoutExecution workouts={workouts as any} />
