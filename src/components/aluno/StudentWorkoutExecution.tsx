@@ -84,6 +84,7 @@ export function StudentWorkoutExecution({ workouts }: { workouts: Workout[] }) {
       await client.invalidateQueries({ queryKey: ["student-workout-history"] });
       await client.invalidateQueries({ queryKey: ["student-goal-progress"] });
       await client.invalidateQueries({ queryKey: ["student-goal-events-admin"] });
+      await client.invalidateQueries({ queryKey: ["admin-mobile-stats"] });
     } catch (e) { toast.error(e instanceof Error ? e.message : "Não foi possível concluir."); }
     finally { setBusy(false); }
   }
