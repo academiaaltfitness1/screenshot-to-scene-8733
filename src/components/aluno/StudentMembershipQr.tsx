@@ -16,7 +16,7 @@ export function StudentMembershipQr() {
       if (sessionError || !sessionData.session?.access_token) throw new Error("Sessão expirada. Entre novamente.");
       return generate({ data: { accessToken: sessionData.session.access_token } });
     },
-    refetchInterval: 25000,
+    refetchInterval: (query) => query.state.data?.mode === "dynamic" ? 25000 : false,
     refetchIntervalInBackground: true,
     retry: 1,
   });
@@ -33,8 +33,8 @@ export function StudentMembershipQr() {
       {error instanceof Error ? error.message : "Gerando QR temporário…"}
     </div>}
     <p className="mt-3 font-mono text-sm tracking-widest">{data?.token ?? "—"}</p>
-    <p className="mt-1 text-xs text-zinc-400">Código temporário · atualiza a cada 30 segundos</p>
-    <p className="mt-2 text-sm font-bold text-[#facc15]">{remaining > 0 ? "Expira em " + remaining + "s" : "Atualizando código…"}</p>
+    <p className="mt-1 text-xs text-zinc-400">{data?.mode === "dynamic" ? "Código temporário · atualiza a cada 30 segundos" : "Carteirinha fixa atual · QR temporário ainda não ativado"}</p>
+    {data?.mode === "dynamic" && <p className="mt-2 text-sm font-bold text-[#facc15]">{remaining > 0 ? "Expira em " + remaining + "s" : "Atualizando código…"}</p>}
     <button type="button" onClick={()=>void refetch()} disabled={isFetching} className="mt-3 inline-flex items-center gap-2 rounded-lg border border-white/15 px-3 py-2 text-sm text-zinc-200 disabled:opacity-50">
       <RefreshCw size={15} className={isFetching?"animate-spin":""}/> Atualizar agora
     </button>
