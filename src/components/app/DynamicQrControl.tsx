@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 
 export function DynamicQrControl({ isAdmin }: { isAdmin: boolean }) {
   const client = useQueryClient();
-  const { data: status = { enabled: false, agentVersion: null as string | null, lastSeen: null as string | null } } = useQuery({
+  const { data: status = { enabled: false, qrAllowed: false, agentVersion: null as string | null, lastSeen: null as string | null } } = useQuery({
     queryKey: ["dynamic-qr-enabled"],
     queryFn: async () => {
       const { data, error } = await (supabase as any).from("settings").select("dynamic_qr_enabled,agent_version,agent_last_seen,allow_qrcode").eq("id", 1).single();
