@@ -24,6 +24,10 @@ export const createStudentActivationCode = createServerFn({ method: "POST" })
     const { data: student, error: studentError } = await supabaseAdmin.from("students")
       .select("id").eq("id", data.studentId).maybeSingle();
     if (studentError || !student) throw new Error("Aluno não encontrado.");
+    const { data: existingAccount, error: accountError } = await supabaseAdmin.from("student_accounts")
+      .select("user_id").eq("student_id", data.studentId).maybeSingle();
+    if (accountError) throw new Error("Não foi possível verificar o acesso do aluno.");
+    if (existingAccount?.user_id) throw new Error("Este aluno já tem acesso ao aplicativo. Oriente-o a recuperar a senha.");
 
     const { randomInt, createHash } = await import("node:crypto");
     const code = String(randomInt(10000000, 100000000));
