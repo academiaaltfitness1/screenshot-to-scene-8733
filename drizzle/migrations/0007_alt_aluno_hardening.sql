@@ -19,6 +19,7 @@ DECLARE
   _valid_until date;
   _overdue_since date;
   _tolerance integer;
+  _today date := (now() AT TIME ZONE 'America/Sao_Paulo')::date;
 BEGIN
   IF _sid IS NULL THEN RAISE EXCEPTION 'Acesso negado'; END IF;
 
@@ -34,10 +35,10 @@ BEGIN
   IF _student_status IS DISTINCT FROM 'ativo' THEN
     RAISE EXCEPTION 'Acesso aos treinos indisponível. Procure a recepção.';
   END IF;
-  IF _valid_until IS NULL OR current_date > (_valid_until + _tolerance) THEN
+  IF _valid_until IS NULL OR _today > (_valid_until + _tolerance) THEN
     RAISE EXCEPTION 'Mensalidade ou matrícula vencida. Regularize na recepção para iniciar treinos.';
   END IF;
-  IF _overdue_since IS NOT NULL AND current_date > (_overdue_since + _tolerance) THEN
+  IF _overdue_since IS NOT NULL AND _today > (_overdue_since + _tolerance) THEN
     RAISE EXCEPTION 'Existe mensalidade em atraso. Regularize na recepção para iniciar treinos.';
   END IF;
 
