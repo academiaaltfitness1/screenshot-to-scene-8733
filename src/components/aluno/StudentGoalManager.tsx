@@ -21,6 +21,7 @@ export function StudentGoalManager({ studentId }: { studentId: string }) {
       if (error) throw error;
       return data ?? [];
     },
+    refetchInterval: 60000,
   });
   const { data: goal } = useQuery({
     queryKey: ["student-goal-admin", studentId],
