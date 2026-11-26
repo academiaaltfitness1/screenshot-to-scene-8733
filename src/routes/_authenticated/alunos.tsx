@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Plus, Trash2, Upload, Printer, MessageCircle, Mail } from "lucide-react";
+import { Plus, Upload, Printer, MessageCircle, Mail } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useStaff, settingsQuery } from "@/hooks/use-staff";
+import { settingsQuery } from "@/hooks/use-staff";
 import { fmtDate, errMsg } from "@/lib/format";
 import { createStudentActivationCode } from "@/lib/student-activation.functions";
 
@@ -143,7 +143,6 @@ function AlunosPage() {
 
 function StudentDialog({ student, onClose, onEnroll }: { student: Partial<Student> | Overview; onClose: () => void; onEnroll: (id: string) => void }) {
   const qc = useQueryClient();
-  const { staff } = useStaff();
   const createActivationCode = useServerFn(createStudentActivationCode);
   const [activationCode, setActivationCode] = useState<string | null>(null);
   const [generatingCode, setGeneratingCode] = useState(false);
@@ -190,19 +189,6 @@ function StudentDialog({ student, onClose, onEnroll }: { student: Partial<Studen
       const m = errMsg(e);
       toast.error(m.includes("access_password") ? "Esta senha de acesso já é usada por outro aluno." : m.includes("card_number") ? "Este cartão já está cadastrado." : m);
     },
-  });
-
-  const remove = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from("students").delete().eq("id", f.id!);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Aluno excluído");
-      qc.invalidateQueries({ queryKey: ["students-overview"] });
-      onClose();
-    },
-    onError: (e) => toast.error(errMsg(e)),
   });
 
   async function generateActivationCode() {
@@ -338,14 +324,10 @@ function StudentDialog({ student, onClose, onEnroll }: { student: Partial<Studen
           </TabsContent>
         </Tabs>
         <DialogFooter className="gap-2">
-          {!isNew && staff?.isAdmin && (
-            <Button
-              variant="destructive"
-              className="mr-auto"
-              onClick={() => confirm("Excluir este aluno e todo o histórico?") && remove.mutate()}
-            >
-              <Trash2 /> Excluir
-            </Button>
+          {!isNew && (
+            <p className="mr-auto max-w-xs text-xs text-muted-foreground">
+              Para preservar matrícula, treinos e histórico, altere a situação do aluno para “Inativo” em vez de excluí-lo.
+            </p>
           )}
           {!isNew && f.whatsapp && (
             <Button variant="outline" onClick={() => {
