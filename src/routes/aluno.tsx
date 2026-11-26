@@ -33,6 +33,7 @@ function StudentPortal() {
       if (error) throw error;
       return Array.isArray(data) ? data[0] ?? null : data;
     },
+    refetchInterval: 30000,
   });
   const { data: workouts = [] } = useQuery({
     queryKey: ["student-portal-workouts"],
@@ -54,6 +55,7 @@ function StudentPortal() {
       if (error) throw error;
       return data ?? [];
     },
+    refetchInterval: 30000,
   });
 
   useEffect(() => {
