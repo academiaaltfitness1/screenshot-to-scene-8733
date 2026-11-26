@@ -41,6 +41,22 @@ export function StudentFinanceAnnouncements({ studentId, bills }: { studentId: s
       return data ?? [];
     },
   });
+  const { data: reads = [] } = useQuery({
+    queryKey: ["student-announcement-reads"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("announcement_reads")
+        .select("announcement_id,read_at");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  async function markRead(announcementId: string) {
+    const { error } = await supabase.from("announcement_reads").upsert({
+      announcement_id: announcementId, student_id: studentId,
+    }, { onConflict: "announcement_id,student_id" });
+    if (error) { toast.error("Não foi possível marcar como lido."); return; }
+    await qc.invalidateQueries({ queryKey: ["student-announcement-reads"] });
+  }
   const { data: proofs = [] } = useQuery({
     queryKey: ["student-payment-proofs"],
     queryFn: async () => {
@@ -113,6 +129,7 @@ export function StudentFinanceAnnouncements({ studentId, bills }: { studentId: s
       {announcements.filter(a=>!a.ends_at||new Date(a.ends_at)>new Date()).length ? announcements.filter(a=>!a.ends_at||new Date(a.ends_at)>new Date()).map(a=><article key={a.id} className="mb-2 rounded-lg bg-black p-3">
         <div className="flex items-center gap-2"><h3 className="font-bold">{a.title}</h3>{a.pinned&&<span className="rounded bg-[#facc15] px-2 py-0.5 text-[10px] font-black text-black">IMPORTANTE</span>}</div>
         <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-300">{a.body}</p>
+        {reads.some(r=>r.announcement_id===a.id) ? <p className="mt-2 text-xs font-semibold text-emerald-400">✓ Lido</p> : <button type="button" onClick={()=>void markRead(a.id)} className="mt-2 rounded border border-white/20 px-3 py-1.5 text-xs font-semibold text-zinc-200">Marcar como lido</button>}
       </article>) : <p className="text-sm text-zinc-400">Nenhum comunicado no momento.</p>}
     </section>
   </div>;
