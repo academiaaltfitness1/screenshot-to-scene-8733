@@ -157,35 +157,58 @@ function TreinosPage() {
   async function save() {
     if (!student) return;
     setSaving(true);
+    const createdIds: string[] = [];
     try {
       const { data: u } = await supabase.auth.getUser();
-      const keep = plan.filter((w) => w.id).map((w) => w.id!);
-      const existing = (data ?? []).map((w) => w.id).filter((id) => !keep.includes(id));
-      if (existing.length) await supabase.from("workouts").delete().in("id", existing);
+      const previousIds = (data ?? []).map((w) => w.id);
+
+      // Cada salvamento cria uma nova versão da ficha. As versões anteriores
+      // ficam inativas, sem apagar treinos ou exercícios do histórico.
       for (const w of plan) {
-        let id = w.id;
-        if (id) {
-          const { error } = await supabase.from("workouts").update({ letter: w.letter, name: w.name, notes: w.notes || null }).eq("id", id);
-          if (error) throw error;
-          await supabase.from("workout_exercises").delete().eq("workout_id", id);
-        } else {
-          const { data: nw, error } = await supabase
-            .from("workouts")
-            .insert({ student_id: student, letter: w.letter, name: w.name, notes: w.notes || null, created_by: u.user?.id ?? null })
-            .select()
-            .single();
-          if (error) throw error;
-          id = nw.id;
-        }
-        const exs = w.exercises.filter((e) => e.exercise.trim()).map((e, k) => ({ ...e, workout_id: id!, sort_order: k }));
+        const { data: nw, error } = await supabase
+          .from("workouts")
+          .insert({
+            student_id: student,
+            letter: w.letter,
+            name: w.name,
+            notes: w.notes || null,
+            created_by: u.user?.id ?? null,
+          })
+          .select()
+          .single();
+        if (error) throw error;
+        createdIds.push(nw.id);
+
+        const exs = w.exercises
+          .filter((e) => e.exercise.trim())
+          .map((e, k) => ({
+            exercise: e.exercise,
+            sets: e.sets,
+            reps: e.reps,
+            load: e.load,
+            rest: e.rest,
+            workout_id: nw.id,
+            sort_order: k,
+          }));
         if (exs.length) {
-          const { error } = await supabase.from("workout_exercises").insert(exs);
-          if (error) throw error;
+          const { error: exerciseError } = await supabase.from("workout_exercises").insert(exs);
+          if (exerciseError) throw exerciseError;
         }
       }
-      toast.success("Ficha salva — já aparece no app do aluno");
+
+      if (previousIds.length) {
+        const { error } = await supabase.from("workouts").update({ active: false }).in("id", previousIds);
+        if (error) throw error;
+      }
+
+      toast.success("Nova versão da ficha salva. O histórico anterior foi preservado.");
       qc.invalidateQueries({ queryKey: ["workouts", student] });
     } catch (e) {
+      // Se a nova versão falhar no meio, ela fica inativa e a ficha anterior
+      // continua ativa. Nenhum registro histórico é excluído.
+      if (createdIds.length) {
+        await supabase.from("workouts").update({ active: false }).in("id", createdIds);
+      }
       toast.error(errMsg(e));
     } finally {
       setSaving(false);
