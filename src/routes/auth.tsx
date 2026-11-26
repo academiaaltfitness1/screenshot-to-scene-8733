@@ -57,7 +57,7 @@ function AuthPage() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user?.app_metadata?.kind === "student") navigate({ to: "/aluno", replace: true });
-      else if (data.user) navigate({ to: window.matchMedia("(display-mode: standalone), (max-width: 767px)").matches ? "/admin-mobile" : "/painel", replace: true });
+      else if (data.user) navigate({ to: "/painel", replace: true });
     });
   }, [navigate]);
 
@@ -87,7 +87,7 @@ function AuthPage() {
         return;
       }
       toast.success("Administrador criado! Bem-vindo.");
-      navigate({ to: window.matchMedia("(display-mode: standalone), (max-width: 767px)").matches ? "/admin-mobile" : "/painel", replace: true });
+      navigate({ to: "/painel", replace: true });
     });
   };
 
@@ -99,7 +99,7 @@ function AuthPage() {
       if (!r.ok) throw new Error(r.error);
       const { error } = await supabase.auth.setSession({ access_token: r.access_token, refresh_token: r.refresh_token });
       if (error) throw error;
-      navigate({ to: window.matchMedia("(display-mode: standalone), (max-width: 767px)").matches ? "/admin-mobile" : "/painel", replace: true });
+      navigate({ to: "/painel", replace: true });
     });
   };
 
@@ -115,7 +115,7 @@ function AuthPage() {
       }
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      navigate({ to: window.matchMedia("(display-mode: standalone), (max-width: 767px)").matches ? "/admin-mobile" : "/painel", replace: true });
+      navigate({ to: "/painel", replace: true });
     });
   };
 
