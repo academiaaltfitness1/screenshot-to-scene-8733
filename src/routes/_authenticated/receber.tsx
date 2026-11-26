@@ -71,12 +71,14 @@ function ReceberPage() {
     });
   }, [rows, filter, q, today, settings?.bill_alert_days]);
 
-  const selectableRows = filtered.filter((r) => !r.paid_at && r.students?.whatsapp);
+  const phoneDigits = (phone: string | null | undefined) => (phone ?? "").replace(/\\D/g, "");
+  const selectableRows = filtered.filter((r) => !r.paid_at && phoneDigits(r.students?.whatsapp).length >= 10);
   const toggleSelected = (id: string) => setSelectedIds((current) => current.includes(id) ? current.filter((x) => x !== id) : [...current, id]);
   const selectedRows = selectableRows.filter((r) => selectedIds.includes(r.id));
   const messageFor = (r: (typeof rows)[number]) => {
     const name = r.students?.name ?? "aluno";
-    const msg = `Olá ${name.split(" ")[0]}! Aqui é da ${settings?.gym_name ?? "Academia ALT FITNESS"}. Sua mensalidade de ${brl(Number(r.amount))} vence em ${fmtDate(r.due_date)}.${settings?.pix_key ? ` Chave Pix: ${settings.pix_key}` : ""}`;
+    const dueVerb = r.due_date < today ? "venceu em" : "vence em";
+    const msg = `Olá ${name.split(" ")[0]}! Aqui é da ${settings?.gym_name ?? "Academia ALT FITNESS"}. Sua mensalidade de ${brl(Number(r.amount))} ${dueVerb} ${fmtDate(r.due_date)}.${settings?.pix_key ? ` Chave Pix: ${settings.pix_key}` : ""}`;
     const phone = (r.students?.whatsapp ?? "").replace(/\D/g, "");
     return `https://wa.me/${phone.length <= 11 ? "55" + phone : phone}?text=${encodeURIComponent(msg)}`;
   };
@@ -84,8 +86,9 @@ function ReceberPage() {
     if (!selectedRows.length) { toast.error("Selecione pelo menos um aluno com WhatsApp."); return; }
     if (messageIndex >= selectedRows.length) { toast.success("Todas as conversas selecionadas já foram abertas."); return; }
     const row = selectedRows[messageIndex];
-    const opened = window.open(messageFor(row), "_blank", "noopener,noreferrer");
+    const opened = window.open(messageFor(row), "_blank");
     if (!opened) { toast.error("O navegador bloqueou a nova aba. Permita pop-ups para este sistema e tente novamente."); return; }
+    opened.opener = null;
     setMessageIndex((index) => index + 1);
     toast.success(`Conversa ${messageIndex + 1} de ${selectedRows.length} aberta. Envie a mensagem no WhatsApp e depois avance para a próxima.`);
   };
@@ -157,7 +160,7 @@ function ReceberPage() {
             const soon = !r.paid_at && !overdue && r.due_date <= soonLimit;
             return (
               <tr key={r.id} className={`${grid.tr} ${overdue ? "bg-destructive/5" : ""}`}>
-                <td className={grid.td}>{!r.paid_at && r.students?.whatsapp ? <input aria-label={`Selecionar ${r.students?.name}`} type="checkbox" checked={selectedIds.includes(r.id)} onChange={() => { toggleSelected(r.id); setMessageIndex(0); }} /> : "—"}</td>
+                <td className={grid.td}>{!r.paid_at && phoneDigits(r.students?.whatsapp).length >= 10 ? <input aria-label={`Selecionar ${r.students?.name}`} type="checkbox" checked={selectedIds.includes(r.id)} onChange={() => { toggleSelected(r.id); setMessageIndex(0); }} /> : "—"}</td>
                 <td className={grid.td}>{fmtDate(r.due_date)}</td>
                 <td className={grid.td}>
                   <span className="mr-1 font-mono text-xs text-muted-foreground">{r.students?.matricula}</span>
