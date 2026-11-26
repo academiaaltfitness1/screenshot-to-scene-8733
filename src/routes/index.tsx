@@ -7,9 +7,9 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Academia ALT FITNESS — Sistema e App do Aluno" },
-      { name: "description", content: "Acesso da equipe ao sistema de gestão e app gratuito do aluno da Academia ALT FITNESS." },
+      { name: "description", content: "Acesso ao ALT ADMIN para gestão da academia e ao ALT ALUNO para treinos e serviços." },
       { property: "og:title", content: "Academia ALT FITNESS — Sistema e App do Aluno" },
-      { property: "og:description", content: "Acesso da equipe ao sistema de gestão e app gratuito do aluno da Academia ALT FITNESS." },
+      { property: "og:description", content: "Acesso ao ALT ADMIN para gestão da academia e ao ALT ALUNO para treinos e serviços." },
     ],
   }),
   component: Index,
@@ -34,8 +34,8 @@ function Index() {
             >
               <ShieldCheck className="h-7 w-7" />
               <span>
-                <span className="block text-lg font-bold">Área da Equipe</span>
-                <span className="text-sm opacity-80">Recepção, instrutores e administração</span>
+                <span className="block text-lg font-bold">ALT ADMIN</span>
+                <span className="text-sm opacity-80">Gestão da academia, equipe, alunos e financeiro</span>
               </span>
             </Link>
             <Link
@@ -44,7 +44,7 @@ function Index() {
             >
               <Smartphone className="h-7 w-7 text-accent" />
               <span>
-                <span className="block text-lg font-bold">App do Aluno</span>
+                <span className="block text-lg font-bold">ALT ALUNO</span>
                 <span className="text-sm opacity-80">Treino, avaliação, mensalidade e carteirinha</span>
               </span>
             </Link>
