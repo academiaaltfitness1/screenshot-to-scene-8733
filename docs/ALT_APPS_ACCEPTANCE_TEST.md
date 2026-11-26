@@ -40,3 +40,14 @@
 - Configurar domínio de produção, variável secreta `APP_URL` e URLs de redirecionamento do Auth; validar entrega do OTP e configurar SMTP próprio se o serviço padrão limitar os envios.\n- Não publicar em produção antes de validar OTP por e-mail, Pix/comprovante, permissões por perfil e leitura real da catraca.
 - Testar uma sessão iniciada antes de o professor publicar uma nova versão da ficha; o aluno deve conseguir concluir a versão antiga.\n- Não apagar nem substituir cadastros, cobranças, fichas ou histórico existentes.
 - Confirmar que o sistema desktop SCA Fit continua operando normalmente.
+
+
+## Validação adicional — comunicados e cobranças
+- [ ] Em Comunicados, publicar um aviso somente com texto.
+- [ ] Publicar um aviso com imagem JPG/PNG/WEBP e conferir a exibição no ALT ALUNO.
+- [ ] Publicar um vídeo MP4/WEBM e conferir reprodução no ALT ALUNO.
+- [ ] Confirmar que aluno não autenticado ou sem comunicado vigente não consegue ler os arquivos privados.
+- [ ] Em Contas a Receber, conferir filtros Vence hoje, A vencer, Pendentes, Vencidas e Pagas.
+- [ ] Selecionar todos ou alguns alunos com telefone válido; abrir uma conversa por vez, confirmar o texto e enviar manualmente no WhatsApp.
+- [ ] Conferir telefone com DDD, telefone com código do país e telefone inválido/ausente.
+- [ ] Confirmar que o índice da fila reinicia ao alterar busca, filtro ou seleção.
