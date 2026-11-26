@@ -32,31 +32,25 @@ export const Route = createFileRoute("/_authenticated/receber")({
 
 type Filter = "abertas" | "hoje" | "a_vencer" | "pendentes" | "vencidas" | "pagas" | "todas";
 
+type Filter = "abertas" | "hoje" | "a_vencer" | "pendentes" | "vencidas" | "pagas" | "todas";
+
 function ReceberPage() {
   const qc = useQueryClient();
   const { data: settings } = useQuery(settingsQuery);
   const [filter, setFilter] = useState<Filter>("abertas");
   const [q, setQ] = useState("");
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [messageIndex, setMessageIndex] = useState(0);
   const [paying, setPaying] = useState<{ id: string; amount: number; desc: string; name: string } | null>(null);
   const [creating, setCreating] = useState(false);
   const today = todayISO();
   const soonLimit = addDaysISO(today, settings?.bill_alert_days ?? 3);
-
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ["receivables"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("receivables")
-        .select("*, students(name, matricula, whatsapp)")
-        .order("due_date", { ascending: false })
-        .limit(2000);
+      const { data, error } = await supabase.from("receivables").select("*, students(name, matricula, whatsapp)").order("due_date", { ascending: false }).limit(2000);
       if (error) throw error;
       return data;
     },
   });
-
   const filtered = useMemo(() => {
     const t = q.toLowerCase();
     return rows.filter((r) => {
@@ -70,142 +64,28 @@ function ReceberPage() {
       return !t || r.students?.name.toLowerCase().includes(t) || r.description.toLowerCase().includes(t);
     });
   }, [rows, filter, q, today, settings?.bill_alert_days]);
-
-  const phoneDigits = (phone: string | null | undefined) => (phone ?? "").replace(/\D/g, "");
-  const selectableRows = filtered.filter((r) => !r.paid_at && phoneDigits(r.students?.whatsapp).length >= 10);
-  const toggleSelected = (id: string) => setSelectedIds((current) => current.includes(id) ? current.filter((x) => x !== id) : [...current, id]);
-  const selectedRows = selectableRows.filter((r) => selectedIds.includes(r.id));
-  const messageFor = (r: (typeof rows)[number]) => {
-    const name = r.students?.name ?? "aluno";
-    const dueVerb = r.due_date < today ? "venceu em" : "vence em";
-    const msg = `Olá ${name.split(" ")[0]}! Aqui é da ${settings?.gym_name ?? "Academia ALT FITNESS"}. Sua mensalidade de ${brl(Number(r.amount))} ${dueVerb} ${fmtDate(r.due_date)}.${settings?.pix_key ? ` Chave Pix: ${settings.pix_key}` : ""}`;
-    const phone = (r.students?.whatsapp ?? "").replace(/\D/g, "");
-    return `https://wa.me/${phone.length <= 11 ? "55" + phone : phone}?text=${encodeURIComponent(msg)}`;
-  };
-  const openNextSelectedMessage = () => {
-    if (!selectedRows.length) { toast.error("Selecione pelo menos um aluno com WhatsApp."); return; }
-    if (messageIndex >= selectedRows.length) { toast.success("Todas as conversas selecionadas já foram abertas."); return; }
-    const row = selectedRows[messageIndex];
-    const opened = window.open(messageFor(row), "_blank");
-    if (!opened) { toast.error("O navegador bloqueou a nova aba. Permita pop-ups para este sistema e tente novamente."); return; }
-    opened.opener = null;
-    setMessageIndex((index) => index + 1);
-    toast.success(`Conversa ${messageIndex + 1} de ${selectedRows.length} aberta. Envie a mensagem no WhatsApp e depois avance para a próxima.`);
-  };
   const totals = useMemo(() => {
     const open = rows.filter((r) => !r.paid_at);
-    return {
-      open: open.reduce((a, r) => a + Number(r.amount), 0),
-      overdue: open.filter((r) => r.due_date < today).reduce((a, r) => a + Number(r.amount), 0),
-    };
+    return { open: open.reduce((a, r) => a + Number(r.amount), 0), overdue: open.filter((r) => r.due_date < today).reduce((a, r) => a + Number(r.amount), 0) };
   }, [rows, today]);
-
-  const whatsapp = (phone: string | null | undefined, name: string, amount: number, due: string) => {
-    if (!phone) { toast.error("Aluno sem WhatsApp cadastrado."); return; }
-    const digits = phone.replace(/\D/g, "");
-    const msg = `Olá ${name.split(" ")[0]}! Aqui é da ${settings?.gym_name ?? "Academia ALT FITNESS"}. Sua mensalidade de ${brl(amount)} venceu em ${fmtDate(due)}.${settings?.pix_key ? ` Chave Pix: ${settings.pix_key}` : ""}`;
-    window.open(`https://wa.me/${digits.length <= 11 ? "55" + digits : digits}?text=${encodeURIComponent(msg)}`, "_blank");
-  };
-
   return (
-    <ModuleWindow
-      module="receber"
-      actions={
-        <Button size="sm" variant="accent" onClick={() => setCreating(true)}>
-          <Plus /> Novo lançamento
-        </Button>
-      }
-    >
+    <ModuleWindow module="receber" actions={<Button size="sm" variant="accent" onClick={() => setCreating(true)}><Plus /> Novo lançamento</Button>}>
       <ModuleBar>
-        <Select value={filter} onValueChange={(v) => { setFilter(v as Filter); setMessageIndex(0); }}>
-          <SelectTrigger className="h-9 w-36 bg-card">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="abertas">A receber (todos em aberto)</SelectItem>
-            <SelectItem value="hoje">Vence hoje</SelectItem>
-            <SelectItem value="a_vencer">A vencer</SelectItem>
-            <SelectItem value="pendentes">Pendentes</SelectItem>
-            <SelectItem value="vencidas">Vencidos</SelectItem>
-            <SelectItem value="pagas">Pagas</SelectItem>
-            <SelectItem value="todas">Todas</SelectItem>
-          </SelectContent>
-        </Select>
-        <SearchBox value={q} onChange={(value) => { setQ(value); setMessageIndex(0); }} placeholder="Aluno ou descrição" />
-        <Button size="sm" variant="outline" disabled={!selectableRows.length} onClick={() => { setSelectedIds(selectableRows.map((r) => r.id)); setMessageIndex(0); }}>Marcar todos ({selectableRows.length})</Button>
-        <Button size="sm" variant="outline" disabled={!selectedIds.length} onClick={() => { setSelectedIds([]); setMessageIndex(0); }}>Limpar seleção</Button>
-        <Badge variant="secondary">Selecionados: {selectedRows.length}</Badge>
-        <Button size="sm" disabled={!selectedRows.length || messageIndex >= selectedRows.length} onClick={openNextSelectedMessage}><Send/> Abrir próxima conversa ({Math.max(0, selectedRows.length - messageIndex)})</Button>
-        <div className="ml-auto flex gap-2 text-sm">
-          <Badge variant="warning">Em aberto: {brl(totals.open)}</Badge>
-          <Badge variant="destructive">Vencido: {brl(totals.overdue)}</Badge>
-        </div>
+        <Select value={filter} onValueChange={(v) => setFilter(v as Filter)}><SelectTrigger className="h-9 w-36 bg-card"><SelectValue /></SelectTrigger><SelectContent>
+          <SelectItem value="abertas">A receber (todos em aberto)</SelectItem><SelectItem value="hoje">Vence hoje</SelectItem><SelectItem value="a_vencer">A vencer</SelectItem><SelectItem value="pendentes">Pendentes</SelectItem><SelectItem value="vencidas">Vencidos</SelectItem><SelectItem value="pagas">Pagas</SelectItem><SelectItem value="todas">Todas</SelectItem>
+        </SelectContent></Select>
+        <SearchBox value={q} onChange={setQ} placeholder="Aluno ou descrição" />
+        <div className="ml-auto flex gap-2 text-sm"><Badge variant="warning">Em aberto: {brl(totals.open)}</Badge><Badge variant="destructive">Vencido: {brl(totals.overdue)}</Badge></div>
       </ModuleBar>
-      <table className={grid.table}>
-        <thead className={grid.thead}>
-          <tr>
-            <th className={grid.th}>Selecionar para WhatsApp</th>
-            <th className={grid.th}>Vencimento</th>
-            <th className={grid.th}>Aluno</th>
-            <th className={grid.th}>Descrição</th>
-            <th className={grid.th}>Valor</th>
-            <th className={grid.th}>Situação</th>
-            <th className={grid.th}></th>
-          </tr>
-        </thead>
-        <tbody>
-          {isLoading && <EmptyRow cols={7} text="Carregando…" />}
-          {!isLoading && filtered.length === 0 && <EmptyRow cols={7} text="Nenhum lançamento." />}
-          {filtered.map((r) => {
-            const overdue = !r.paid_at && r.due_date < today;
-            const soon = !r.paid_at && !overdue && r.due_date <= soonLimit;
-            return (
-              <tr key={r.id} className={`${grid.tr} ${overdue ? "bg-destructive/5" : ""}`}>
-                <td className={grid.td}>{!r.paid_at && phoneDigits(r.students?.whatsapp).length >= 10 ? <input aria-label={`Selecionar ${r.students?.name}`} type="checkbox" checked={selectedIds.includes(r.id)} onChange={() => { toggleSelected(r.id); setMessageIndex(0); }} /> : "—"}</td>
-                <td className={grid.td}>{fmtDate(r.due_date)}</td>
-                <td className={grid.td}>
-                  <span className="mr-1 font-mono text-xs text-muted-foreground">{r.students?.matricula}</span>
-                  {r.students?.name ?? "—"}
-                </td>
-                <td className={grid.td}>{r.description}</td>
-                <td className={`${grid.td} font-semibold`}>{brl(r.amount)}</td>
-                <td className={grid.td}>
-                  {r.paid_at ? (
-                    <Badge variant="success">
-                      Pago {fmtDate(r.paid_at)} · {r.payment_method}
-                    </Badge>
-                  ) : overdue ? (
-                    <Badge variant="destructive">Vencida</Badge>
-                  ) : soon ? (
-                    <Badge variant="warning">A vencer</Badge>
-                  ) : (
-                    <Badge variant="secondary">Pendente</Badge>
-                  )}
-                </td>
-                <td className={`${grid.td} whitespace-nowrap text-right`}>
-                  {!r.paid_at && (
-                    <>
-                      {overdue && (
-                        <Button size="icon" variant="ghost" title="Cobrar no WhatsApp" onClick={() => window.open(messageFor(r), "_blank", "noopener,noreferrer")}>
-                          <MessageCircle className="text-success" />
-                        </Button>
-                      )}
-                      <Button size="sm" variant="success" onClick={() => setPaying({ id: r.id, amount: Number(r.amount), desc: r.description, name: r.students?.name ?? "" })}>
-                        <CheckCircle2 /> Receber
-                      </Button>
-                    </>
-                  )}
-
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-      {paying && <PayDialog bill={paying} onClose={() => setPaying(null)} />}
-      {creating && <NewReceivable onClose={() => setCreating(false)} />}
-          <PaymentProofReview />
-</ModuleWindow>
+      <table className={grid.table}><thead className={grid.thead}><tr><th className={grid.th}>Vencimento</th><th className={grid.th}>Aluno</th><th className={grid.th}>Descrição</th><th className={grid.th}>Valor</th><th className={grid.th}>Situação</th><th className={grid.th}></th></tr></thead><tbody>
+        {isLoading && <EmptyRow cols={6} text="Carregando…" />}{!isLoading && filtered.length === 0 && <EmptyRow cols={6} text="Nenhum lançamento." />}
+        {filtered.map((r) => { const overdue = !r.paid_at && r.due_date < today; const soon = !r.paid_at && !overdue && r.due_date <= soonLimit; return <tr key={r.id} className={`${grid.tr} ${overdue ? "bg-destructive/5" : ""}`}>
+          <td className={grid.td}>{fmtDate(r.due_date)}</td><td className={grid.td}><span className="mr-1 font-mono text-xs text-muted-foreground">{r.students?.matricula}</span>{r.students?.name ?? "—"}</td><td className={grid.td}>{r.description}</td><td className={`${grid.td} font-semibold`}>{brl(r.amount)}</td><td className={grid.td}>{r.paid_at ? <Badge variant="success">Pago {fmtDate(r.paid_at)} · {r.payment_method}</Badge> : overdue ? <Badge variant="destructive">Vencida</Badge> : soon ? <Badge variant="warning">A vencer</Badge> : <Badge variant="secondary">Pendente</Badge>}</td>
+          <td className={`${grid.td} whitespace-nowrap text-right`}>{!r.paid_at && <Button size="sm" variant="success" onClick={() => setPaying({ id: r.id, amount: Number(r.amount), desc: r.description, name: r.students?.name ?? "" })}><CheckCircle2 /> Receber</Button>}</td>
+        </tr>; })}
+      </tbody></table>
+      {paying && <PayDialog bill={paying} onClose={() => setPaying(null)} />}{creating && <NewReceivable onClose={() => setCreating(false)} />}<PaymentProofReview />
+    </ModuleWindow>
   );
 }
 
