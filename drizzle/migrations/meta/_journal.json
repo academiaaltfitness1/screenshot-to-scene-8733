@@ -50,6 +50,13 @@
       "when": 1795652547986,
       "tag": "0006_alt_aluno_app",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1795653000000,
+      "tag": "0007_alt_aluno_hardening",
+      "breakpoints": true
     }
   ]
 }
