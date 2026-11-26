@@ -1289,6 +1289,7 @@ export type Database = {
         Update: {
           exercise?: string
           id?: string
+          video_url?: string | null
           load?: string
           notes?: string | null
           reps?: string
