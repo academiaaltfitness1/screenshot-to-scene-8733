@@ -9,6 +9,83 @@ type Workout = {
   workout_exercises: { id: string; exercise: string; sets: string; reps: string; load: string; rest: string; sort_order: number }[];
 };
 
+
+type ExerciseMediaRecord = {
+  id: string;
+  name_en: string;
+  name_es?: string;
+  images?: { flat?: { start?: string; peak?: string; main?: string } };
+};
+
+const EXERCISE_SEARCH_ALIASES: Record<string, string[]> = {
+  "supino reto": ["bench press"],
+  "supino inclinado": ["incline barbell bench press", "incline bench press"],
+  "supino maquina": ["machine chest press", "chest press machine"],
+  "puxada frontal": ["lat pulldown"],
+  "remada baixa": ["seated cable row", "seated row"],
+  "remada curvada": ["bent over barbell row", "barbell bent over row"],
+  "leg press 45": ["45 degree leg press", "leg press"],
+  "cadeira extensora": ["leg extension"],
+  "mesa flexora": ["lying leg curl", "leg curl"],
+  "stiff": ["romanian deadlift"],
+  "elevacao lateral": ["dumbbell lateral raise", "lateral raise"],
+  "desenvolvimento": ["seated dumbbell shoulder press", "overhead press"],
+  "rosca direta": ["barbell curl"],
+  "rosca alternada": ["alternating dumbbell curl", "dumbbell curl"],
+  "triceps pulley": ["cable triceps pushdown", "triceps pushdown"],
+  "triceps testa": ["lying triceps extension", "skull crusher"],
+  "panturrilha em pe": ["standing calf raise"],
+  "abdominal supra": ["crunch"],
+  "prancha": ["plank"],
+};
+
+function normalizeExerciseName(value: string) {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function ExerciseIllustration({ exercise }: { exercise: string }) {
+  const { data: library = [], isLoading } = useQuery<ExerciseMediaRecord[]>({
+    queryKey: ["repdb-exercise-illustrations"],
+    queryFn: async () => {
+      const response = await fetch("https://exercise-dataset.com/exercises.json");
+      if (!response.ok) throw new Error("Não foi possível carregar as ilustrações.");
+      const payload = await response.json();
+      return Array.isArray(payload.exercises) ? payload.exercises : [];
+    },
+    staleTime: 1000 * 60 * 60 * 24,
+    retry: 1,
+  });
+
+  const normalized = normalizeExerciseName(exercise);
+  const aliases = EXERCISE_SEARCH_ALIASES[normalized] ?? [normalized];
+  const match = library.find((item) => {
+    const names = [normalizeExerciseName(item.name_en), normalizeExerciseName(item.name_es ?? "")];
+    return aliases.some((alias) => {
+      const needle = normalizeExerciseName(alias);
+      return names.some((name) => name === needle || name.includes(needle));
+    });
+  });
+  const imageBase = "https://huggingface.co/datasets/RepDB/exercise-dataset/resolve/main/";
+  const startPath = match?.images?.flat?.start;
+  const peakPath = match?.images?.flat?.peak;
+  const mainPath = match?.images?.flat?.main;
+
+  if (!match) {
+    return <p className="mt-2 text-xs text-zinc-500">{isLoading ? "Carregando demonstração…" : "Ilustração ainda não disponível para este exercício."}</p>;
+  }
+
+  return (
+    <div className="mt-3 rounded-lg border border-white/10 bg-[#101010] p-2">
+      <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-[#facc15]">Demonstração ilustrativa</p>
+      <div className="grid grid-cols-2 gap-2">
+        {(startPath || mainPath) && <img src={imageBase + (startPath || mainPath)} alt={exercise + " — posição inicial"} loading="lazy" className="aspect-square w-full rounded-md bg-white object-contain" />}
+        {(peakPath || mainPath) && <img src={imageBase + (peakPath || mainPath)} alt={exercise + " — posição final"} loading="lazy" className="aspect-square w-full rounded-md bg-white object-contain" />}
+      </div>
+      <p className="mt-2 text-[10px] text-zinc-500">Imagem ilustrativa: posição inicial e final do movimento.</p>
+    </div>
+  );
+}
+
 /** Student-side execution; all ownership and progression rules are enforced by database RPC/RLS. */
 export function StudentWorkoutExecution({ workouts }: { workouts: Workout[] }) {
   const client = useQueryClient();
@@ -164,7 +241,9 @@ export function StudentWorkoutExecution({ workouts }: { workouts: Workout[] }) {
     {sessionId && activeWorkout ? <div className="mb-4 rounded-lg border border-[#facc15]/40 bg-black p-3">
       <p className="font-bold text-[#facc15]">Em andamento · Treino {activeWorkout.letter} — {activeWorkout.name}</p>
       <div className="mt-3 space-y-3">{[...activeWorkout.workout_exercises].sort((a,b)=>a.sort_order-b.sort_order).map(ex=><div key={ex.id} className="rounded-lg border border-white/10 p-3">
-        <p className="font-semibold">{ex.exercise}</p><p className="text-xs text-zinc-400">{ex.sets} séries · {ex.reps} repetições · descanso {ex.rest}</p>
+        <p className="break-words text-base font-bold leading-snug">{ex.exercise}</p>
+        <ExerciseIllustration exercise={ex.exercise} />
+        <p className="mt-2 text-xs text-zinc-400">{ex.sets} séries · {ex.reps} repetições · descanso {ex.rest}</p>
         <button type="button" onClick={()=>startRest(ex)} className="mt-2 rounded border border-[#facc15]/40 px-3 py-1.5 text-xs font-bold text-[#facc15]">
           {restTimers[ex.id] && restTimers[ex.id] > clock ? "Descansando " + Math.ceil((restTimers[ex.id] - clock) / 1000) + "s" : "Iniciar descanso (" + restSeconds(ex.rest) + "s)"}
         </button>{lastByName.get(ex.exercise.trim().toLocaleLowerCase("pt-BR"))?.load != null && <p className="mt-1 text-xs text-emerald-400">Última carga registrada: {Number(lastByName.get(ex.exercise.trim().toLocaleLowerCase("pt-BR"))?.load).toLocaleString("pt-BR")} kg</p>}
