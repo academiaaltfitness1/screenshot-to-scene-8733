@@ -10,3 +10,6 @@
 - [x] Logotipo original aplicado (cabeçalho, login, ícones, favicon)
 - [x] Tela de entrada: lista da equipe (escolher nome + senha), e-mail opcional para funcionários
 - [ ] Central de Mensagens WhatsApp: fila em 5 categorias (2 dias atraso → depois de amanhã), seleção, avanço só manual, status por mensagem, modelos editáveis, salva no banco, sem envio automático
+- [ ] ALT ALUNO (plano aprovado): banco + regras; ativação/login/recuperação; treino A→B→C com registro; financeiro/comprovantes/Pix; mural + Comunicados; QR temporário + Agente; ícone instalável; testes
+- [ ] Desligar cadastro público e entrada sem confirmação — aguardando resposta do usuário
+- [ ] Conferir `dashboard_mascot_url` / local `dashboard-assets` no banco

@@ -43,6 +43,13 @@
       "when": 1795620000000,
       "tag": "0005_dashboard_mascot_image",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795652547986,
+      "tag": "0006_alt_aluno_app",
+      "breakpoints": true
     }
   ]
 }
