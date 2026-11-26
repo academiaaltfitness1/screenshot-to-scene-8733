@@ -16,7 +16,7 @@ export function StudentMembershipQr() {
       if (sessionError || !sessionData.session?.access_token) throw new Error("Sessão expirada. Entre novamente.");
       return generate({ data: { accessToken: sessionData.session.access_token } });
     },
-    refetchInterval: (query) => query.state.data?.mode === "dynamic" ? 25000 : false,
+    refetchInterval: (query) => query.state.data?.mode === "dynamic" ? 25000 : 60000,
     refetchIntervalInBackground: true,
     retry: 1,
   });
