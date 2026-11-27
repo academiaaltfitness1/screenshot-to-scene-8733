@@ -110,11 +110,11 @@ export function StudentLogin({ onSignedIn }: { onSignedIn: () => void }) {
       <label className="block text-sm font-semibold">Sua matrícula
         <input required inputMode="numeric" value={identifier} onChange={e=>setIdentifier(e.target.value.replace(/[^0-9]/g,""))} className={field} placeholder="Número da matrícula"/>
       </label>
-      <label className="block text-sm font-semibold">Crie sua senha (mínimo 6 caracteres)
-        <input required minLength={6} maxLength={200} type="password" autoComplete="new-password" value={password} onChange={e=>setPassword(e.target.value)} className={field}/>
+      <label className="block text-sm font-semibold">Crie sua senha (4 dígitos)
+        <input required minLength={4} maxLength={4} pattern="[0-9]{4}" inputMode="numeric" autoComplete="new-password" value={password} onChange={e=>setPassword(e.target.value.replace(/[^0-9]/g,"").slice(0,4))} type="password" className={field} placeholder="4 números"/>
       </label>
       <label className="block text-sm font-semibold">Confirme sua senha
-        <input required minLength={6} maxLength={200} type="password" autoComplete="new-password" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} className={field}/>
+        <input required minLength={4} maxLength={4} pattern="[0-9]{4}" inputMode="numeric" autoComplete="new-password" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value.replace(/[^0-9]/g,"").slice(0,4))} type="password" className={field} placeholder="Repita os 4 números"/>
       </label>
       <button disabled={busy} className={button}>{busy?<Loader2 className="animate-spin"/>:<UserRoundPlus size={18}/>} Criar meu acesso</button>
       <button type="button" onClick={()=>setMode("code")} className="flex w-full items-center justify-center gap-2 text-sm text-zinc-300"><ArrowLeft size={15}/> Voltar</button>
