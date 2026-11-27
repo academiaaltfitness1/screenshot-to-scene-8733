@@ -10,6 +10,7 @@ import { useStaff, settingsQuery } from "@/hooks/use-staff";
 import { MODULES, SHORTCUTS, TOOLBAR } from "@/lib/modules";
 import { AppMenuBar } from "./AppMenuBar";
 import { cn } from "@/lib/utils";
+import { lockDesktopSession } from "@/lib/desktop-session";
 
 export function useSignOut() {
   const queryClient = useQueryClient();
@@ -17,6 +18,7 @@ export function useSignOut() {
   return async () => {
     await queryClient.cancelQueries();
     queryClient.clear();
+    lockDesktopSession();
     await supabase.auth.signOut();
     navigate({ to: "/auth", replace: true });
   };
