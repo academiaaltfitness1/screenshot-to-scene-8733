@@ -1,4 +1,10 @@
-/* eslint-disable */
+/*
+const AlunoRoute = AlunoRouteImport.update({
+  id: '/aluno',
+  path: '/aluno',
+  getParentRoute: () => rootRouteImport,
+} as any)
+ eslint-disable */
 
 // @ts-nocheck
 
@@ -13,6 +19,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as AlunoRouteImport } from './routes/aluno'
 import { Route as AuthenticatedAlunosRouteImport } from './routes/_authenticated/alunos'
 import { Route as AuthenticatedAvaliacaoRouteImport } from './routes/_authenticated/avaliacao'
 import { Route as AuthenticatedBackupRouteImport } from './routes/_authenticated/backup'
@@ -316,6 +323,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  AlunoRoute: typeof AlunoRoute
   ApiPublicAgentCommandsRoute: typeof ApiPublicAgentCommandsRoute
   ApiPublicAgentEventsRoute: typeof ApiPublicAgentEventsRoute
   ApiPublicAgentSyncRoute: typeof ApiPublicAgentSyncRoute
@@ -542,6 +550,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  AlunoRoute: AlunoRoute,
   ApiPublicAgentCommandsRoute: ApiPublicAgentCommandsRoute,
   ApiPublicAgentEventsRoute: ApiPublicAgentEventsRoute,
   ApiPublicAgentSyncRoute: ApiPublicAgentSyncRoute,
