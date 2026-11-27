@@ -74,7 +74,7 @@ export const beginStudentActivation = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({
     matricula: z.string().trim().min(1).max(20),
     code: z.string().regex(/^\d{8}$/),
-    password: z.string().min(6).max(200),
+    password: z.string().regex(/^\d{4}$/, "A senha deve ter exatamente 4 números."),
   }).parse(input))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
