@@ -48,7 +48,8 @@ export const staffSignIn = createServerFn({ method: "POST" })
   });
 
 async function assertAdmin(context: { supabase: ReturnType<typeof publicClient>; userId: string }) {
-  const { data } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+  const { data, error } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+  if (error) throw new Error("Não foi possível validar a permissão de administrador.");
   if (!data) throw new Error("Somente o administrador pode fazer isso.");
 }
 
@@ -84,12 +85,30 @@ export const createEmployee = createServerFn({ method: "POST" })
     });
     if (error || !created.user) throw new Error(error?.message.includes("already") ? "Este e-mail já está cadastrado." : error?.message ?? "Erro ao criar");
     const id = created.user.id;
-    await supabaseAdmin.from("profiles").upsert({ id, full_name: data.full_name, cargo: data.cargo, email: data.email || null, active: true });
-    await supabaseAdmin.from("user_roles").insert({ user_id: id, role: data.admin ? "admin" : "staff" });
-    if (data.permissions.length) {
-      await supabaseAdmin.from("employee_permissions").insert(data.permissions.map((m) => ({ user_id: id, module: m })));
+    try {
+      const { error: profileError } = await supabaseAdmin.from("profiles").upsert({
+        id, full_name: data.full_name, cargo: data.cargo, email: data.email || null, active: true,
+      });
+      if (profileError) throw new Error("Perfil: " + profileError.message);
+
+      const { error: roleError } = await supabaseAdmin.from("user_roles").insert({
+        user_id: id, role: data.admin ? "admin" : "staff",
+      });
+      if (roleError) throw new Error("Permissão de equipe: " + roleError.message);
+
+      if (data.permissions.length) {
+        const { error: permissionsError } = await supabaseAdmin.from("employee_permissions").insert(
+          data.permissions.map((m) => ({ user_id: id, module: m })),
+        );
+        if (permissionsError) throw new Error("Permissões dos módulos: " + permissionsError.message);
+      }
+      return { id };
+    } catch (writeError) {
+      const { error: rollbackError } = await supabaseAdmin.auth.admin.deleteUser(id);
+      if (rollbackError) console.error("[ALT EQUIPE] Falha ao reverter usuário incompleto:", rollbackError.message);
+      console.error("[ALT EQUIPE] Falha ao concluir cadastro:", writeError);
+      throw new Error(writeError instanceof Error ? writeError.message : "Não foi possível concluir o cadastro do funcionário.");
     }
-    return { id };
   });
 
 export const updateEmployee = createServerFn({ method: "POST" })
@@ -118,12 +137,20 @@ export const updateEmployee = createServerFn({ method: "POST" })
       const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, { password: data.password });
       if (error) throw new Error(error.message);
     }
-    await supabaseAdmin.from("profiles").update({ full_name: data.full_name, cargo: data.cargo, active: data.active }).eq("id", data.userId);
-    await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId);
-    await supabaseAdmin.from("user_roles").insert({ user_id: data.userId, role: data.admin ? "admin" : "staff" });
-    await supabaseAdmin.from("employee_permissions").delete().eq("user_id", data.userId);
+    const { error: profileError } = await supabaseAdmin.from("profiles")
+      .update({ full_name: data.full_name, cargo: data.cargo, active: data.active }).eq("id", data.userId);
+    if (profileError) throw new Error("Perfil: " + profileError.message);
+    const { error: deleteRolesError } = await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId);
+    if (deleteRolesError) throw new Error("Não foi possível atualizar o perfil de acesso: " + deleteRolesError.message);
+    const { error: roleError } = await supabaseAdmin.from("user_roles").insert({ user_id: data.userId, role: data.admin ? "admin" : "staff" });
+    if (roleError) throw new Error("Permissão de equipe: " + roleError.message);
+    const { error: deletePermissionsError } = await supabaseAdmin.from("employee_permissions").delete().eq("user_id", data.userId);
+    if (deletePermissionsError) throw new Error("Não foi possível atualizar as permissões: " + deletePermissionsError.message);
     if (data.permissions.length) {
-      await supabaseAdmin.from("employee_permissions").insert(data.permissions.map((m) => ({ user_id: data.userId, module: m })));
+      const { error: permissionsError } = await supabaseAdmin.from("employee_permissions").insert(
+        data.permissions.map((m) => ({ user_id: data.userId, module: m })),
+      );
+      if (permissionsError) throw new Error("Permissões dos módulos: " + permissionsError.message);
     }
     return { ok: true };
   });
