@@ -810,6 +810,7 @@ export type Database = {
         Row: {
           address: string
           agent_last_seen: string | null
+          agent_version: string | null
           allow_card: boolean
           allow_face: boolean
           allow_matricula: boolean
@@ -819,6 +820,7 @@ export type Database = {
           bill_alert_days: number
           block_inactive: boolean
           dashboard_mascot_url: string | null
+          dynamic_qr_enabled: boolean
           fingerprint_rule: string
           gym_name: string
           id: number
@@ -835,11 +837,11 @@ export type Database = {
           turnstile_port: number
           updated_at: string
           welcome_message: string
-          receivables_message_templates: Json
         }
         Insert: {
           address?: string
           agent_last_seen?: string | null
+          agent_version?: string | null
           allow_card?: boolean
           allow_face?: boolean
           allow_matricula?: boolean
@@ -849,6 +851,7 @@ export type Database = {
           bill_alert_days?: number
           block_inactive?: boolean
           dashboard_mascot_url?: string | null
+          dynamic_qr_enabled?: boolean
           fingerprint_rule?: string
           gym_name?: string
           id?: number
@@ -865,11 +868,11 @@ export type Database = {
           turnstile_port?: number
           updated_at?: string
           welcome_message?: string
-          receivables_message_templates?: Json
         }
         Update: {
           address?: string
           agent_last_seen?: string | null
+          agent_version?: string | null
           allow_card?: boolean
           allow_face?: boolean
           allow_matricula?: boolean
@@ -879,6 +882,7 @@ export type Database = {
           bill_alert_days?: number
           block_inactive?: boolean
           dashboard_mascot_url?: string | null
+          dynamic_qr_enabled?: boolean
           fingerprint_rule?: string
           gym_name?: string
           id?: number
@@ -1051,6 +1055,48 @@ export type Database = {
           },
         ]
       }
+      student_goal_events: {
+        Row: {
+          completed_sessions: number
+          id: string
+          reached_at: string
+          student_id: string
+          target_sessions: number
+          week_start: string
+        }
+        Insert: {
+          completed_sessions: number
+          id?: string
+          reached_at?: string
+          student_id: string
+          target_sessions: number
+          week_start: string
+        }
+        Update: {
+          completed_sessions?: number
+          id?: string
+          reached_at?: string
+          student_id?: string
+          target_sessions?: number
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_goal_events_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_goal_events_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_goals: {
         Row: {
           note: string | null
@@ -1151,6 +1197,51 @@ export type Database = {
             foreignKeyName: "student_training_state_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: true
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_workout_review_requests: {
+        Row: {
+          created_at: string
+          id: string
+          note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          student_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          student_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_workout_review_requests_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_workout_review_requests_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
             referencedRelation: "students"
             referencedColumns: ["id"]
           },
@@ -1265,37 +1356,37 @@ export type Database = {
         Row: {
           exercise: string
           id: string
-          video_url: string | null
           load: string
           notes: string | null
           reps: string
           rest: string
           sets: string
           sort_order: number
+          video_url: string | null
           workout_id: string
         }
         Insert: {
           exercise: string
           id?: string
-          video_url?: string | null
           load?: string
           notes?: string | null
           reps?: string
           rest?: string
           sets?: string
           sort_order?: number
+          video_url?: string | null
           workout_id: string
         }
         Update: {
           exercise?: string
           id?: string
-          video_url?: string | null
           load?: string
           notes?: string | null
           reps?: string
           rest?: string
           sets?: string
           sort_order?: number
+          video_url?: string | null
           workout_id?: string
         }
         Relationships: [
@@ -1568,7 +1659,6 @@ export type Database = {
         }[]
       }
       aluno_start_session: { Args: { _workout_id: string }; Returns: string }
-      review_student_payment_proof: { Args: { _proof_id: string; _approved: boolean; _note?: string | null }; Returns: undefined }
       can_access: { Args: { _module: string }; Returns: boolean }
       current_student_id: { Args: never; Returns: string }
       has_role: {
@@ -1586,6 +1676,10 @@ export type Database = {
           full_name: string
           id: string
         }[]
+      }
+      review_student_payment_proof: {
+        Args: { _approved: boolean; _note?: string; _proof_id: string }
+        Returns: undefined
       }
       setup_needed: { Args: never; Returns: boolean }
     }
