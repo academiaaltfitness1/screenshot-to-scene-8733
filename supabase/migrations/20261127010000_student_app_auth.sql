@@ -27,3 +27,6 @@ revoke all on table public.student_accounts from anon, authenticated;
 revoke all on table public.student_auth_attempts from anon, authenticated;
 grant all on table public.student_accounts to service_role;
 grant all on table public.student_auth_attempts to service_role;
+
+-- PIN de 4 dígitos: somente hash com salt, nunca senha em texto puro.
+alter table public.student_accounts add column if not exists pin_hash text;
