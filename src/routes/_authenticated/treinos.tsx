@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Plus, Save, Trash2, X, Printer, Copy, ClipboardList } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -347,7 +347,8 @@ function TreinosPage() {
                 </thead>
                 <tbody>
                   {w.exercises.map((e, k) => (
-                    <tr key={k} className="border-b border-border">
+                    <Fragment key={k}>
+                    <tr className="border-b border-border">
                       <td className="px-2 py-1">
                         <Input aria-label="Nome completo do exercício" title={e.exercise} className="h-11 min-w-[330px] w-full text-base" value={e.exercise} onChange={(ev) => updEx(i, k, { exercise: ev.target.value })} placeholder="Digite o nome completo do exercício" />
                       </td>
@@ -378,6 +379,7 @@ function TreinosPage() {
                         </div>
                       </td>
                     </tr>
+                    </Fragment>
                   ))}
                 </tbody>
               </table>
