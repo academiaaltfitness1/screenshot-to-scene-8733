@@ -30,7 +30,7 @@ export function StudentLogin({ onSignedIn }: { onSignedIn: () => void }) {
     e.preventDefault();
     void run(async () => {
       const result = await signIn({ data: { identifier, password } });
-      if (!result.ok) throw new Error(result.error);
+      if (!result.ok) throw new Error("Matrícula ou senha inválidos.");
       const { error } = await supabase.auth.setSession({ access_token: result.access_token, refresh_token: result.refresh_token });
       if (error) throw error;
       toast.success("Bem-vindo ao ALT ALUNO!");
