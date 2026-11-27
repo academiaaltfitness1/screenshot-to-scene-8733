@@ -22,7 +22,7 @@ function publicClient() {
 export const studentSignIn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({
     identifier: z.string().trim().min(1).max(32),
-    password: z.string().regex(/^\\d{4}$/, "A senha deve ter exatamente 4 números."),
+    password: z.string().regex(/^\d{4}$/, "A senha deve ter exatamente 4 números."),
   }).parse(input))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
