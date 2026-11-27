@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { z } from "zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Fragment, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -16,6 +17,7 @@ import { StudentWorkoutHistoryReview } from "@/components/aluno/StudentWorkoutHi
 import { ExerciseIllustration } from "@/components/aluno/StudentWorkoutExecution";
 
 export const Route = createFileRoute("/_authenticated/treinos")({
+  validateSearch: z.object({ studentId: z.string().optional() }),
   head: () => ({
     meta: [
       { title: "Prescrição de Treinos — ALT FITNESS" },
@@ -130,6 +132,8 @@ const WORKOUT_TEMPLATES: Record<string, Workout[]> = {
 };
 
 function TreinosPage() {
+  const search = Route.useSearch();
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const [student, setStudent] = useState<string | null>(null);
   const [plan, setPlan] = useState<Workout[]>([]);
@@ -137,6 +141,14 @@ function TreinosPage() {
   const [templateKey, setTemplateKey] = useState("");
   const [copySource, setCopySource] = useState<string | null>(null);
   const [loadingCopy, setLoadingCopy] = useState(false);
+
+  useEffect(() => {
+    if (!search.studentId) return;
+    setStudent(search.studentId);
+    setCopySource(null);
+    setPlan([]);
+    navigate({ to: "/treinos", search: {}, replace: true });
+  }, [search.studentId, navigate]);
 
   const { data } = useQuery({
     queryKey: ["workouts", student],
