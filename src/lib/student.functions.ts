@@ -112,19 +112,27 @@ export const beginStudentActivation = createServerFn({ method: "POST" })
       return { ok: false as const, error: "Muitas tentativas. Aguarde 30 minutos ou procure a recepção." };
     }
     const validCode = data.code === "02226770";
+    // Use the same overview as the desktop app: it derives validity from active enrollments.
     const { data: student, error: studentError } = validCode
-      ? await supabaseAdmin.from("students").select("id,status").eq("matricula", Number(matriculaDigits)).maybeSingle()
+      ? await supabaseAdmin.from("student_overview").select("id,status,valid_until").eq("matricula", Number(matriculaDigits)).maybeSingle()
       : { data: null, error: null };
-    if (studentError) return { ok: false as const, error: "Não foi possível localizar a matrícula. Tente novamente." };
-    const normalizedStatus = String(student?.status ?? "").trim().toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    const validStudent = !!student && ["ativo", "ativa", "active", "regular", "regularizada", "em dia", "true", "1"].includes(normalizedStatus);
+    if (studentError) {
+      console.error("[ALT ALUNO] Falha ao consultar matrícula no resumo:", studentError.message);
+      return { ok: false as const, error: "Não foi possível consultar a matrícula agora. Tente novamente." };
+    }
+    const normalizedStatus = String(student?.status ?? "").trim().toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
+    const today = new Date().toISOString().slice(0, 10);
+    const hasCurrentEnrollment = !!student?.valid_until && student.valid_until >= today;
+    const validStatus = ["ativo", "ativa", "active", "regular", "regularizada", "em dia", "true", "1"].includes(normalizedStatus);
+    const validStudent = !!student && validStatus && hasCurrentEnrollment;
     const { error: attemptError } = await supabaseAdmin.from("student_auth_attempts").insert({
       key, kind: "activation", success: validCode && validStudent,
     });
     if (attemptError) return { ok: false as const, error: "Não foi possível registrar a tentativa. Tente novamente." };
-    if (!validCode || !validStudent || !student) {
-      return { ok: false as const, error: "Código ou matrícula inválidos. Confira os dados com a recepção." };
-    }
+    if (!validCode) return { ok: false as const, error: "Código de primeiro acesso inválido." };
+    if (!student) return { ok: false as const, error: "Matrícula não encontrada. Confira o número no cadastro da recepção." };
+    if (!validStatus) return { ok: false as const, error: "O cadastro do aluno não está ativo. A recepção precisa regularizar a situação." };
+    if (!hasCurrentEnrollment) return { ok: false as const, error: "Não encontramos uma matrícula vigente para este aluno. Confira a mensalidade na recepção." }
 
     const { data: existing, error: existingError } = await supabaseAdmin.from("student_accounts")
       .select("user_id").eq("student_id", student.id).maybeSingle();
