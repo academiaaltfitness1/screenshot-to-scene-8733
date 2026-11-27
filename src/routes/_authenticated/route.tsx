@@ -5,8 +5,17 @@ import { AppShell } from "@/components/shell/AppShell";
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async () => {
+    // A sessão do Supabase pode permanecer salva entre aberturas do PWA.
+    // Só liberamos o Desktop depois de uma senha digitada nesta abertura.
+    if (typeof window !== "undefined" && window.sessionStorage.getItem("alt-desktop-unlocked") !== "1") {
+      await supabase.auth.signOut();
+      throw redirect({ to: "/auth" });
+    }
     const { data } = await supabase.auth.getUser();
-    if (!data.user) throw redirect({ to: "/auth" });
+    if (!data.user) {
+      if (typeof window !== "undefined") window.sessionStorage.removeItem("alt-desktop-unlocked");
+      throw redirect({ to: "/auth" });
+    }
     if (data.user.app_metadata?.kind === "student") throw redirect({ to: "/aluno" });
     const [{ data: roles }, { data: profile }] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", data.user.id),
