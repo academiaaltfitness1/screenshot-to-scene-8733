@@ -13,3 +13,5 @@
 - [ ] ALT ALUNO (plano aprovado): banco + regras; ativação/login/recuperação; treino A→B→C com registro; financeiro/comprovantes/Pix; mural + Comunicados; QR temporário + Agente; ícone instalável; testes
 - [ ] Desligar cadastro público e entrada sem confirmação — aguardando resposta do usuário
 - [ ] Conferir `dashboard_mascot_url` / local `dashboard-assets` no banco
+- [ ] Correção: ALT ALUNO só matrícula + senha (primeiro acesso com código fixo 02226770, sem CPF/RG/nascimento)
+- [ ] Correção: Desktop exige senha da equipe a cada nova abertura, inclusive rotas diretas
