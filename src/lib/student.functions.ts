@@ -117,7 +117,16 @@ export const beginStudentActivation = createServerFn({ method: "POST" })
       : { data: null, error: null };
     if (studentError) return { ok: false as const, error: "Não foi possível localizar a matrícula. Tente novamente." };
     const normalizedStatus = String(student?.status ?? "").trim().toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    const validStudent = !!student && ["ativo", "ativa", "active", "true", "1"].includes(normalizedStatus);
+    // Cadastro com status antigo não basta: o aluno precisa ter matrícula vigente hoje.
+    const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+    const { data: currentEnrollments, error: enrollmentError } = student
+      ? await supabaseAdmin.from("enrollments").select("id")
+          .eq("student_id", student.id).eq("status", "ativa")
+          .lte("start_date", today).gte("end_date", today).limit(1)
+      : { data: [], error: null };
+    if (enrollmentError) return { ok: false as const, error: "Não foi possível conferir a validade da matrícula. Tente novamente." };
+    const validStudent = !!student && ["ativo", "ativa", "active", "true", "1"].includes(normalizedStatus)
+      && (currentEnrollments?.length ?? 0) > 0;
     const { error: attemptError } = await supabaseAdmin.from("student_auth_attempts").insert({
       key, kind: "activation", success: validCode && validStudent,
     });
