@@ -57,6 +57,7 @@ function AuthPage() {
   // A entrada da equipe exige senha novamente ao abrir a tela de login.
   // A sessão anterior é encerrada para impedir entrada automática no Desktop.
   useEffect(() => {
+    window.sessionStorage.removeItem("alt-desktop-unlocked");
     void supabase.auth.signOut();
   }, []);
 
@@ -85,6 +86,7 @@ function AuthPage() {
         toast.success("Conta criada. Entre com sua senha.");
         return;
       }
+      window.sessionStorage.setItem("alt-desktop-unlocked", "1");
       toast.success("Administrador criado! Bem-vindo.");
       navigate({ to: "/painel", replace: true });
     });
@@ -98,6 +100,7 @@ function AuthPage() {
       if (!r.ok) throw new Error(r.error);
       const { error } = await supabase.auth.setSession({ access_token: r.access_token, refresh_token: r.refresh_token });
       if (error) throw error;
+      window.sessionStorage.setItem("alt-desktop-unlocked", "1");
       navigate({ to: "/painel", replace: true });
     });
   };
@@ -114,6 +117,7 @@ function AuthPage() {
       }
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
+      window.sessionStorage.setItem("alt-desktop-unlocked", "1");
       navigate({ to: "/painel", replace: true });
     });
   };
