@@ -54,12 +54,11 @@ function AuthPage() {
     },
   });
 
+  // A entrada da equipe exige senha novamente ao abrir a tela de login.
+  // A sessão anterior é encerrada para impedir entrada automática no Desktop.
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user?.app_metadata?.kind === "student") navigate({ to: "/aluno", replace: true });
-      else if (data.user) navigate({ to: "/painel", replace: true });
-    });
-  }, [navigate]);
+    void supabase.auth.signOut();
+  }, []);
 
   async function run(fn: () => Promise<void>) {
     setBusy(true);
