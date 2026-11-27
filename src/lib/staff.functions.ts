@@ -91,14 +91,16 @@ export const createEmployee = createServerFn({ method: "POST" })
       });
       if (profileError) throw new Error("Perfil: " + profileError.message);
 
-      const { error: roleError } = await supabaseAdmin.from("user_roles").insert({
-        user_id: id, role: data.admin ? "admin" : "staff",
-      });
+      const { error: roleError } = await supabaseAdmin.from("user_roles").upsert(
+        { user_id: id, role: data.admin ? "admin" : "staff" },
+        { onConflict: "user_id,role", ignoreDuplicates: true },
+      );
       if (roleError) throw new Error("Permissão de equipe: " + roleError.message);
 
       if (data.permissions.length) {
-        const { error: permissionsError } = await supabaseAdmin.from("employee_permissions").insert(
+        const { error: permissionsError } = await supabaseAdmin.from("employee_permissions").upsert(
           data.permissions.map((m) => ({ user_id: id, module: m })),
+          { onConflict: "user_id,module", ignoreDuplicates: true },
         );
         if (permissionsError) throw new Error("Permissões dos módulos: " + permissionsError.message);
       }
