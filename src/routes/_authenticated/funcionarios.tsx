@@ -219,7 +219,7 @@ function EmpDialog({ emp, onClose, selfId }: { emp: Partial<Emp> & { password?: 
             </Field>
           )}
           <Field label={isNew ? "Senha (mín. 6)" : "Nova senha (deixe em branco p/ manter)"}>
-            <Input type="text" autoComplete="off" value={f.password ?? ""} onChange={(e) => setF({ ...f, password: e.target.value })} />
+            <Input type="password" autoComplete="new-password" minLength={6} maxLength={100} value={f.password ?? ""} onChange={(e) => setF({ ...f, password: e.target.value })} />
           </Field>
           <div className="flex items-center gap-6 sm:col-span-2">
             <label className="flex items-center gap-2 text-sm">
