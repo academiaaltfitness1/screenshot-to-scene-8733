@@ -206,12 +206,12 @@ function MatriculasPage() {
           <PlansTab plans={plans} />
         </TabsContent>
       </Tabs>
-      {draft && <EnrollDialog draft={draft} setDraft={setDraft} plans={plans} />}
+      {draft && <EnrollDialog draft={draft} setDraft={setDraft} plans={plans} onAfterEnroll={(studentId) => { if (confirm("Matrícula registrada! Deseja montar a prescrição de treino agora?")) navigate({ to: "/treinos", search: { studentId } }); }} />}
     </ModuleWindow>
   );
 }
 
-function EnrollDialog({ draft, setDraft, plans }: { draft: Draft; setDraft: (d: Draft | null) => void; plans: Plan[] }) {
+function EnrollDialog({ draft, setDraft, plans, onAfterEnroll }: { draft: Draft; setDraft: (d: Draft | null) => void; plans: Plan[]; onAfterEnroll: (studentId: string) => void }) {
   const qc = useQueryClient();
   const plan = plans.find((p) => p.id === draft.plan_id);
   const end = plan ? addMonthsSameDayISO(draft.start_date, plan.months) : "";
@@ -254,6 +254,7 @@ function EnrollDialog({ draft, setDraft, plans }: { draft: Draft; setDraft: (d: 
       toast.success("Matrícula registrada");
       ["enrollments", "students-overview", "receivables"].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
       setDraft(null);
+      if (draft.student_id) onAfterEnroll(draft.student_id);
     },
     onError: (e) => toast.error(errMsg(e)),
   });
