@@ -86,9 +86,9 @@ export function StudentLogin({ onSignedIn }: { onSignedIn: () => void }) {
         <input value={identifier} onChange={e=>setIdentifier(e.target.value.replace(/[^0-9]/g,""))} autoComplete="username" inputMode="numeric" required className={field} placeholder="Digite sua matrícula"/>
       </label>
       <label className="block text-sm font-semibold">Senha
-        <input value={password} onChange={e=>setPassword(e.target.value)} type="password" autoComplete="current-password" required className={field} placeholder="Sua senha do app"/>
+        <input value={password} onChange={e=>setPassword(e.target.value.replace(/[^0-9]/g,"").slice(0,4))} type="password" inputMode="numeric" pattern="[0-9]{4}" minLength={4} maxLength={4} autoComplete="current-password" required className={field} placeholder="Senha de 4 dígitos"/>
       </label>
-      <button disabled={busy} className={button}>{busy && <Loader2 className="animate-spin" size={18}/>} Entrar</button>
+      <button disabled={busy || password.length !== 4 || !identifier.trim()} className={button}>{busy && <Loader2 className="animate-spin" size={18}/>} Entrar</button>
       <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
         <button type="button" onClick={()=>{setIdentifier("");setPassword("");setCode("");setMode("code");}} className="flex min-h-11 items-center justify-center rounded-lg border border-[#facc15]/70 bg-[#facc15]/10 px-4 font-bold text-[#facc15]">Primeiro acesso · criar senha</button>
         <button type="button" onClick={()=>toast.info("Para redefinir sua senha, procure a recepção da ALT FITNESS.")} className="text-zinc-300">Esqueci a senha</button>
