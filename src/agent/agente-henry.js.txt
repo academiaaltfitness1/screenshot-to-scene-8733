@@ -146,7 +146,7 @@ function sync(onlyCommands) {
       return ack.then(flushQueue);
     })
     .catch(function (e) {
-      if (online) log("Sem internet (" + e.message + ") - usando a copia local dos alunos.");
+      log("Falha na sincronizacao com a API ALT FITNESS (" + e.message + "). Verifique system_url e token do agente; usando a copia local dos alunos.");
       online = false;
     });
 }
