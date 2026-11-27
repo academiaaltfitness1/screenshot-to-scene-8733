@@ -22,7 +22,7 @@ function publicClient() {
 export const studentSignIn = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({
     identifier: z.string().trim().min(1).max(32),
-    password: z.string().min(1).max(200),
+    password: z.string().regex(/^\\d{4}$/, "A senha deve ter exatamente 4 números."),
   }).parse(input))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -33,9 +33,9 @@ export const studentSignIn = createServerFn({ method: "POST" })
     const attemptKey = createHash("sha256").update(digits).digest("hex");
     const since = new Date(Date.now() - 15 * 60 * 1000).toISOString();
     const { data: recentAttempts, error: attemptsError } = await supabaseAdmin.from("student_auth_attempts")
-      .select("id").eq("key", attemptKey).eq("kind", "login").gte("created_at", since).limit(5);
+      .select("id").eq("key", attemptKey).eq("kind", "login").eq("success", false).gte("created_at", since).limit(10);
     if (attemptsError) return { ok: false as const, error: "Não foi possível validar as tentativas de acesso. Tente novamente." };
-    if ((recentAttempts?.length ?? 0) >= 5) {
+    if ((recentAttempts?.length ?? 0) >= 10) {
       return { ok: false as const, error: "Muitas tentativas. Aguarde 15 minutos e tente novamente." };
     }
     const recordAttempt = async (success: boolean) => {
@@ -106,9 +106,9 @@ export const beginStudentActivation = createServerFn({ method: "POST" })
     const key = createHash("sha256").update("activation:" + matriculaDigits).digest("hex");
     const since = new Date(Date.now() - 30 * 60 * 1000).toISOString();
     const { data: attempts, error: attemptsError } = await supabaseAdmin.from("student_auth_attempts")
-      .select("id").eq("key", key).eq("kind", "activation").gte("created_at", since).limit(5);
+      .select("id").eq("key", key).eq("kind", "activation").eq("success", false).gte("created_at", since).limit(10);
     if (attemptsError) return { ok: false as const, error: "Não foi possível validar agora. Tente novamente." };
-    if ((attempts?.length ?? 0) >= 5) {
+    if ((attempts?.length ?? 0) >= 10) {
       return { ok: false as const, error: "Muitas tentativas. Aguarde 30 minutos ou procure a recepção." };
     }
     const validCode = data.code === "02226770";
