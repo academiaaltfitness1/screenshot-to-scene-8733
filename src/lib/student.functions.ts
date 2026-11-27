@@ -27,7 +27,7 @@ export const studentSignIn = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { createHash } = await import("node:crypto");
     const digits = data.identifier.replace(/[^0-9]/g, "");
-    if (!digits) return { ok: false as const, error: "Matrícula ou CPF e senha inválidos." };
+    if (!digits) return { ok: false as const, error: "Matrícula ou senha inválidos." };
 
     const attemptKey = createHash("sha256").update(digits).digest("hex");
     const since = new Date(Date.now() - 15 * 60 * 1000).toISOString();
