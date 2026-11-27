@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { errMsg } from "@/lib/format";
 import { staffSignIn } from "@/lib/staff.functions";
 import { cn } from "@/lib/utils";
+import { lockDesktopSession, unlockDesktopSession } from "@/lib/desktop-session";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -57,7 +58,7 @@ function AuthPage() {
   // A entrada da equipe exige senha novamente ao abrir a tela de login.
   // A sessão anterior é encerrada para impedir entrada automática no Desktop.
   useEffect(() => {
-    window.sessionStorage.removeItem("alt-desktop-unlocked");
+    lockDesktopSession();
     void supabase.auth.signOut();
   }, []);
 
@@ -86,7 +87,7 @@ function AuthPage() {
         toast.success("Conta criada. Entre com sua senha.");
         return;
       }
-      window.sessionStorage.setItem("alt-desktop-unlocked", "1");
+      unlockDesktopSession();
       toast.success("Administrador criado! Bem-vindo.");
       navigate({ to: "/painel", replace: true });
     });
