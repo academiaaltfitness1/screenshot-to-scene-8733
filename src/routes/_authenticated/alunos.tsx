@@ -136,12 +136,11 @@ function AlunosPage() {
             <th className={grid.th}>Nome</th>
             <th className={grid.th}>WhatsApp</th>
             <th className={grid.th}>Vencimento</th>
-            <th className={grid.th}>Cadastro</th>
             <th className={grid.th}>Situação</th>
           </tr>
         </thead>
         <tbody>
-          {isLoading && <EmptyRow cols={6} text="Carregando…" />}
+          {isLoading && <EmptyRow cols={5} text="Carregando…" />}
           {!isLoading && filtered.length === 0 && <EmptyRow cols={6} text="Nenhum aluno encontrado. Clique em “Novo aluno”." />}
           {filtered.map((r) => (
             <tr key={r.id} className={`${grid.tr} cursor-pointer`} onClick={() => setEditing(r as Student)}>
@@ -149,9 +148,6 @@ function AlunosPage() {
               <td className={grid.td}>{r.name}</td>
               <td className={grid.td}>{r.whatsapp ?? "—"}</td>
               <td className={grid.td}>{fmtDate(r.valid_until)}</td>
-              <td className={grid.td}>
-                <span className="capitalize">{r.status}</span>
-              </td>
               <td className={grid.td}>
                 <SituationBadge
                   s={{ status: r.status ?? "ativo", valid_until: r.valid_until, overdue_since: r.overdue_since }}
