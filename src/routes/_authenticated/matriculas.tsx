@@ -74,7 +74,7 @@ function MatriculasPage() {
     const t = q.toLowerCase();
     return rows.filter(
       (r) =>
-        (!onlyActive || r.status === "ativa") &&
+        (!onlyActive || (r.status === "ativa" && r.end_date >= today)) &&
         (!t || r.students?.name.toLowerCase().includes(t) || String(r.students?.matricula).includes(t)),
     );
   }, [rows, q, onlyActive]);
