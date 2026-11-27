@@ -33,9 +33,9 @@ export const studentSignIn = createServerFn({ method: "POST" })
     const attemptKey = createHash("sha256").update(digits).digest("hex");
     const since = new Date(Date.now() - 15 * 60 * 1000).toISOString();
     const { data: recentAttempts, error: attemptsError } = await supabaseAdmin.from("student_auth_attempts")
-      .select("id").eq("key", attemptKey).eq("kind", "login").gte("created_at", since).limit(10);
+      .select("id").eq("key", attemptKey).eq("kind", "login").gte("created_at", since).limit(5);
     if (attemptsError) return { ok: false as const, error: "Não foi possível validar as tentativas de acesso. Tente novamente." };
-    if ((recentAttempts?.length ?? 0) >= 10) {
+    if ((recentAttempts?.length ?? 0) >= 5) {
       return { ok: false as const, error: "Muitas tentativas. Aguarde 15 minutos e tente novamente." };
     }
     const recordAttempt = async (success: boolean) => {
