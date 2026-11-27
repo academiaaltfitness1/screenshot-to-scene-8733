@@ -26,7 +26,7 @@ export const studentSignIn = createServerFn({ method: "POST" })
   }).parse(input))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { createHash } = await import("node:crypto");
+    const { createHash, scryptSync, timingSafeEqual } = await import("node:crypto");
     const digits = data.identifier.replace(/[^0-9]/g, "");
     if (!digits) return { ok: false as const, error: "Matrícula ou senha inválidos." };
 
@@ -51,20 +51,40 @@ export const studentSignIn = createServerFn({ method: "POST" })
     if (!student) { await recordAttempt(false); return { ok: false as const, error: "Matrícula ou senha inválidos." }; }
 
     const { data: account, error: accountError } = await supabaseAdmin.from("student_accounts")
-      .select("user_id,email_verified_at").eq("student_id", student.id).maybeSingle();
+      .select("user_id,email_verified_at,pin_hash").eq("student_id", student.id).maybeSingle();
     if (accountError) return { ok: false as const, error: "Não foi possível validar o cadastro. Tente novamente." };
     if (!account?.user_id || !account.email_verified_at) {
       await recordAttempt(false);
       return { ok: false as const, error: "Acesso ainda não ativado. Procure a recepção para ativar seu app." };
+    }
+    if (!account.pin_hash) {
+      await recordAttempt(false);
+      return { ok: false as const, error: "Acesso ainda não ativado com a nova senha. Faça o primeiro acesso novamente." };
+    }
+    const [saltHex, hashHex] = account.pin_hash.split(":");
+    if (!saltHex || !hashHex) return { ok: false as const, error: "Cadastro de acesso inválido. Procure a recepção." };
+    const supplied = scryptSync(data.password, Buffer.from(saltHex, "hex"), 64);
+    const expected = Buffer.from(hashHex, "hex");
+    const pinMatches = expected.length === supplied.length && timingSafeEqual(expected, supplied);
+    if (!pinMatches) {
+      await recordAttempt(false);
+      return { ok: false as const, error: "Matrícula ou senha inválidos." };
     }
     const { data: authUser, error: authUserError } = await supabaseAdmin.auth.admin.getUserById(account.user_id);
     if (authUserError) return { ok: false as const, error: "Não foi possível validar o cadastro. Tente novamente." };
     const email = authUser.user?.email;
     if (!email) { await recordAttempt(false); return { ok: false as const, error: "Acesso ainda não ativado. Procure a recepção." }; }
 
-    const { data: session, error } = await publicClient().auth.signInWithPassword({ email, password: data.password });
+    const { data: link, error: linkError } = await supabaseAdmin.auth.admin.generateLink({ type: "magiclink", email });
+    const tokenHash = link.properties?.hashed_token;
+    if (linkError || !tokenHash) {
+      await recordAttempt(false);
+      console.error("[ALT ALUNO] Falha ao gerar sessão após validar PIN:", linkError?.message ?? "Token não retornado");
+      return { ok: false as const, error: "Não foi possível iniciar a sessão. Tente novamente." };
+    }
+    const { data: session, error } = await publicClient().auth.verifyOtp({ token_hash: tokenHash, type: "magiclink" });
     await recordAttempt(!error && !!session.session);
-    if (error || !session.session) return { ok: false as const, error: "Matrícula ou senha inválidos." };
+    if (error || !session.session) return { ok: false as const, error: "Não foi possível iniciar a sessão. Tente novamente." };
     return { ok: true as const, access_token: session.session.access_token, refresh_token: session.session.refresh_token };
   });
 
@@ -78,7 +98,7 @@ export const beginStudentActivation = createServerFn({ method: "POST" })
   }).parse(input))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { createHash } = await import("node:crypto");
+    const { createHash, randomBytes, scryptSync } = await import("node:crypto");
     const matriculaDigits = data.matricula.replace(/[^0-9]/g, "");
     if (!matriculaDigits || !/^\d+$/.test(matriculaDigits)) {
       return { ok: false as const, error: "Confira o número da matrícula." };
@@ -114,9 +134,12 @@ export const beginStudentActivation = createServerFn({ method: "POST" })
     }
 
     const internalEmail = student.id + "@students.altfitness.invalid";
+    const pinSalt = randomBytes(16);
+    const pinHash = scryptSync(data.password, pinSalt, 64);
+    const technicalPassword = randomBytes(48).toString("base64url");
     const { data: created, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email: internalEmail,
-      password: data.password,
+      password: technicalPassword,
       email_confirm: true,
       app_metadata: { kind: "student" },
       user_metadata: { student_id: student.id },
@@ -130,17 +153,19 @@ export const beginStudentActivation = createServerFn({ method: "POST" })
       user_id: created.user.id,
       student_id: student.id,
       email_verified_at: new Date().toISOString(),
-    });
+      pin_hash: pinSalt.toString("hex") + ":" + pinHash.toString("hex"),
+    } as never);
     if (accountError) {
       await supabaseAdmin.auth.admin.deleteUser(created.user.id);
       console.error("[ALT ALUNO] Falha ao vincular conta à matrícula:", accountError.message);
       return { ok: false as const, error: "Esta matrícula já possui acesso ou não foi possível concluir o cadastro. Procure a recepção para conferir." };
     }
 
-    const { data: session, error: signInError } = await publicClient().auth.signInWithPassword({
-      email: internalEmail,
-      password: data.password,
-    });
+    const { data: link, error: linkError } = await supabaseAdmin.auth.admin.generateLink({ type: "magiclink", email: internalEmail });
+    const tokenHash = link.properties?.hashed_token;
+    const { data: session, error: signInError } = tokenHash && !linkError
+      ? await publicClient().auth.verifyOtp({ token_hash: tokenHash, type: "magiclink" })
+      : { data: { session: null }, error: linkError ?? new Error("Token de sessão não retornado") };
     if (signInError || !session.session) {
       console.error("[ALT ALUNO] Conta criada, mas o login automático falhou:", signInError?.message ?? "Sessão não retornada");
       return { ok: true as const, activated: true as const, access_token: null, refresh_token: null, message: "Acesso criado. Entre com sua matrícula e a senha cadastrada." };
