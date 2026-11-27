@@ -27,8 +27,9 @@ function addDays(isoDate: string, days: number): string {
 }
 
 export function checkAccess(s: AccessInput, today: string, toleranceDays: number): AccessResult {
-  if (s.status === "bloqueado") return { allowed: false, code: "bloqueado", message: "Procure a Recepção" };
-  if (s.status === "inativo") return { allowed: false, code: "inativo", message: "Aluno Inativo" };
+  const status = String(s.status ?? "").trim().toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
+  if (["bloqueado", "blocked"].includes(status)) return { allowed: false, code: "bloqueado", message: "Procure a Recepção" };
+  if (["inativo", "inativa", "inactive"].includes(status)) return { allowed: false, code: "inativo", message: "Aluno Inativo" };
   if (!s.valid_until) return { allowed: false, code: "sem_matricula", message: "Procure a Recepção" };
   if (today > addDays(s.valid_until, toleranceDays))
     return { allowed: false, code: "vencido", message: "Mensalidade Vencida" };
