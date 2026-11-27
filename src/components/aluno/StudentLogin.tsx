@@ -110,11 +110,11 @@ export function StudentLogin({ onSignedIn }: { onSignedIn: () => void }) {
       <label className="block text-sm font-semibold">Sua matrícula
         <input required inputMode="numeric" value={identifier} onChange={e=>setIdentifier(e.target.value.replace(/[^0-9]/g,""))} className={field} placeholder="Número da matrícula"/>
       </label>
-      <label className="block text-sm font-semibold">Crie sua senha (mínimo 8 caracteres)
-        <input required minLength={8} type="password" autoComplete="new-password" value={password} onChange={e=>setPassword(e.target.value)} className={field}/>
+      <label className="block text-sm font-semibold">Crie sua senha (mínimo 6 caracteres)
+        <input required minLength={6} maxLength={200} type="password" autoComplete="new-password" value={password} onChange={e=>setPassword(e.target.value)} className={field}/>
       </label>
       <label className="block text-sm font-semibold">Confirme sua senha
-        <input required minLength={8} type="password" autoComplete="new-password" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} className={field}/>
+        <input required minLength={6} maxLength={200} type="password" autoComplete="new-password" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} className={field}/>
       </label>
       <button disabled={busy} className={button}>{busy?<Loader2 className="animate-spin"/>:<UserRoundPlus size={18}/>} Criar meu acesso</button>
       <button type="button" onClick={()=>setMode("code")} className="flex w-full items-center justify-center gap-2 text-sm text-zinc-300"><ArrowLeft size={15}/> Voltar</button>
