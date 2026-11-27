@@ -60,6 +60,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AlunoRoute = AlunoRouteImport.update({
+  id: '/aluno',
+  path: '/aluno',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAlunosRoute = AuthenticatedAlunosRouteImport.update({
   id: '/alunos',
   path: '/alunos',
