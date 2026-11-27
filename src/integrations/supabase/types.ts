@@ -907,6 +907,7 @@ export type Database = {
           created_at: string
           email_verified_at: string | null
           phone_verified_at: string | null
+          pin_hash: string | null
           student_id: string
           user_id: string
         }
@@ -914,6 +915,7 @@ export type Database = {
           created_at?: string
           email_verified_at?: string | null
           phone_verified_at?: string | null
+          pin_hash?: string | null
           student_id: string
           user_id: string
         }
@@ -921,6 +923,7 @@ export type Database = {
           created_at?: string
           email_verified_at?: string | null
           phone_verified_at?: string | null
+          pin_hash?: string | null
           student_id?: string
           user_id?: string
         }
