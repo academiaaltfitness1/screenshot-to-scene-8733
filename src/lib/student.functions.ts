@@ -96,8 +96,8 @@ export const beginStudentActivation = createServerFn({ method: "POST" })
       ? await supabaseAdmin.from("students").select("id,status").eq("matricula", Number(matriculaDigits)).maybeSingle()
       : { data: null, error: null };
     if (studentError) return { ok: false as const, error: "Não foi possível localizar a matrícula. Tente novamente." };
-    const normalizedStatus = String(student?.status ?? "").trim().toLocaleLowerCase("pt-BR");
-    const validStudent = !!student && ["ativo", "active"].includes(normalizedStatus);
+    const normalizedStatus = String(student?.status ?? "").trim().toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const validStudent = !!student && ["ativo", "ativa", "active", "true", "1"].includes(normalizedStatus);
     const { error: attemptError } = await supabaseAdmin.from("student_auth_attempts").insert({
       key, kind: "activation", success: validCode && validStudent,
     });
